@@ -251,6 +251,13 @@ function setup() {
   bSlider.input(() => { if (!isEasterEggActive && !isAutoRotateMode) { updateSliders(); updateUI(); } });
 
 
+  // --- 綁定Save按鈕事件 ---
+  saveButton.mousePressed(() => {
+    if (letters.length > 0) {
+      saveTransparentPNG();
+    }
+  });
+
   // --- 綁定手機版Save按鈕事件 ---
   if (saveButtonMobile) {
     saveButtonMobile.mousePressed(() => {
@@ -690,7 +697,7 @@ function updateUI() {
         customButton.style('display', 'none');
         select('#custom-angle-controls').style('display', 'none');
         select('#separator-1').style('display', 'none');
-        select('#separator-2').style('display', 'none');
+        select('#separator-2').style('display', 'flex'); // 保持一個分割線
         randomButton.style('display', 'none');
         resetButton.style('display', 'none');
 
@@ -708,7 +715,8 @@ function updateUI() {
         inverseButton.style("border", isInverseTarget ? activeBorder : "none");
         inverseButton.style("cursor", isInverseTarget ? "default" : "pointer");
         
-        saveButton.attribute('src', mode === "Inverse" ? 'save_white.svg' : 'save_black.svg');
+        // 修復：設定正確的圖片元素
+        saveImg.attribute('src', mode === "Inverse" ? 'save_white.svg' : 'save_black.svg');
         saveButton.style('cursor', 'pointer');
         saveButton.elt.disabled = false;
 
@@ -754,7 +762,9 @@ function updateUI() {
             resetButton.style('display', 'none');
         }
         
-        // separator-1和separator-2始終顯示，不受JS控制
+        // 確保分割線在正常模式下顯示
+        select('#separator-1').style('display', 'flex');
+        select('#separator-2').style('display', 'flex');
 
         // 更新 Random/Reset 圖示
         randomButton.elt.disabled = !customControlsEnabled;
@@ -857,6 +867,38 @@ function windowResized() {
         // 更新UI以反映可能的模式變化
         updateUI();
     }, 50); // 50ms延遲，讓CSS媒體查詢先生效
+}
+
+// --- 保存透明PNG函數 ---
+function saveTransparentPNG() {
+  if (isEasterEggActive) {
+    // 彩蛋模式：保存靜態圖片
+    let imgToSave = (mode === 'Inverse') ? sccdWhiteImg : sccdBlackImg;
+    if (imgToSave) {
+      let pg = createGraphics(imgToSave.width, imgToSave.height);
+      pg.image(imgToSave, 0, 0);
+      pg.save("sccd_logo.png");
+    }
+  } else {
+    // 正常模式：保存動態logo
+    let canvasSize = getCanvasSize();
+    let pg = createGraphics(canvasSize.width, canvasSize.height);
+    pg.textFont(font);
+    pg.textSize(300);
+    pg.textAlign(CENTER, CENTER);
+    pg.imageMode(CENTER);
+    
+    // 如果顯示圓圈，先繪製圓圈
+    if (showCircle) {
+      drawCentralCircle(pg, 255);
+    }
+    
+    // 繪製logo
+    drawLogo(pg, 255);
+    
+    // 保存文件
+    pg.save("sccd_logo.png");
+  }
 }
 
 // --- 鍵盤事件處理 ---
