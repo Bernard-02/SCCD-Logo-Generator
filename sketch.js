@@ -14,9 +14,13 @@ let autoRotate = false;
 let rotationFactor = 0;
 let rotationAngles = [];
 let originalRotationAngles = []; // 用於重置角度
+let shouldResetToZero = false; // 是否應該 ease 回到 0°
+let resetEaseSpeed = 0.035; // ease 回 0° 的速度
 const baseSpeeds = [0.5, -0.5, 1]; // R, G, B 各自的基礎旋轉速度
-const defaultFontSize = '70px';
-const smallerFontSize = '55px';
+// 新的字體大小設定：根據字元數
+const largeFontSize = '120px';   // 1-15 字
+const mediumFontSize = '90px';   // 16-30 字
+const smallFontSize = '60px';    // 31-40 字
 const easterEggString = "SHIHCHIENCOMMUNICATIONSDESIGN";
 let isEasterEggActive = false;
 
@@ -42,11 +46,24 @@ let rSlider, gSlider, bSlider;
 let rAngleLabel, gAngleLabel, bAngleLabel;
 let randomImg, resetImg, saveImg; // 圖片按鈕的 img 元素
 let disabledColor = '#E0E0E0'; // 定義一個禁用顏色
+let colormodeIndicator; // 滑動邊框指示器
 
 // --- 響應式元素 ---
 let inputBoxMobile, hiddenMeasurerMobile;
 let saveButtonMobile, saveImgMobile;
 let isMobileMode = false;
+
+// --- 下載提示框 ---
+let downloadNotification;
+
+// --- 打字機動畫變數 ---
+let typewriterActive = false;
+let typewriterLines = []; // 將文字分行儲存
+let typewriterCurrentLine = 0; // 當前正在打的行
+let typewriterCurrentChar = 0; // 當前行的字元索引
+let typewriterStartTime = 0;
+const typewriterDuration = 1500; // 3秒完成動畫
+let typewriterTotalChars = 0; // 總字元數（不包含換行符）
 
 // --- Logo 繪製相關常數 ---
 const colors = [ [255, 68, 138], [0, 255, 128], [38, 188, 255] ];
@@ -121,18 +138,21 @@ function setup() {
 
   // p5.js 繪圖設定
   textFont(font);
-  textSize(300);
+  textSize(350);
   textAlign(CENTER, CENTER);
   imageMode(CENTER); // <-- 新增：將圖片的繪製模式設定為中心對齊
 
   // --- 修正：使用 Class 選擇器來選取所有 UI 元素 ---
   inputBox = select("#input-box");
   hiddenMeasurer = select("#hidden-measurer");
-  
+
   rotateButton = select(".custom-button-rotate");
   customButton = select(".custom-button-custom");
   standardButton = select(".custom-button-standard");
   inverseButton = select(".custom-button-inverse");
+
+  // 選取滑動邊框指示器
+  colormodeIndicator = select("#colormode-indicator");
   
   // 這些按鈕本身是 button，裡面的 img 只是圖示
   randomButton = select("#random-button"); 
@@ -156,6 +176,9 @@ function setup() {
   hiddenMeasurerMobile = select("#hidden-measurer-mobile");
   saveButtonMobile = select("#save-button-mobile");
   saveImgMobile = select("#save-img-mobile");
+
+  // --- 選取下載提示框 ---
+  downloadNotification = select("#download-notification");
 
   // --- 重新對齊 hidden-measurer 的設定，參考 ref.js:82-86 ---
   hiddenMeasurer.style('font-family', inputBox.style('font-family'));
@@ -188,12 +211,26 @@ function setup() {
   // 參考 ref.js:123
   rotateButton.mousePressed(() => {
     if (letters.length > 0 && !isEasterEggActive) {
-      isAutoRotateMode = true;
-      // 切換 autoRotate 狀態
-      autoRotate = !autoRotate;
-      if (autoRotate) {
+      // 從 Custom 模式切換到 Auto 模式
+      if (!isAutoRotateMode) {
+        isAutoRotateMode = true;
+        autoRotate = true;
         resetRotationOffsets();
+      } else {
+        // 已經在 Auto 模式，只是 toggle
+        autoRotate = !autoRotate;
+        if (autoRotate) {
+          resetRotationOffsets();
+        }
       }
+
+      // 更新按鈕文字
+      if (autoRotate) {
+        rotateButton.html('Pause 暫停旋轉');
+      } else {
+        rotateButton.html('Automatic 自動旋轉');
+      }
+
       updateUI();
     }
   });
@@ -203,10 +240,25 @@ function setup() {
     if (letters.length > 0 && !isEasterEggActive) {
       isAutoRotateMode = false;
       autoRotate = false;
-      rotationFactor = 0; // 重設旋轉因子
-      // 按下 custom 時，重設角度
+
+      // 先將所有角度正規化到 -180° 到 180° 範圍（選擇最短路徑）
+      for (let i = 0; i < rotationAngles.length; i++) {
+        if (rotationAngles[i] !== undefined) {
+          // 正規化到 -180° 到 180°（最短路徑）
+          let angle = rotationAngles[i] % 360;
+          if (angle > 180) angle -= 360;   // 如果 > 180°，往負方向
+          if (angle < -180) angle += 360;  // 如果 < -180°，往正方向
+          rotationAngles[i] = angle;
+        }
+      }
+
+      // 重置按鈕文字
+      rotateButton.html('Automatic 自動旋轉');
+
+      // 標記需要 ease 回 0°
+      shouldResetToZero = true;
+      // 重設滑桿
       resetRotationOffsets();
-      rotationAngles = [...originalRotationAngles]; // 重設到原始角度
       updateUI();
     }
   });
@@ -269,7 +321,7 @@ function setup() {
 
   // 初始化響應式檢測
   checkMobileMode();
-  
+
   // 監聽媒體查詢變化，確保與CSS保持同步
   const mediaQuery = window.matchMedia('(max-width: 768px)');
   mediaQuery.addListener(() => {
@@ -278,16 +330,125 @@ function setup() {
       updateUI();
     }, 10);
   });
-  
+
   // 初始 UI 狀態設定
   updateUI();
+
+  // 初始化指示器位置
+  if (colormodeIndicator) {
+    colormodeIndicator.addClass('at-standard'); // 預設在 Standard 位置
+  }
+
+  // --- 啟動打字機動畫 ---
+  startTypewriterAnimation();
+}
+
+// --- 打字機動畫函數 ---
+function startTypewriterAnimation() {
+  // 獲取原始 placeholder
+  let placeholderText = inputBox.attribute('placeholder');
+
+  // 根據是否為手機模式選擇不同的 placeholder
+  if (isMobileMode && inputBoxMobile) {
+    placeholderText = inputBoxMobile.attribute('placeholder');
+  }
+
+  // 將 placeholder 按換行符分割成行
+  typewriterLines = placeholderText.split('\n');
+
+  // 計算總字元數（不包含換行符）
+  typewriterTotalChars = typewriterLines.reduce((sum, line) => sum + line.length, 0);
+
+  // 初始化動畫參數
+  typewriterCurrentLine = 0;
+  typewriterCurrentChar = 0;
+  typewriterStartTime = millis();
+  typewriterActive = true;
+
+  // 清空 placeholder 準備開始動畫
+  inputBox.attribute('placeholder', '');
+  if (inputBoxMobile) {
+    inputBoxMobile.attribute('placeholder', '');
+  }
 }
 
 // --- p5.js 繪圖迴圈 ---
 function draw() {
   // 保持canvas透明，讓CSS控制頁面背景
   clear();
-  
+
+  // --- 打字機動畫更新 ---
+  if (typewriterActive) {
+    let elapsed = millis() - typewriterStartTime;
+    let progress = constrain(elapsed / typewriterDuration, 0, 1);
+
+    // 計算當前應該已經打了多少個字元（總計）
+    let targetTotalChars = floor(progress * typewriterTotalChars);
+
+    // 計算目前已經打了多少字元
+    let currentTotalChars = 0;
+    for (let i = 0; i < typewriterCurrentLine; i++) {
+      currentTotalChars += typewriterLines[i].length;
+    }
+    currentTotalChars += typewriterCurrentChar;
+
+    // 如果需要前進
+    if (targetTotalChars > currentTotalChars) {
+      // 計算需要前進多少字元
+      let charsToAdd = targetTotalChars - currentTotalChars;
+
+      for (let i = 0; i < charsToAdd; i++) {
+        // 檢查當前行是否已經打完
+        if (typewriterCurrentChar >= typewriterLines[typewriterCurrentLine].length) {
+          // 換到下一行
+          typewriterCurrentLine++;
+          typewriterCurrentChar = 0;
+
+          // 檢查是否已經打完所有行
+          if (typewriterCurrentLine >= typewriterLines.length) {
+            typewriterActive = false;
+            break;
+          }
+        } else {
+          // 在當前行繼續打字
+          typewriterCurrentChar++;
+        }
+      }
+
+      // 構建當前要顯示的文字
+      let displayText = '';
+      for (let i = 0; i <= typewriterCurrentLine && i < typewriterLines.length; i++) {
+        if (i < typewriterCurrentLine) {
+          // 完整顯示之前的行
+          displayText += typewriterLines[i];
+          if (i < typewriterLines.length - 1) {
+            displayText += '\n';
+          }
+        } else if (i === typewriterCurrentLine) {
+          // 部分顯示當前行
+          displayText += typewriterLines[i].substring(0, typewriterCurrentChar);
+        }
+      }
+
+      // 更新 placeholder
+      inputBox.attribute('placeholder', displayText);
+      if (inputBoxMobile) {
+        inputBoxMobile.attribute('placeholder', displayText);
+      }
+    }
+
+    // 動畫完成
+    if (progress >= 1 || !typewriterActive) {
+      typewriterActive = false;
+      // 顯示完整文字
+      let fullText = typewriterLines.join('\n');
+      inputBox.attribute('placeholder', fullText);
+      if (inputBoxMobile) {
+        inputBoxMobile.attribute('placeholder', fullText);
+      }
+    }
+  }
+
   // 直接處理模式轉換，不需要漸變（CSS有transition效果）
   if (mode !== targetMode) {
     mode = targetMode;
@@ -327,10 +488,10 @@ function draw() {
   // --- 彩蛋圖片繪製 ---
   if (isEasterEggActive && currentEasterEggAlpha > 0) {
     push();
-    tint(255, currentEasterEggAlpha); 
+    tint(255, currentEasterEggAlpha);
     // 根據模式選擇要顯示的彩蛋圖片
     let imgToShow = (mode === 'Inverse') ? sccdWhiteImg : sccdBlackImg;
-    image(imgToShow, width / 2, height / 2, 300, 300); 
+    image(imgToShow, width / 2, height / 2, 360, 360); // 放大 1.2 倍 (300 * 1.2 = 360)
     pop();
   }
 
@@ -426,6 +587,8 @@ function handleInput(event) {
     if (!isEasterEggActive) {
       autoRotate = false;
       isAutoRotateMode = false; // 確保退出自動模式
+      // 重置按鈕文字
+      rotateButton.html('Automatic 自動旋轉');
     }
     rotationAngles = new Array(letters.length).fill(0);
     originalRotationAngles = [...rotationAngles]; // 儲存一份乾淨的初始角度
@@ -495,20 +658,47 @@ function drawLogo(pg, alphaMultiplier = 255) {
   // 根據當前模式設定混合模式
   pg.blendMode(mode === "Inverse" ? SCREEN : MULTIPLY);
 
-  // --- Easing 效果 ---
-  // 根據 autoRotate 狀態，平滑地增減 rotationFactor
+  // --- 旋轉效果 ---
+  // 開啟時立即開始，關閉時有減速效果
   if (autoRotate) {
-    rotationFactor = lerp(rotationFactor, 1, 0.1);
+    rotationFactor = 1;
   } else {
-    rotationFactor = lerp(rotationFactor, 0, 0.035);
+    rotationFactor = lerp(rotationFactor, 0, 0.08);
   }
-  rotationFactor = constrain(rotationFactor, 0, 1);
+
+  // 如果需要重設角度到 0°，使用 ease 效果平滑過渡
+  if (shouldResetToZero) {
+    let allReachedZero = true;
+    for (let i = 0; i < totalLetters; i++) {
+      if (rotationAngles[i] !== undefined) {
+        // 使用 lerp 讓角度平滑回到 0°
+        rotationAngles[i] = lerp(rotationAngles[i], 0, 0.08);
+
+        // 檢查是否已經很接近 0°
+        if (abs(rotationAngles[i]) > 0.1) {
+          allReachedZero = false;
+        }
+      }
+    }
+
+    // 如果所有角度都接近 0° 了，完全重設並停止
+    if (allReachedZero) {
+      rotationAngles = [...originalRotationAngles];
+      shouldResetToZero = false;
+    }
+  }
 
   for (let i = 0; i < totalLetters; i++) {
     let letter = letters[i];
-    
+
+    // 獲取當前 textSize（從 pg 的設定中）
+    // 注意：p5.Graphics 沒有直接的 getter，所以我們需要用其他方式
+    // 在這裡直接使用全域的 textSize，因為 setup 時設定為 350
+    // 但在保存時會臨時修改為 700
+    let currentTextSize = pg._renderer._textSize || 350;
+
     // 獲取字母的邊界，以計算垂直偏移，使其中心對齊
-    let bounds = font.textBounds(letter, 0, 0, 300);
+    let bounds = font.textBounds(letter, 0, 0, currentTextSize);
     let offsetY = bounds.y + bounds.h / 2;
     
     // 決定當前字母的顏色
@@ -522,9 +712,12 @@ function drawLogo(pg, alphaMultiplier = 255) {
     }
     
     // --- 更新每個字母的旋轉角度 ---
-    let rotationSpeed = baseSpeeds[colorIndex] * rotationFactor;
-    if (rotationAngles[i] === undefined) { rotationAngles[i] = 0; }
-    rotationAngles[i] += rotationSpeed;
+    // 只有在不是 ease 回 0° 的狀態下，才累積旋轉角度
+    if (!shouldResetToZero) {
+      let rotationSpeed = baseSpeeds[colorIndex] * rotationFactor;
+      if (rotationAngles[i] === undefined) { rotationAngles[i] = 0; }
+      rotationAngles[i] += rotationSpeed;
+    }
 
     // --- 應用手動偏移 ---
     let currentManualOffset;
@@ -560,15 +753,15 @@ function drawLogo(pg, alphaMultiplier = 255) {
 }
 
 // --- 繪製中央圓圈的函數 ---
-function drawCentralCircle(pg, alpha) {
+function drawCentralCircle(pg, alpha, diameter = 250) {
     pg.push();
     // 修正：統一使用畫布的中心 width/2, height/2
     pg.translate(width / 2, height / 2);
     // 根據模式設定圓圈顏色
-    pg.fill(mode === "Inverse" ? 255 : 0, alpha); 
+    pg.fill(mode === "Inverse" ? 255 : 0, alpha);
     pg.noStroke();
-    // 使用 ref.js 中的固定尺寸
-    pg.circle(0, 0, 200); 
+    // 圓圈直徑（可自訂，預設 250）
+    pg.circle(0, 0, diameter);
     pg.pop();
 }
 
@@ -576,43 +769,73 @@ function drawCentralCircle(pg, alpha) {
 function adjustInputFontSize() {
     // 在手機模式下，字體大小由CSS控制，不需要動態調整
     if (isMobileMode) return;
-    
-    // 確保 hiddenMeasurer 已被選取
-    if (!hiddenMeasurer) return;
-    
-    // 將測量器的寬度與輸入框同步
-    hiddenMeasurer.style('width', inputBox.width + 'px');
-    
+
     if (!isEasterEggActive) {
-        let currentFontSize = inputBox.style('font-size');
-        hiddenMeasurer.style('font-size', currentFontSize);
+        // 計算字元數（移除空格和換行）
+        let charCount = letters.length;
 
-        let htmlContent = inputBox.value().replace(/\n/g, '<br>');
-        hiddenMeasurer.html(htmlContent);
-
-        // 計算實際行數的更準確方法
-        let actualLineCount = getActualLineCount(inputBox.value());
-        
-        // 只有在實際超過3行時才縮小字體
-        if (actualLineCount > 3) {
-            if (currentFontSize !== smallerFontSize) {
-                inputBox.style("font-size", smallerFontSize);
-                hiddenMeasurer.style('font-size', smallerFontSize);
-            }
-        } else if (actualLineCount <= 2) {
-            // 只有在2行以內時才用大字體
-            if (currentFontSize !== defaultFontSize) {
-                inputBox.style("font-size", defaultFontSize);
-                hiddenMeasurer.style('font-size', defaultFontSize);
-            }
+        let targetFontSize;
+        // 根據字元數決定字體大小
+        if (charCount === 0) {
+            targetFontSize = largeFontSize; // 空白時使用大字體
+        } else if (charCount <= 15) {
+            targetFontSize = largeFontSize; // 1-15 字：120px
+        } else if (charCount <= 30) {
+            targetFontSize = mediumFontSize; // 16-30 字：90px
+        } else {
+            targetFontSize = smallFontSize; // 31-40 字：60px
         }
-        // 如果正好是3行，保持當前字體大小不變
+
+        // 只在需要時更新字體大小
+        let currentFontSize = inputBox.style('font-size');
+        if (currentFontSize !== targetFontSize) {
+            inputBox.style("font-size", targetFontSize);
+        }
     } else {
-        // 如果是彩蛋模式，確保字體是預設大小
-        if (inputBox.style('font-size') !== defaultFontSize) {
-            inputBox.style("font-size", defaultFontSize);
+        // 彩蛋模式使用中字體
+        if (inputBox.style('font-size') !== mediumFontSize) {
+            inputBox.style("font-size", mediumFontSize);
         }
     }
+
+    // 調整垂直 padding 讓文字置中
+    adjustVerticalPadding();
+}
+
+// --- 新增：調整輸入框垂直置中的函數 ---
+function adjustVerticalPadding() {
+    if (isMobileMode || !inputBox) return;
+
+    // 使用 hiddenMeasurer 來測量文字實際高度
+    if (!hiddenMeasurer) return;
+
+    // 同步設定
+    hiddenMeasurer.style('width', inputBox.width + 'px');
+    hiddenMeasurer.style('font-size', inputBox.style('font-size'));
+    hiddenMeasurer.style('font-family', inputBox.style('font-family'));
+    hiddenMeasurer.style('line-height', inputBox.style('line-height'));
+    hiddenMeasurer.style('white-space', 'pre-wrap');
+    hiddenMeasurer.style('word-wrap', 'break-word');
+    hiddenMeasurer.style('text-align', 'left');
+
+    // 設定內容
+    let content = inputBox.value();
+    if (content.length === 0) {
+        // 空白時不需要 padding
+        inputBox.style('padding-top', '0px');
+        return;
+    }
+
+    hiddenMeasurer.html(content.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;'));
+
+    // 測量高度
+    let contentHeight = hiddenMeasurer.elt.offsetHeight;
+    let containerHeight = 400; // inputBox 的高度
+
+    // 計算需要的 padding-top 讓文字垂直置中
+    let paddingTop = Math.max(0, (containerHeight - contentHeight) / 2);
+
+    inputBox.style('padding-top', paddingTop + 'px');
 }
 
 // --- 新增：計算實際行數的函數 ---
@@ -673,6 +896,43 @@ function resetRotationOffsets() {
     updateSliders(); // 確保全域變數也被更新
 }
 
+// --- 新增：更新顏色模式指示器位置 ---
+function updateColormodeIndicator() {
+    if (!colormodeIndicator) return;
+
+    // 移除所有位置類別
+    colormodeIndicator.removeClass('at-standard');
+    colormodeIndicator.removeClass('at-inverse');
+
+    // 根據目標模式添加對應的類別
+    if (targetMode === "Standard") {
+        colormodeIndicator.addClass('at-standard');
+    } else {
+        colormodeIndicator.addClass('at-inverse');
+    }
+}
+
+// --- 新增：顯示下載提示框 ---
+function showDownloadNotification() {
+    if (!downloadNotification) return;
+
+    // 移除 hidden 類別並添加 show 類別
+    downloadNotification.removeClass('hidden');
+    // 需要小延遲讓瀏覽器先渲染 DOM 變化，然後才能觸發 CSS transition
+    setTimeout(() => {
+        downloadNotification.addClass('show');
+    }, 10);
+
+    // 1 秒後開始淡出
+    setTimeout(() => {
+        downloadNotification.removeClass('show');
+        // 等待淡出動畫完成後隱藏元素
+        setTimeout(() => {
+            downloadNotification.addClass('hidden');
+        }, 200); // 對應 CSS 的 transition 時間
+    }, 1000);
+}
+
 // --- 完全參照 ref.js:278-346 重寫 updateUI ---
 function updateUI() {
     const hasText = letters.length > 0;
@@ -681,6 +941,9 @@ function updateUI() {
     const activeColor = (mode === "Inverse" ? "white" : "black");
     const activeBorder = (mode === "Inverse" ? "2px solid white" : "2px solid black");
     const body = select('body');
+
+    // 更新顏色模式指示器位置
+    updateColormodeIndicator();
 
     // 更新 Body Class
     body.class(mode === 'Inverse' ? 'inverse-mode' : 'standard-mode');
@@ -693,13 +956,8 @@ function updateUI() {
 
     if (isEasterEggActive) {
         // --- 彩蛋模式 UI ---
-        rotateButton.style('display', 'none');
-        customButton.style('display', 'none');
-        select('#custom-angle-controls').style('display', 'none');
-        select('#separator-1').style('display', 'none');
-        select('#separator-2').style('display', 'flex'); // 保持一個分割線
-        randomButton.style('display', 'none');
-        resetButton.style('display', 'none');
+        // 隱藏整個 rotation-box
+        select('#rotation-box').style('display', 'none');
 
         standardButton.style('display', 'flex');
         inverseButton.style('display', 'flex');
@@ -707,14 +965,22 @@ function updateUI() {
 
         standardButton.elt.disabled = isStandardTarget;
         standardButton.style("color", isStandardTarget ? activeColor : disabledColor);
-        standardButton.style("border", isStandardTarget ? activeBorder : "none");
         standardButton.style("cursor", isStandardTarget ? "default" : "pointer");
+        if (isStandardTarget) {
+            standardButton.addClass('active');
+        } else {
+            standardButton.removeClass('active');
+        }
 
         inverseButton.elt.disabled = isInverseTarget;
         inverseButton.style("color", isInverseTarget ? activeColor : disabledColor);
-        inverseButton.style("border", isInverseTarget ? activeBorder : "none");
         inverseButton.style("cursor", isInverseTarget ? "default" : "pointer");
-        
+        if (isInverseTarget) {
+            inverseButton.addClass('active');
+        } else {
+            inverseButton.removeClass('active');
+        }
+
         // 修復：設定正確的圖片元素
         saveImg.attribute('src', mode === "Inverse" ? 'save_white.svg' : 'save_black.svg');
         saveButton.style('cursor', 'pointer');
@@ -722,31 +988,55 @@ function updateUI() {
 
     } else {
         // --- 正常模式 UI ---
+        // 顯示整個 rotation-box
+        select('#rotation-box').style('display', 'flex');
+
         rotateButton.style('display', 'flex');
         customButton.style('display', 'flex');
 
-        // 更新 Auto/Custom 按鈕
+        // 更新 Auto/Custom 按鈕（使用 class 控制邊框）
         rotateButton.elt.disabled = !hasText;
         rotateButton.style("color", !hasText ? disabledColor : isAutoRotateMode ? activeColor : disabledColor);
-        rotateButton.style("border", !hasText ? "none" : isAutoRotateMode ? activeBorder : "none");
         rotateButton.style("cursor", !hasText ? 'not-allowed' : "pointer");
+        // 使用 class 控制 active 狀態
+        if (hasText && isAutoRotateMode) {
+            rotateButton.addClass('active');
+        } else {
+            rotateButton.removeClass('active');
+        }
 
         customButton.elt.disabled = !hasText;
         customButton.style("color", !hasText ? disabledColor : !isAutoRotateMode ? activeColor : disabledColor);
-        customButton.style("border", !hasText ? "none" : !isAutoRotateMode ? activeBorder : "none");
         customButton.style("cursor", !hasText ? 'not-allowed' : "pointer");
+        // 使用 class 控制 active 狀態
+        if (hasText && !isAutoRotateMode) {
+            customButton.addClass('active');
+        } else {
+            customButton.removeClass('active');
+        }
 
         // 更新 Standard/Inverse 按鈕（不受hasText影響，總是顯示狀態）
+        // 這些按鈕不需要 border，因為使用滑動指示器
         standardButton.style('display', 'flex');
         inverseButton.style('display', 'flex');
         standardButton.elt.disabled = isStandardTarget;
         standardButton.style("color", isStandardTarget ? activeColor : disabledColor);
-        standardButton.style("border", isStandardTarget ? activeBorder : "none");
         standardButton.style("cursor", isStandardTarget ? "default" : "pointer");
+        // 使用 class 控制 active 狀態（但邊框由指示器處理）
+        if (isStandardTarget) {
+            standardButton.addClass('active');
+        } else {
+            standardButton.removeClass('active');
+        }
+
         inverseButton.elt.disabled = isInverseTarget;
         inverseButton.style("color", isInverseTarget ? activeColor : disabledColor);
-        inverseButton.style("border", isInverseTarget ? activeBorder : "none");
         inverseButton.style("cursor", isInverseTarget ? "default" : "pointer");
+        if (isInverseTarget) {
+            inverseButton.addClass('active');
+        } else {
+            inverseButton.removeClass('active');
+        }
 
         // 更新 Custom 控制面板
         const customControlsEnabled = hasText && !isAutoRotateMode;
@@ -761,10 +1051,6 @@ function updateUI() {
             randomButton.style('display', 'none');
             resetButton.style('display', 'none');
         }
-        
-        // 確保分割線在正常模式下顯示
-        select('#separator-1').style('display', 'flex');
-        select('#separator-2').style('display', 'flex');
 
         // 更新 Random/Reset 圖示
         randomButton.elt.disabled = !customControlsEnabled;
@@ -871,6 +1157,19 @@ function windowResized() {
 
 // --- 保存透明PNG函數 ---
 function saveTransparentPNG() {
+  // 顯示提示框
+  showDownloadNotification();
+
+  // 延遲 1 秒後開始下載
+  setTimeout(() => {
+    performDownload();
+  }, 1000);
+}
+
+// --- 實際執行下載的函數 ---
+function performDownload() {
+  const saveSize = 1080;
+
   if (isEasterEggActive) {
     // 彩蛋模式：保存靜態圖片
     let imgToSave = (mode === 'Inverse') ? sccdWhiteImg : sccdBlackImg;
@@ -880,24 +1179,44 @@ function saveTransparentPNG() {
       pg.save("sccd_logo.png");
     }
   } else {
-    // 正常模式：保存動態logo
-    let canvasSize = getCanvasSize();
-    let pg = createGraphics(canvasSize.width, canvasSize.height);
+    // 正常模式：創建一個 1080x1080 的高解析度畫布來儲存
+    let pg = createGraphics(saveSize, saveSize);
+    const scaleFactor = 2; // 放大倍數
+
+    // 設定繪圖參數（保持原本的參數）
     pg.textFont(font);
-    pg.textSize(300);
+    pg.textSize(350); // 保持原本的大小
     pg.textAlign(CENTER, CENTER);
     pg.imageMode(CENTER);
-    
-    // 如果顯示圓圈，先繪製圓圈
+
+    // 臨時保存全域的 width 和 height
+    let tempWidth = width;
+    let tempHeight = height;
+
+    // 暫時修改全域變數為原始canvas尺寸（540），而不是saveSize（1080）
+    // 這樣 drawLogo 和 drawCentralCircle 會使用 540/2 = 270 作為中心點
+    width = saveSize / scaleFactor; // 540
+    height = saveSize / scaleFactor; // 540
+
+    pg.push();
+    pg.scale(scaleFactor); // 將整個內容放大2倍
+
+    // 如果顯示圓圈，先繪製圓圈（使用原本的參數）
     if (showCircle) {
-      drawCentralCircle(pg, 255);
+      drawCentralCircle(pg, 255); // 使用預設直徑 250
     }
-    
-    // 繪製logo
+
+    // 繪製logo（使用原本的參數）
     drawLogo(pg, 255);
-    
+
+    pg.pop();
+
+    // 恢復原本的 width 和 height
+    width = tempWidth;
+    height = tempHeight;
+
     // 保存文件
-    pg.save("sccd_logo.png");
+    pg.save("sccd_logo_1080.png");
   }
 }
 
