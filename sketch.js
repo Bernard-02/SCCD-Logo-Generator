@@ -68,12 +68,34 @@ let typewriterTotalChars = 0; // 總字元數（不包含換行符）
 // --- Logo 繪製相關常數 ---
 const colors = [ [255, 68, 138], [0, 255, 128], [38, 188, 255] ];
 
+// --- Placeholder SVG 變數 ---
+let placeholderR, placeholderG, placeholderB; // 三層 SVG (黑色)
+let placeholderR_white, placeholderG_white, placeholderB_white; // 三層 SVG (白色)
+let placeholderRotations = [0, 0, 0]; // R, G, B 三層的旋轉角度
+let placeholderAlpha = 255; // Placeholder 的透明度（用於 fade in/out）
+let targetPlaceholderAlpha = 255; // 目標透明度
+
+// --- 頁面載入動畫變數 ---
+let pageLoadStartTime = 0; // 頁面載入開始時間
+let inputBoxOpacity = 0; // 輸入框透明度
+let logoOpacity = 0; // Logo placeholder 透明度
+let controlPanelOpacity = 0; // Control panel 透明度
+const fadeInDuration = 200; // 每個元素 fade in 的持續時間 (ms) - 改成 1s
+const fadeInDelay = 500; // 每個元素之間的延遲 (ms)
+
 // --- p5.js 預載入 ---
 function preload() {
   font = loadFont("Inter-Medium.ttf");
   // 載入彩蛋圖片
   sccdBlackImg = loadImage('sccd_black.png');
   sccdWhiteImg = loadImage('sccd_white.png');
+  // 載入 placeholder SVG wireframe (三層分離 - 黑色和白色版本)
+  placeholderR = loadImage('SCCD_R.svg');
+  placeholderG = loadImage('SCCD_G.svg');
+  placeholderB = loadImage('SCCD_B.svg');
+  placeholderR_white = loadImage('SCCD_R_white.svg');
+  placeholderG_white = loadImage('SCCD_G_white.svg');
+  placeholderB_white = loadImage('SCCD_B_white.svg');
 }
 
 // --- 檢測手機模式函數 ---
@@ -289,6 +311,9 @@ function setup() {
   // 參考 ref.js:128
   resetButton.mousePressed(() => {
       if (letters.length > 0 && !isAutoRotateMode && !isEasterEggActive) {
+        // 觸發 ease 回到 0° 的效果
+        shouldResetToZero = true;
+        // 先將 slider 設為 0，但實際的角度會平滑過渡
         rSlider.value(0);
         gSlider.value(0);
         bSlider.value(0);
@@ -339,6 +364,24 @@ function setup() {
     colormodeIndicator.addClass('at-standard'); // 預設在 Standard 位置
   }
 
+  // 初始化頁面載入動畫
+  pageLoadStartTime = millis();
+  // 初始隱藏所有元素
+  if (inputBox) inputBox.style('opacity', '0');
+  if (inputBoxMobile) inputBoxMobile.style('opacity', '0');
+  let controlPanel = select('.control-panel');
+  if (controlPanel) controlPanel.style('opacity', '0');
+  // placeholder 的 opacity 由 logoOpacity 變數控制，在 draw() 中處理
+
+  // --- 禁用 Canvas 容器的右鍵菜單，防止直接下載 ---
+  // 只在 canvas-container 上禁用，不影響其他區域
+  if (canvasContainer) {
+    canvasContainer.elt.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      return false;
+    });
+  }
+
   // --- 啟動打字機動畫 ---
   startTypewriterAnimation();
 }
@@ -376,6 +419,38 @@ function startTypewriterAnimation() {
 function draw() {
   // 保持canvas透明，讓CSS控制頁面背景
   clear();
+
+  // --- 頁面載入動畫 ---
+  let timeSinceLoad = millis() - pageLoadStartTime;
+
+  // 1. 輸入框 fade in (0ms - 400ms)
+  if (timeSinceLoad < fadeInDuration) {
+    inputBoxOpacity = map(timeSinceLoad, 0, fadeInDuration, 0, 1);
+  } else {
+    inputBoxOpacity = 1;
+  }
+
+  // 2. Logo placeholder fade in (200ms - 600ms)
+  let logoStartTime = fadeInDelay;
+  if (timeSinceLoad >= logoStartTime && timeSinceLoad < logoStartTime + fadeInDuration) {
+    logoOpacity = map(timeSinceLoad, logoStartTime, logoStartTime + fadeInDuration, 0, 1);
+  } else if (timeSinceLoad >= logoStartTime + fadeInDuration) {
+    logoOpacity = 1;
+  }
+
+  // 3. Control panel fade in (400ms - 800ms)
+  let panelStartTime = fadeInDelay * 2;
+  if (timeSinceLoad >= panelStartTime && timeSinceLoad < panelStartTime + fadeInDuration) {
+    controlPanelOpacity = map(timeSinceLoad, panelStartTime, panelStartTime + fadeInDuration, 0, 1);
+  } else if (timeSinceLoad >= panelStartTime + fadeInDuration) {
+    controlPanelOpacity = 1;
+  }
+
+  // 應用透明度到 DOM 元素
+  if (inputBox) inputBox.style('opacity', inputBoxOpacity.toString());
+  if (inputBoxMobile) inputBoxMobile.style('opacity', inputBoxOpacity.toString());
+  let controlPanel = select('.control-panel');
+  if (controlPanel) controlPanel.style('opacity', controlPanelOpacity.toString());
 
   // --- 打字機動畫更新 ---
   if (typewriterActive) {
@@ -479,6 +554,12 @@ function draw() {
       currentEasterEggAlpha = isEasterEggActive ? 255 : 0;
   }
   
+  // --- Placeholder SVG 繪製 ---
+  // 非彩蛋模式時，當沒有文字或正在 fade out 時繪製（透明度由 placeholderAlpha 控制）
+  if (!isEasterEggActive && (letters.length === 0 || placeholderAlpha > 1)) {
+    drawPlaceholder(this);
+  }
+
   // --- Logo 繪製 ---
   // 只有在非彩蛋模式、有字母、且透明度大於 0 時才繪製動態 Logo
   if (!isEasterEggActive && letters.length > 0 && currentLogoAlpha > 0) {
@@ -581,8 +662,16 @@ function handleInput(event) {
     }
   
     // 最終，移除所有空格和換行符，得到用於生成 Logo 的純字母陣列
+    let previousLettersLength = letters.length;
     letters = validInput.replace(/[\s\n]/g, "").split("");
-  
+
+    // 控制 Placeholder 的 fade in/out
+    if (letters.length === 0) {
+      targetPlaceholderAlpha = 255; // Fade in（沒有文字時顯示）
+    } else if (previousLettersLength === 0 && letters.length > 0) {
+      targetPlaceholderAlpha = 0; // Fade out（剛輸入文字時隱藏）
+    }
+
     // 每次手動輸入文字時，都停止自動旋轉並重置角度
     if (!isEasterEggActive) {
       autoRotate = false;
@@ -636,6 +725,56 @@ function handleInput(event) {
     updateUI();
 }
 
+// --- 繪製 Placeholder SVG Wireframe ---
+function drawPlaceholder(pg) {
+  // 更新旋轉角度（使用 baseSpeeds: [0.5, -0.5, 1] 對應 R, G, B）
+  placeholderRotations[0] += baseSpeeds[0]; // R: 0.5
+  placeholderRotations[1] += baseSpeeds[1]; // G: -0.5
+  placeholderRotations[2] += baseSpeeds[2]; // B: 1
+
+  // Fade in/out 動畫（fade out: 0.3s，fade in: 0.5s）
+  let fadeSpeed = (targetPlaceholderAlpha === 0) ? 0.3 : 0.15; // fade out 快，fade in 慢
+  placeholderAlpha = lerp(placeholderAlpha, targetPlaceholderAlpha, fadeSpeed);
+
+  // 結合頁面載入動畫的 opacity
+  let finalAlpha = placeholderAlpha * logoOpacity;
+
+  pg.push();
+  pg.translate(width / 2, height / 2);
+  pg.imageMode(CENTER);
+
+  // 繪製尺寸（放大 1.2 倍：350 * 1.2 = 420）
+  let svgSize = 420;
+
+  // 根據模式選擇正確的 SVG 檔案（Standard: 黑色, Inverse: 白色）
+  let rImg = (mode === 'Inverse') ? placeholderR_white : placeholderR;
+  let gImg = (mode === 'Inverse') ? placeholderG_white : placeholderG;
+  let bImg = (mode === 'Inverse') ? placeholderB_white : placeholderB;
+
+  // 繪製 R 層
+  pg.push();
+  pg.rotate(radians(placeholderRotations[0]));
+  pg.tint(255, finalAlpha);
+  pg.image(rImg, 0, 0, svgSize, svgSize);
+  pg.pop();
+
+  // 繪製 G 層
+  pg.push();
+  pg.rotate(radians(placeholderRotations[1]));
+  pg.tint(255, finalAlpha);
+  pg.image(gImg, 0, 0, svgSize, svgSize);
+  pg.pop();
+
+  // 繪製 B 層
+  pg.push();
+  pg.rotate(radians(placeholderRotations[2]));
+  pg.tint(255, finalAlpha);
+  pg.image(bImg, 0, 0, svgSize, svgSize);
+  pg.pop();
+
+  pg.pop();
+}
+
 // --- 核心 Logo 繪製邏輯 (直接從 ref.js 移植，簡化版) ---
 function drawLogo(pg, alphaMultiplier = 255) {
   let totalLetters = letters.length;
@@ -669,6 +808,8 @@ function drawLogo(pg, alphaMultiplier = 255) {
   // 如果需要重設角度到 0°，使用 ease 效果平滑過渡
   if (shouldResetToZero) {
     let allReachedZero = true;
+
+    // 處理 rotationAngles（Auto 模式的旋轉）
     for (let i = 0; i < totalLetters; i++) {
       if (rotationAngles[i] !== undefined) {
         // 使用 lerp 讓角度平滑回到 0°
@@ -681,9 +822,22 @@ function drawLogo(pg, alphaMultiplier = 255) {
       }
     }
 
+    // 處理手動偏移（Custom 模式的 offset）
+    rRotationOffset = lerp(rRotationOffset, 0, 0.08);
+    gRotationOffset = lerp(gRotationOffset, 0, 0.08);
+    bRotationOffset = lerp(bRotationOffset, 0, 0.08);
+
+    // 檢查 offset 是否也接近 0°
+    if (abs(rRotationOffset) > 0.1 || abs(gRotationOffset) > 0.1 || abs(bRotationOffset) > 0.1) {
+      allReachedZero = false;
+    }
+
     // 如果所有角度都接近 0° 了，完全重設並停止
     if (allReachedZero) {
       rotationAngles = [...originalRotationAngles];
+      rRotationOffset = 0;
+      gRotationOffset = 0;
+      bRotationOffset = 0;
       shouldResetToZero = false;
     }
   }
@@ -786,20 +940,27 @@ function adjustInputFontSize() {
             targetFontSize = smallFontSize; // 31-40 字：60px
         }
 
-        // 只在需要時更新字體大小
+        // 更新字體大小
         let currentFontSize = inputBox.style('font-size');
         if (currentFontSize !== targetFontSize) {
             inputBox.style("font-size", targetFontSize);
+            // 字體大小改變時，強制在下一幀重新計算 padding
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    adjustVerticalPadding();
+                });
+            });
+        } else {
+            // 字體沒變，但內容可能變了，仍需調整 padding
+            adjustVerticalPadding();
         }
     } else {
         // 彩蛋模式使用中字體
         if (inputBox.style('font-size') !== mediumFontSize) {
             inputBox.style("font-size", mediumFontSize);
         }
+        adjustVerticalPadding();
     }
-
-    // 調整垂直 padding 讓文字置中
-    adjustVerticalPadding();
 }
 
 // --- 新增：調整輸入框垂直置中的函數 ---
@@ -809,15 +970,6 @@ function adjustVerticalPadding() {
     // 使用 hiddenMeasurer 來測量文字實際高度
     if (!hiddenMeasurer) return;
 
-    // 同步設定
-    hiddenMeasurer.style('width', inputBox.width + 'px');
-    hiddenMeasurer.style('font-size', inputBox.style('font-size'));
-    hiddenMeasurer.style('font-family', inputBox.style('font-family'));
-    hiddenMeasurer.style('line-height', inputBox.style('line-height'));
-    hiddenMeasurer.style('white-space', 'pre-wrap');
-    hiddenMeasurer.style('word-wrap', 'break-word');
-    hiddenMeasurer.style('text-align', 'left');
-
     // 設定內容
     let content = inputBox.value();
     if (content.length === 0) {
@@ -826,7 +978,19 @@ function adjustVerticalPadding() {
         return;
     }
 
+    // 同步設定（使用最新的字體大小）
+    hiddenMeasurer.style('width', inputBox.width + 'px');
+    hiddenMeasurer.style('font-size', inputBox.style('font-size'));
+    hiddenMeasurer.style('font-family', inputBox.style('font-family'));
+    hiddenMeasurer.style('line-height', inputBox.style('line-height'));
+    hiddenMeasurer.style('white-space', 'pre-wrap');
+    hiddenMeasurer.style('word-wrap', 'break-word');
+    hiddenMeasurer.style('text-align', 'left');
+
     hiddenMeasurer.html(content.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;'));
+
+    // 強制瀏覽器重新計算佈局
+    hiddenMeasurer.elt.offsetHeight; // 觸發 reflow
 
     // 測量高度
     let contentHeight = hiddenMeasurer.elt.offsetHeight;
