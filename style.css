@@ -493,6 +493,10 @@ body.inverse-mode .notification {
 }
 
 /* --- 桌面版隱藏手機版元素 --- */
+.mobile-controls-wrapper {
+  display: none;
+}
+
 .mobile-input-save-row {
   display: none;
 }
@@ -506,29 +510,35 @@ body.inverse-mode .notification {
     height: 100vh;
   }
 
-  /* === 重新設計主容器為四行結構 === */
+  /* === 重新設計主容器為兩大區塊 === */
   .main-container {
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
     width: 100vw;
     height: 100vh;
-    padding: 1rem; /* 減少padding避免超出100vh */
-    gap: 0;
+    padding: 4rem 1rem 2rem 1rem; /* 上下左右padding */
+    gap: 3rem; /* logo和下方操作區之間的間距 */
     box-sizing: border-box;
   }
 
-  /* === 第一行：Logo === */
+  /* === 第一大區塊：Logo === */
   .display-area {
     flex-direction: column;
-    justify-content: flex-end; /* 底部對齊，讓Logo靠近控制區 */
+    justify-content: center; /* 垂直置中 */
     align-items: center;
-    height: 32vh; /* 進一步減少Logo區域高度 */
+    flex: 7; /* 沒有輸入文字時占7 */
     width: 100%;
     gap: 0;
     max-width: none;
     max-height: none;
-    padding-bottom: 0.5rem; /* 減少底部padding，讓Logo更貼近 */
+    padding-bottom: 0;
+    transition: flex 0.3s ease; /* 添加過渡效果 */
+  }
+
+  /* Custom展開時，logo占比變成4 */
+  .display-area.expanded {
+    flex: 4; /* 改為占比4 */
   }
 
   #canvas-container {
@@ -536,10 +546,10 @@ body.inverse-mode .notification {
     width: 100%;
     height: 100%;
     max-width: 90vw; /* 限制最大寬度不超出螢幕 */
-    max-height: 18vh; /* 減少初始高度，JS會動態調整 */
-    min-height: 160px; /* 減少最小高度 */
+    max-height: none; /* 移除最大高度限制，讓它自適應 */
+    min-height: 160px;
     flex-shrink: 1; /* 允許縮小以適應螢幕 */
-    transition: max-height 0.3s ease, background-color 1s ease; /* 合併所有transition */
+    transition: background-color 1s ease;
   }
 
   /* === 隱藏桌面版的輸入框 === */
@@ -547,129 +557,206 @@ body.inverse-mode .notification {
     display: none;
   }
 
-  /* === 重新配置UI控制區 === */
+  /* === 隱藏桌面版的 control-panel === */
   .control-panel {
-    flex-direction: column;
-    justify-content: flex-end; /* 改為靠底部對齊，讓控制區更靠近輸入框 */
-    align-items: stretch;
-    flex: 1; /* 自動填滿剩餘空間 */
-    width: 100%;
-    max-width: none;
-    padding: 0;
-    gap: 0;
-    box-sizing: border-box;
+    display: none; /* 手機版隱藏桌面版的 control-panel */
   }
 
-  /* === 第二行：Auto/Custom === */
-  .control-group-stack:first-child {
+  /* === 第二大區塊：手機版操作區域包裝器 === */
+  .mobile-controls-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 3; /* 沒有輸入文字時占3 */
+    width: 100%;
+    gap: 0.8rem; /* 三行之間的間距 */
+    box-sizing: border-box;
+    transition: flex 0.3s ease;
+  }
+
+  /* Custom展開時，操作區域變成6 */
+  .mobile-controls-wrapper.expanded {
+    flex: 6; /* 改為占比6 */
+  }
+
+  /* === 手機版 control-box 樣式 === */
+  .mobile-colormode-box,
+  .mobile-rotation-box {
+    border: 2px solid;
+    border-radius: 18px;
+    padding: 0.8rem;
+    transition: border-color 1s ease;
+    flex: 2; /* 每個區塊占2 */
+  }
+
+  /* 根據模式切換邊框顏色 */
+  body.standard-mode .mobile-colormode-box,
+  body.standard-mode .mobile-rotation-box {
+    border-color: black;
+  }
+  body.inverse-mode .mobile-colormode-box,
+  body.inverse-mode .mobile-rotation-box {
+    border-color: white;
+  }
+
+  /* === 手機版 Standard/Inverse 按鈕排列 === */
+  .mobile-colormode-controls {
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     width: 100%;
     gap: 1rem;
-    padding: 0.5rem 1rem 1rem 1rem; /* 減少頂部padding，讓與logo更貼近 */
+    padding: 0;
     box-sizing: border-box;
-    flex: 0 0 auto; /* 固定高度 */
+    position: relative;
   }
 
-  .control-group-stack:first-child .custom-button {
+  .mobile-colormode-controls .custom-button {
     flex: 1;
     height: 35px;
     font-size: 12px;
     justify-content: center;
+    border-radius: 15px;
   }
 
-  /* === Custom展開區域（動態高度）=== */
-  #custom-angle-controls {
+  /* 手機版：colormode indicator 左右移動 */
+  .mobile-colormode-indicator {
+    position: absolute;
+    width: calc(50% - 0.5rem);
+    height: 35px;
+    border: 2px solid;
+    border-radius: 15px;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 1s ease;
+    z-index: 0;
+  }
+
+  body.standard-mode .mobile-colormode-indicator {
+    border-color: black;
+  }
+  body.inverse-mode .mobile-colormode-indicator {
+    border-color: white;
+  }
+
+  .mobile-colormode-indicator.at-standard {
+    transform: translateX(0);
+  }
+
+  .mobile-colormode-indicator.at-inverse {
+    transform: translateX(calc(50% + 0.5rem));
+  }
+
+  /* === 手機版 Auto/Custom 按鈕排列 === */
+  .mobile-rotation-box .control-group-stack {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
     width: 100%;
-    flex-direction: row; /* 改為左右佈局 */
+    gap: 1rem;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .mobile-rotation-box .control-group-stack .custom-button {
+    flex: 1;
+    height: 35px;
+    font-size: 12px;
+    justify-content: center;
+    border: 2px solid transparent;
+    border-radius: 15px;
+    transition: color 0.2s, border-color 0.3s;
+  }
+
+  /* 手機版：rotation 按鈕的 active 狀態 */
+  body.standard-mode .mobile-rotation-box .custom-button.active {
+    border-color: black;
+  }
+  body.inverse-mode .mobile-rotation-box .custom-button.active {
+    border-color: white;
+  }
+
+  /* === 手機版 Custom 展開區域 === */
+  .mobile-custom-angle-controls {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
     align-items: stretch;
     background: transparent;
-    padding: 1rem; /* 統一所有方向padding為1rem */
+    padding: 1rem 0.5rem 0.5rem 0.5rem;
     box-sizing: border-box;
-    flex: 0 0 auto; /* 動態高度 */
-    gap: 0.8rem;
+    gap: 1rem;
   }
 
-  #custom-angle-controls .sliders-wrapper {
-    flex: 1; /* 佔據左側主要空間 */
-    margin-bottom: 0;
+  .mobile-custom-angle-controls .sliders-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: calc(12px * var(--scale));
   }
 
-  #custom-angle-controls .icon-buttons-wrapper {
-    flex-direction: column; /* 改為上下排列 */
-    justify-content: space-between;
+  .mobile-custom-angle-controls .slider-container {
+    display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 0;
-    width: 40px; /* 進一步縮小寬度 */
+    gap: var(--slider-gap);
+    width: 100%;
+    margin: calc(2px * var(--scale)) 0;
+  }
+
+  .mobile-custom-angle-controls .custom-slider {
+    width: 100%;
+    max-width: none;
+  }
+
+  .mobile-custom-angle-controls .icon-buttons-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.8rem;
+    width: auto;
     flex-shrink: 0;
   }
 
-  #custom-angle-controls .icon-buttons-wrapper .image-button {
-    width: 34px;
-    height: 34px;
-    padding: 4px;
+  .mobile-custom-angle-controls .icon-buttons-wrapper .image-button {
+    width: 44px;
+    height: 44px;
+    padding: 6px;
   }
 
-  #custom-angle-controls .icon-buttons-wrapper .image-button img {
-    width: 26px;
-    height: 26px;
+  .mobile-custom-angle-controls .icon-buttons-wrapper .image-button img {
+    width: 32px;
+    height: 32px;
   }
 
-  /* === 第三行：Standard/Inverse + 分割線 === */
-  #colormode-controls {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    gap: 1rem;
-    padding: 1rem; /* 統一所有方向的padding為1rem */
-    box-sizing: border-box;
-    flex: 0 0 auto; /* 固定高度 */
-  }
-
-  #colormode-controls .custom-button {
-    flex: 1;
-    height: 35px;
-    font-size: 12px;
-    justify-content: center;
-  }
-
-  /* === 隱藏桌面版的Save按鈕 === */
-  #save-controls {
-    display: none;
-  }
-
-  /* === 第四行：輸入框(左) + Save按鈕(右) === */
+  /* === 手機版輸入框區域 === */
   .mobile-input-save-row {
     display: flex;
     flex-direction: row;
-    align-items: center; /* 保持垂直居中對齊 */
+    align-items: stretch;
     justify-content: space-between;
     width: 100%;
-    padding: 1rem; /* 保持所有方向padding為1rem */
+    flex: 2; /* 每個區塊占2 */
+    padding: 0;
     box-sizing: border-box;
-    gap: 1rem;
-    height: 100px; /* 進一步減少高度避免超出螢幕 */
-    flex-shrink: 0; /* 不允許縮小 */
+    gap: 0.8rem;
   }
 
   .mobile-input-container {
     flex: 1;
-    height: 80px; /* 減少固定高度 */
+    height: 100%; /* 填滿父容器高度 */
     position: relative;
   }
 
   .mobile-input-container #input-box-mobile {
     width: 100%;
-    height: 80px; /* 固定高度，不隨內容變化 */
-    max-height: 80px; /* 限制最大高度 */
+    height: 100%; /* 填滿父容器高度 */
+    max-height: none; /* 移除最大高度限制 */
     font-size: 1.6rem;
-    padding: 0.5rem;
-    border: 2px solid var(--disabled-color);
-    border-radius: var(--border-radius);
+    padding: 0.8rem; /* 與其他control-box一致的padding */
+    border: 2px solid; /* 與其他邊框一致 */
+    border-radius: 18px;
     background-color: transparent;
     resize: none;
     overflow-y: auto; /* 內容超出時可滾動 */
@@ -678,6 +765,15 @@ body.inverse-mode .notification {
     font-family: inherit;
     color: inherit;
     box-sizing: border-box;
+    transition: border-color 1s ease; /* 添加過渡效果 */
+  }
+
+  /* 根據模式切換邊框顏色 */
+  body.standard-mode .mobile-input-container #input-box-mobile {
+    border-color: black;
+  }
+  body.inverse-mode .mobile-input-container #input-box-mobile {
+    border-color: white;
   }
 
   .mobile-input-container #input-box-mobile::placeholder {
@@ -695,9 +791,22 @@ body.inverse-mode .notification {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px; /* 保持40px容器尺寸 */
     flex-shrink: 0;
+    width: 70px; /* 設定寬度讓它更寬 */
+    height: 100%; /* 填滿父容器高度 */
+    /* 添加邊框，與其他control-box一致 */
+    border: 2px solid;
+    border-radius: 18px;
+    padding: 0.8rem; /* 與其他control-box一致的padding */
+    transition: border-color 1s ease;
+  }
+
+  /* 根據模式切換邊框顏色 */
+  body.standard-mode .mobile-save-container {
+    border-color: black;
+  }
+  body.inverse-mode .mobile-save-container {
+    border-color: white;
   }
 
   .mobile-save-container #save-button-mobile {
@@ -715,41 +824,5 @@ body.inverse-mode .notification {
     display: block;
   }
 
-  /* === 手機版不顯示分割線 === */
-  .separator {
-    display: none;
-  }
-
-  /* === 手機版的 control-box 樣式 === */
-  .control-box {
-    width: 100%;
-    padding: 0.8rem;
-    margin-bottom: 0.8rem;
-  }
-
-  /* === 調整按鈕尺寸 === */
-  .custom-button-standard,
-  .custom-button-inverse,
-  .custom-button-rotate,
-  .custom-button-custom {
-    font-size: 0.9rem;
-    justify-content: center;
-  }
-
-  /* === 滑桿標籤調整 === */
-  .slider-container {
-    gap: 10px;
-    margin: 2px 0;
-  }
-
-  .slider-container label {
-    font-size: 0.85rem;
-    min-width: 20px;
-  }
-
-  /* === 手機版滑桿寬度調整 === */
-  #custom-angle-controls .custom-slider {
-    width: 100%;
-    max-width: none;
-  }
+  /* 手機版不需要額外的樣式，因為不顯示 control-panel */
 }
