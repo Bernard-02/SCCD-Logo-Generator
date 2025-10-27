@@ -227,27 +227,7 @@ function setup() {
   // --- 選取下載提示框 ---
   downloadNotification = select("#download-notification");
 
-  // --- 重新對齊 hidden-measurer 的設定，參考 ref.js:82-86 ---
-  hiddenMeasurer.style('font-family', inputBox.style('font-family'));
-  hiddenMeasurer.style('font-size', inputBox.style('font-size'));
-  hiddenMeasurer.style('white-space', 'pre-wrap');
-  hiddenMeasurer.style('word-wrap', 'break-word');
-  hiddenMeasurer.style('visibility', 'hidden');
-  hiddenMeasurer.style('position', 'absolute');
-  hiddenMeasurer.style('top', '-9999px');
-  hiddenMeasurer.style('left', '-9999px');
-
-  // --- 設定手機版隱藏測量器 ---
-  if (hiddenMeasurerMobile) {
-    hiddenMeasurerMobile.style('font-family', inputBox.style('font-family'));
-    hiddenMeasurerMobile.style('font-size', inputBox.style('font-size'));
-    hiddenMeasurerMobile.style('white-space', 'pre-wrap');
-    hiddenMeasurerMobile.style('word-wrap', 'break-word');
-    hiddenMeasurerMobile.style('visibility', 'hidden');
-    hiddenMeasurerMobile.style('position', 'absolute');
-    hiddenMeasurerMobile.style('top', '-9999px');
-    hiddenMeasurerMobile.style('left', '-9999px');
-  }
+  // 注意：hiddenMeasurer 變數保留但不再使用（未來可能移除）
 
   // --- 綁定所有 UI 事件 ---
   inputBox.input(handleInput);
@@ -580,11 +560,6 @@ function setup() {
   // 初始 UI 狀態設定
   updateUI();
 
-  // 初始化輸入框的垂直對齊（桌面版）
-  if (!isMobileMode) {
-    adjustInputFontSize();
-  }
-
   // 初始化指示器位置
   if (colormodeIndicator) {
     colormodeIndicator.addClass('at-standard'); // 預設在 Standard 位置
@@ -840,6 +815,7 @@ function getCurrentHiddenMeasurer() {
 // --- 同步兩個輸入框的內容 ---
 function syncInputBoxes(sourceValue) {
     if (inputBox && inputBoxMobile) {
+        // 桌面版和手機版都是 textarea
         inputBox.value(sourceValue);
         inputBoxMobile.value(sourceValue);
     }
@@ -849,20 +825,45 @@ function syncInputBoxes(sourceValue) {
 function handleInput(event) {
     // 確定是哪個輸入框觸發了事件
     let sourceInputBox = event ? event.target : getCurrentInputBox().elt;
+
+    // textarea 使用 value
     let currentInput = sourceInputBox.value;
-    
+
     // 獲取輸入框的內容，轉換為大寫，並移除所有非字母字元（保留空格和換行以便後續處理）
     let rawInput = currentInput.toUpperCase();
-    let validInput = rawInput.replace(/[^A-Z \n]/g, ""); 
+    let validInput = rawInput.replace(/[^A-Z \n]/g, "");
+
+    // 移除開頭的所有空白字元（空格和換行）
+    validInput = validInput.replace(/^[\s\n]+/, '');
+
+    // 合併多個連續空格為單個空格
     validInput = validInput.replace(/ {2,}/g, ' ');
     let lines = validInput.split("\n");
     if (lines.length > 3) {
       validInput = lines.slice(0, 3).join("\n");
     }
-  
+
+    // 限制最大字元數為 40（計算純字母，不含空格換行）
+    let pureLetters = validInput.replace(/[\s\n]/g, "");
+    if (pureLetters.length > 40) {
+        // 超過 40 字，需要截斷
+        // 重新組裝，保留空格和換行，但只取前 40 個字母
+        let letterCount = 0;
+        let result = '';
+        for (let char of validInput) {
+            if (char === ' ' || char === '\n') {
+                result += char; // 保留空格和換行
+            } else if (letterCount < 40) {
+                result += char;
+                letterCount++;
+            }
+        }
+        validInput = result;
+    }
+
     // 同步更新兩個輸入框
     syncInputBoxes(validInput);
-    
+
     // 彩蛋邏輯
     let previousEasterEggState = isEasterEggActive;
     let normalizedInput = validInput.toUpperCase().replace(/[\s\n]/g, "");
@@ -1187,11 +1188,12 @@ function adjustInputFontSize() {
     // 在手機模式下，字體大小由CSS控制，不需要動態調整
     if (isMobileMode) return;
 
+    let targetFontSize;
+
     if (!isEasterEggActive) {
         // 計算字元數（移除空格和換行）
         let charCount = letters.length;
 
-        let targetFontSize;
         // 根據字元數決定字體大小
         if (charCount === 0) {
             targetFontSize = largeFontSize; // 空白時使用大字體
@@ -1204,123 +1206,75 @@ function adjustInputFontSize() {
         }
 
         // 更新字體大小
-        let currentFontSize = inputBox.style('font-size');
-        if (currentFontSize !== targetFontSize) {
-            inputBox.style("font-size", targetFontSize);
-            // 字體大小改變時，強制在下一幀重新計算 padding
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    adjustVerticalPadding();
-                });
-            });
-        } else {
-            // 字體沒變，但內容可能變了，仍需調整 padding
-            adjustVerticalPadding();
-        }
+        inputBox.style("font-size", targetFontSize);
     } else {
         // 彩蛋模式使用中字體
-        if (inputBox.style('font-size') !== mediumFontSize) {
-            inputBox.style("font-size", mediumFontSize);
-        }
-        adjustVerticalPadding();
+        targetFontSize = mediumFontSize;
+        inputBox.style("font-size", targetFontSize);
     }
+
+    // 等待 CSS transition 完成後再測量（font-size transition 是 0.2s = 200ms）
+    // 加上一點緩衝時間確保渲染完成
+    setTimeout(() => {
+        adjustTextareaHeight(targetFontSize);
+    }, 220);
 }
 
-// --- 新增：調整輸入框垂直置中的函數 ---
-function adjustVerticalPadding() {
+// --- 精確的垂直置中函數（使用隱藏 div 測量）---
+function adjustTextareaHeight(fontSize) {
     if (isMobileMode || !inputBox) return;
 
-    // 使用 hiddenMeasurer 來測量文字實際高度
-    if (!hiddenMeasurer) return;
-
-    // 設定內容
+    // 獲取當前內容
     let content = inputBox.value();
-    if (content.length === 0) {
-        // 空白時不需要 padding
+
+    // 如果沒有內容，padding-top 設為 0
+    if (!content || content.length === 0) {
         inputBox.style('padding-top', '0px');
         return;
     }
 
-    // 同步設定（使用最新的字體大小）
-    hiddenMeasurer.style('width', inputBox.width + 'px');
-    hiddenMeasurer.style('font-size', inputBox.style('font-size'));
-    hiddenMeasurer.style('font-family', inputBox.style('font-family'));
-    hiddenMeasurer.style('line-height', inputBox.style('line-height'));
-    hiddenMeasurer.style('white-space', 'pre-wrap');
-    hiddenMeasurer.style('word-wrap', 'break-word');
-    hiddenMeasurer.style('text-align', 'left');
-    hiddenMeasurer.style('padding', '0');
-    hiddenMeasurer.style('margin', '0');
-    hiddenMeasurer.style('border', 'none');
-    hiddenMeasurer.style('box-sizing', 'border-box');
+    // 如果沒有傳入 fontSize，從 inputBox 讀取
+    if (!fontSize) {
+        fontSize = inputBox.style('font-size');
+    }
 
-    hiddenMeasurer.html(content.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;'));
+    // 創建臨時測量 div
+    let measurer = createDiv('');
+    measurer.style('position', 'absolute');
+    measurer.style('visibility', 'hidden');
+    measurer.style('top', '-9999px');
+    measurer.style('left', '-9999px');
+    measurer.style('width', (inputBox.width - 20) + 'px'); // 減去左右 padding
+    measurer.style('font-family', inputBox.style('font-family'));
+    measurer.style('font-size', fontSize); // 使用傳入的字體大小
+    measurer.style('line-height', inputBox.style('line-height'));
+    measurer.style('white-space', 'pre-wrap');
+    measurer.style('word-wrap', 'break-word');
+    measurer.style('padding', '0');
+    measurer.style('margin', '0');
+    measurer.style('border', 'none');
+    measurer.style('box-sizing', 'border-box');
+
+    // 設定內容（轉換換行為 <br>）
+    measurer.html(content.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;'));
 
     // 強制瀏覽器重新計算佈局
-    hiddenMeasurer.elt.offsetHeight; // 觸發 reflow
+    measurer.elt.offsetHeight; // 觸發 reflow
 
     // 測量高度
-    let contentHeight = hiddenMeasurer.elt.offsetHeight;
-    let containerHeight = 400; // inputBox 的高度
+    let contentHeight = measurer.elt.offsetHeight;
+    let containerHeight = 400;
 
-    // 計算需要的 padding-top 讓文字垂直置中
+    // 計算 padding-top
     let paddingTop = Math.max(0, (containerHeight - contentHeight) / 2);
 
+    // 設定 padding
     inputBox.style('padding-top', paddingTop + 'px');
 
-    // Debug log（如果需要診斷，可以取消註解）
-    // console.log('Content:', content.substring(0, 20), 'Font:', inputBox.style('font-size'), 'Height:', contentHeight, 'Padding:', paddingTop);
+    // 移除測量 div
+    measurer.remove();
 }
 
-// --- 新增：計算實際行數的函數 ---
-function getActualLineCount(text) {
-    if (!text || text.length === 0) return 0;
-    
-    // 計算手動換行數量
-    let manualLineBreaks = (text.match(/\n/g) || []).length;
-    
-    // 建立臨時測量元素來計算自動換行
-    let tempMeasurer = createDiv('');
-    tempMeasurer.style('font-family', inputBox.style('font-family'));
-    tempMeasurer.style('font-size', inputBox.style('font-size'));
-    tempMeasurer.style('width', inputBox.width + 'px');
-    tempMeasurer.style('white-space', 'pre-wrap');
-    tempMeasurer.style('word-wrap', 'break-word');
-    tempMeasurer.style('visibility', 'hidden');
-    tempMeasurer.style('position', 'absolute');
-    tempMeasurer.style('top', '-9999px');
-    tempMeasurer.style('left', '-9999px');
-    tempMeasurer.style('padding', '0');
-    tempMeasurer.style('margin', '0');
-    tempMeasurer.style('border', 'none');
-    tempMeasurer.style('line-height', '1.2');
-    
-    // 設定測試內容
-    tempMeasurer.html(text.replace(/\n/g, '<br>'));
-    
-    // 測量單行高度
-    let singleLineDiv = createDiv('A');
-    singleLineDiv.style('font-family', inputBox.style('font-family'));
-    singleLineDiv.style('font-size', inputBox.style('font-size'));
-    singleLineDiv.style('visibility', 'hidden');
-    singleLineDiv.style('position', 'absolute');
-    singleLineDiv.style('top', '-9999px');
-    singleLineDiv.style('left', '-9999px');
-    singleLineDiv.style('white-space', 'nowrap');
-    singleLineDiv.style('line-height', '1.2');
-    
-    let singleLineHeight = singleLineDiv.elt.offsetHeight;
-    let totalHeight = tempMeasurer.elt.offsetHeight;
-    
-    // 計算實際行數
-    let calculatedLines = Math.round(totalHeight / singleLineHeight);
-    
-    // 清理臨時元素
-    tempMeasurer.remove();
-    singleLineDiv.remove();
-    
-    return calculatedLines;
-}
 
 // --- 新增：角度正規化函數（將角度正規化到 -180° 到 180° 之間）---
 function normalizeAngle(angle) {
@@ -1605,11 +1559,12 @@ function updateUI() {
 
     // 更新手機版 Custom 控制面板
     const customControlsEnabled = hasText && !isAutoRotateMode;
+
     if (mobileCustomAngleControls) {
         if (customControlsEnabled) {
-            mobileCustomAngleControls.style('display', 'flex');
+            mobileCustomAngleControls.removeClass('hidden');
         } else {
-            mobileCustomAngleControls.style('display', 'none');
+            mobileCustomAngleControls.addClass('hidden');
         }
     }
 
@@ -1706,14 +1661,16 @@ function windowResized() {
     setTimeout(() => {
         // 更新響應式模式檢測
         checkMobileMode();
-        
+
         // 根據新的模式重新計算並調整Canvas尺寸
         let canvasSize = getCanvasSize();
         resizeCanvas(canvasSize.width, canvasSize.height);
-        
-        // 調整字體大小（僅桌面版）
-        adjustInputFontSize();
-        
+
+        // 調整字體大小和輸入框高度（僅桌面版）
+        if (!isMobileMode) {
+            adjustInputFontSize(); // 這個函數內部會調用 adjustTextareaHeight()
+        }
+
         // 更新UI以反映可能的模式變化
         updateUI();
     }, 50); // 50ms延遲，讓CSS媒體查詢先生效
