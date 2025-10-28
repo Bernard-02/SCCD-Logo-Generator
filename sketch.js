@@ -3,7 +3,6 @@ let letters = [];
 let font;
 let inputBox;
 let canvasContainer;
-let hiddenMeasurer; // 新增：用於測量文字的隱藏 div
 let showCircle = false;
 let circleAlpha = 0;
 let circleShrinking = false;
@@ -53,7 +52,7 @@ let disabledColor = '#E0E0E0'; // 定義一個禁用顏色
 let colormodeIndicator; // 滑動邊框指示器
 
 // --- 響應式元素 ---
-let inputBoxMobile, hiddenMeasurerMobile;
+let inputBoxMobile;
 let saveButtonMobile, saveImgMobile;
 let isMobileMode = false;
 
@@ -170,7 +169,6 @@ function setup() {
 
   // --- 修正：使用 Class 選擇器來選取所有 UI 元素 ---
   inputBox = select("#input-box");
-  hiddenMeasurer = select("#hidden-measurer");
 
   rotateButton = select(".custom-button-rotate");
   customButton = select(".custom-button-custom");
@@ -199,7 +197,6 @@ function setup() {
 
   // --- 選取手機版元素 ---
   inputBoxMobile = select("#input-box-mobile");
-  hiddenMeasurerMobile = select("#hidden-measurer-mobile");
   saveButtonMobile = select("#save-button-mobile");
   saveImgMobile = select("#save-img-mobile");
 
@@ -226,8 +223,6 @@ function setup() {
 
   // --- 選取下載提示框 ---
   downloadNotification = select("#download-notification");
-
-  // 注意：hiddenMeasurer 變數保留但不再使用（未來可能移除）
 
   // --- 綁定所有 UI 事件 ---
   inputBox.input(handleInput);
@@ -570,11 +565,7 @@ function setup() {
 
   // 初始化頁面載入動畫
   pageLoadStartTime = millis();
-  // 初始隱藏所有元素
-  if (inputBox) inputBox.style('opacity', '0');
-  if (inputBoxMobile) inputBoxMobile.style('opacity', '0');
-  let controlPanel = select('.control-panel');
-  if (controlPanel) controlPanel.style('opacity', '0');
+  // CSS 已經將所有元素預設為 opacity: 0，這裡不需要重複設定
   // placeholder 的 opacity 由 logoOpacity 變數控制，在 draw() 中處理
 
   // --- 禁用 Canvas 容器的右鍵菜單，防止直接下載 ---
@@ -653,8 +644,17 @@ function draw() {
   // 應用透明度到 DOM 元素
   if (inputBox) inputBox.style('opacity', inputBoxOpacity.toString());
   if (inputBoxMobile) inputBoxMobile.style('opacity', inputBoxOpacity.toString());
+  // 桌面版：輸入框容器跟隨輸入框透明度
+  let inputContainer = select('.input-container');
+  if (inputContainer) inputContainer.style('opacity', inputBoxOpacity.toString());
+  // Canvas 容器跟隨 logo 透明度
+  if (canvasContainer) canvasContainer.style('opacity', logoOpacity.toString());
+  // 控制面板
   let controlPanel = select('.control-panel');
   if (controlPanel) controlPanel.style('opacity', controlPanelOpacity.toString());
+  // 手機版：操作區域跟隨控制面板透明度
+  let mobileControlsWrapper = select('.mobile-controls-wrapper');
+  if (mobileControlsWrapper) mobileControlsWrapper.style('opacity', controlPanelOpacity.toString());
 
   // --- 打字機動畫更新 ---
   if (typewriterActive) {
@@ -806,10 +806,6 @@ function draw() {
 // --- 獲取當前活動的輸入框 ---
 function getCurrentInputBox() {
     return isMobileMode ? inputBoxMobile : inputBox;
-}
-
-function getCurrentHiddenMeasurer() {
-    return isMobileMode ? hiddenMeasurerMobile : hiddenMeasurer;
 }
 
 // --- 同步兩個輸入框的內容 ---
@@ -1220,7 +1216,7 @@ function adjustInputFontSize() {
     }, 220);
 }
 
-// --- 精確的垂直置中函數（使用隱藏 div 測量）---
+// --- 精確的垂直置中函數（使用 Canvas 測量實際文字渲染高度）---
 function adjustTextareaHeight(fontSize) {
     if (isMobileMode || !inputBox) return;
 
@@ -1238,41 +1234,89 @@ function adjustTextareaHeight(fontSize) {
         fontSize = inputBox.style('font-size');
     }
 
-    // 創建臨時測量 div
-    let measurer = createDiv('');
-    measurer.style('position', 'absolute');
-    measurer.style('visibility', 'hidden');
-    measurer.style('top', '-9999px');
-    measurer.style('left', '-9999px');
-    measurer.style('width', (inputBox.width - 20) + 'px'); // 減去左右 padding
-    measurer.style('font-family', inputBox.style('font-family'));
-    measurer.style('font-size', fontSize); // 使用傳入的字體大小
-    measurer.style('line-height', inputBox.style('line-height'));
-    measurer.style('white-space', 'pre-wrap');
-    measurer.style('word-wrap', 'break-word');
-    measurer.style('padding', '0');
-    measurer.style('margin', '0');
-    measurer.style('border', 'none');
-    measurer.style('box-sizing', 'border-box');
+    // 使用 Canvas 來精確測量文字高度（不受 textarea 游標影響）
+    let canvas = document.createElement('canvas');
+    let ctx = canvas.getContext('2d');
 
-    // 設定內容（轉換換行為 <br>）
-    measurer.html(content.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;'));
+    // 設定與 textarea 相同的字體樣式
+    let fontSizeNum = parseFloat(fontSize);
 
-    // 強制瀏覽器重新計算佈局
-    measurer.elt.offsetHeight; // 觸發 reflow
+    // 讀取 line-height（可能是純數字或帶單位的字串）
+    let lineHeightValue = window.getComputedStyle(inputBox.elt).lineHeight;
+    let lineHeight;
+    if (lineHeightValue === 'normal') {
+        lineHeight = 1.1; // 預設值
+    } else if (lineHeightValue.includes('px')) {
+        // 如果是 px 單位，轉換為相對於 fontSize 的倍數
+        lineHeight = parseFloat(lineHeightValue) / fontSizeNum;
+    } else {
+        // 純數字
+        lineHeight = parseFloat(lineHeightValue);
+    }
 
-    // 測量高度
-    let contentHeight = measurer.elt.offsetHeight;
+    ctx.font = `${fontSize} ${inputBox.style('font-family')}`;
+
+    // 取得 textarea 的實際寬度（textarea 沒有設定 padding，直接使用完整寬度）
+    let textareaWidth = inputBox.elt.clientWidth;
+
+    // 將文字按換行符分割
+    let lines = content.split('\n');
+    let totalLines = 0;
+
+    // 對每一行進行寬度測量，計算實際需要多少行
+    for (let line of lines) {
+        if (line.length === 0) {
+            // 空行也算一行
+            totalLines += 1;
+        } else {
+            // 測量這一行的文字寬度
+            let lineWidth = ctx.measureText(line).width;
+
+            // 如果超過容器寬度，需要計算會自動換成幾行
+            if (lineWidth > textareaWidth) {
+                // 逐字測量，找出每行能放多少字
+                let currentLineWidth = 0;
+                let currentLineCount = 1;
+
+                for (let i = 0; i < line.length; i++) {
+                    let charWidth = ctx.measureText(line[i]).width;
+                    currentLineWidth += charWidth;
+
+                    if (currentLineWidth > textareaWidth) {
+                        // 超出寬度，換行
+                        currentLineCount++;
+                        currentLineWidth = charWidth;
+                    }
+                }
+
+                totalLines += currentLineCount;
+            } else {
+                // 不需要自動換行
+                totalLines += 1;
+            }
+        }
+    }
+
+    // 計算總高度（行數 * 行高）
+    let contentHeight = totalLines * (fontSizeNum * lineHeight);
     let containerHeight = 400;
 
-    // 計算 padding-top
+    // 計算 padding-top（垂直置中）
     let paddingTop = Math.max(0, (containerHeight - contentHeight) / 2);
+
+    // 調試輸出
+    console.log('=== adjustTextareaHeight Debug ===');
+    console.log('content:', JSON.stringify(content));
+    console.log('fontSize:', fontSize, '=> num:', fontSizeNum);
+    console.log('lineHeight:', lineHeightValue, '=> computed:', lineHeight);
+    console.log('textareaWidth:', textareaWidth);
+    console.log('totalLines:', totalLines);
+    console.log('contentHeight:', contentHeight, '= totalLines *', fontSizeNum, '*', lineHeight);
+    console.log('containerHeight:', containerHeight);
+    console.log('paddingTop:', paddingTop);
 
     // 設定 padding
     inputBox.style('padding-top', paddingTop + 'px');
-
-    // 移除測量 div
-    measurer.remove();
 }
 
 
