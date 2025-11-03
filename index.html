@@ -24,54 +24,65 @@
         <!-- 桌面版：下方控制面板區域 -->
         <section class="control-panel">
 
-                <!-- 第一組：顏色模式 -->
+                <!-- 第一組：顏色模式 (單個循環按鈕) -->
                 <div class="control-box" id="colormode-box">
-                    <div class="control-group-stack" id="colormode-controls">
-                        <div class="button-indicator" id="colormode-indicator"></div>
-                        <button class="custom-button custom-button-standard">Standard 標準版</button>
-                        <button class="custom-button custom-button-inverse">Inverse 反色版</button>
-                    </div>
+                    <button class="custom-button custom-button-colormode" id="colormode-button">
+                        <img id="colormode-icon" src="Panel Icon/Standard.svg" alt="Color Mode">
+                    </button>
+                </div>
+
+                <!-- 色彩選擇器 (用於 Wireframe 模式) -->
+                <div class="control-box" id="colorpicker-box">
+                    <div id="colorpicker-container"></div>
                 </div>
 
                 <!-- 第二組：旋轉模式（包含 Auto/Custom 和展開控制） -->
                 <div class="control-box" id="rotation-box">
-                    <div class="control-group-stack">
-                        <button class="custom-button custom-button-rotate">Automatic 自動旋轉</button>
-                        <button class="custom-button custom-button-custom">Custom 自訂角度</button>
+                    <!-- Custom 區域包裝容器 -->
+                    <div class="custom-area-wrapper" id="custom-area-wrapper">
+                        <!-- Custom 按鈕 -->
+                        <button class="custom-button custom-button-custom">
+                            <img id="custom-icon" src="Panel Icon/Custom.svg" alt="Custom">
+                        </button>
+
+                        <!-- 自訂角度控制 (由 JS 控制顯隱) -->
+                        <div class="control-group" id="custom-angle-controls">
+                            <div class="sliders-wrapper">
+                                <div class="slider-container">
+                                    <input type="range" id="r-slider" class="custom-slider" min="-360" max="360" value="0">
+                                    <input type="text" id="r-angle-label" class="angle-input" value="0">
+                                </div>
+                                <div class="slider-container">
+                                    <input type="range" id="g-slider" class="custom-slider" min="-360" max="360" value="0">
+                                    <input type="text" id="g-angle-label" class="angle-input" value="0">
+                                </div>
+                                <div class="slider-container">
+                                    <input type="range" id="b-slider" class="custom-slider" min="-360" max="360" value="0">
+                                    <input type="text" id="b-angle-label" class="angle-input" value="0">
+                                </div>
+                            </div>
+                            <div class="icon-buttons-wrapper">
+                                <button id="random-button" class="image-button">
+                                    <img id="random-img" src="Panel Icon/Random.svg" alt="Random Icon">
+                                </button>
+                                <button id="reset-button" class="image-button">
+                                    <img id="reset-img" src="Panel Icon/Reset.svg" alt="Reset Icon">
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- 自訂角度控制 (由 JS 控制顯隱) -->
-                    <div class="control-group" id="custom-angle-controls">
-                        <div class="sliders-wrapper">
-                            <div class="slider-container">
-                                <input type="range" id="r-slider" class="custom-slider" min="-360" max="360" value="0">
-                                <label id="r-angle-label" for="r-slider">0</label>
-                            </div>
-                            <div class="slider-container">
-                                <input type="range" id="g-slider" class="custom-slider" min="-360" max="360" value="0">
-                                <label id="g-angle-label" for="g-slider">0</label>
-                            </div>
-                            <div class="slider-container">
-                                <input type="range" id="b-slider" class="custom-slider" min="-360" max="360" value="0">
-                                <label id="b-angle-label" for="b-slider">0</label>
-                            </div>
-                        </div>
-                        <div class="icon-buttons-wrapper">
-                            <button id="random-button" class="image-button">
-                                <img id="random-img" src="random_gray.svg" alt="Random Icon">
-                            </button>
-                            <button id="reset-button" class="image-button">
-                                <img id="reset-img" src="reset_gray.svg" alt="Reset Icon">
-                            </button>
-                        </div>
-                    </div>
+                    <!-- Auto 按鈕 -->
+                    <button class="custom-button custom-button-rotate">
+                        <img id="rotate-icon" src="Panel Icon/Rotate.svg" alt="Auto Rotate">
+                    </button>
                 </div>
 
                 <!-- 第三組：儲存 -->
                 <div class="control-box" id="save-box">
                     <div class="control-group-save" id="save-controls">
                          <button id="save-button" class="image-button">
-                            <img id="save-img" src="save_gray.svg" alt="Save Icon">
+                            <img id="save-img" src="Panel Icon/Download.svg" alt="Save Icon">
                         </button>
                     </div>
                 </div>
@@ -84,16 +95,24 @@
             <div class="control-box mobile-colormode-box">
                 <div class="control-group-stack mobile-colormode-controls">
                     <div class="button-indicator mobile-colormode-indicator"></div>
-                    <button class="custom-button custom-button-standard mobile-standard">Standard 標準版</button>
-                    <button class="custom-button custom-button-inverse mobile-inverse">Inverse 反色版</button>
+                    <button class="custom-button custom-button-standard mobile-standard">
+                        <img id="mobile-standard-icon" src="Panel Icon/Standard.svg" alt="Standard">
+                    </button>
+                    <button class="custom-button custom-button-inverse mobile-inverse">
+                        <img id="mobile-inverse-icon" src="Panel Icon/Inverse.svg" alt="Inverse">
+                    </button>
                 </div>
             </div>
 
             <!-- 第二行：Auto/Custom -->
             <div class="control-box mobile-rotation-box">
                 <div class="control-group-stack">
-                    <button class="custom-button custom-button-rotate mobile-rotate">Automatic 自動旋轉</button>
-                    <button class="custom-button custom-button-custom mobile-custom">Custom 自訂角度</button>
+                    <button class="custom-button custom-button-rotate mobile-rotate">
+                        <img id="mobile-rotate-icon" src="Panel Icon/Rotate.svg" alt="Auto Rotate">
+                    </button>
+                    <button class="custom-button custom-button-custom mobile-custom">
+                        <img id="mobile-custom-icon" src="Panel Icon/Custom.svg" alt="Custom">
+                    </button>
                 </div>
 
                 <!-- 自訂角度控制 (由 JS 控制顯隱) -->
@@ -101,23 +120,23 @@
                     <div class="sliders-wrapper">
                         <div class="slider-container">
                             <input type="range" class="custom-slider mobile-r-slider" min="-360" max="360" value="0">
-                            <label class="mobile-r-angle-label" for="mobile-r-slider">0</label>
+                            <input type="text" class="mobile-r-angle-label angle-input" value="0">
                         </div>
                         <div class="slider-container">
                             <input type="range" class="custom-slider mobile-g-slider" min="-360" max="360" value="0">
-                            <label class="mobile-g-angle-label" for="mobile-g-slider">0</label>
+                            <input type="text" class="mobile-g-angle-label angle-input" value="0">
                         </div>
                         <div class="slider-container">
                             <input type="range" class="custom-slider mobile-b-slider" min="-360" max="360" value="0">
-                            <label class="mobile-b-angle-label" for="mobile-b-slider">0</label>
+                            <input type="text" class="mobile-b-angle-label angle-input" value="0">
                         </div>
                     </div>
                     <div class="icon-buttons-wrapper">
                         <button class="image-button mobile-random-button">
-                            <img class="mobile-random-img" src="random_gray.svg" alt="Random Icon">
+                            <img class="mobile-random-img" src="Panel Icon/Random.svg" alt="Random Icon">
                         </button>
                         <button class="image-button mobile-reset-button">
-                            <img class="mobile-reset-img" src="reset_gray.svg" alt="Reset Icon">
+                            <img class="mobile-reset-img" src="Panel Icon/Reset.svg" alt="Reset Icon">
                         </button>
                     </div>
                 </div>
@@ -131,7 +150,7 @@
                 </div>
                 <div class="mobile-save-container">
                     <button id="save-button-mobile" class="image-button">
-                        <img id="save-img-mobile" src="save_gray.svg" alt="Save Icon">
+                        <img id="save-img-mobile" src="Panel Icon/Download.svg" alt="Save Icon">
                     </button>
                 </div>
             </div>
@@ -144,8 +163,15 @@
         <span>Generating 生成中</span>
     </div>
 
-    <!-- 依序載入 p5.js 函式庫和你的程式碼 -->
+    <!-- 依序載入 p5.js 函式庫和模塊化程式碼 -->
     <script src="p5.min.js"></script>
+
+    <!-- 模塊化 JavaScript 文件 (按照依賴順序載入) -->
+    <script src="js/variables.js"></script>
+    <script src="js/utils.js"></script>
+
+    <!-- 主程式 (已移除重複定義的變數和函數) -->
+    <!-- 色彩選擇器邏輯已整合至 sketch.js -->
     <script src="sketch.js"></script>
 </body>
 </html>
