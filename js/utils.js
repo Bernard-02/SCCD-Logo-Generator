@@ -2,10 +2,9 @@
 // 工具函數模塊
 // ====================================
 
-// 獲取禁用顏色（根據模式動態改變）
+// 獲取禁用顏色（統一使用黑色25%不透明度）
 function getDisabledColor() {
-  const isInverseMode = mode === "Inverse";
-  return isInverseMode ? '#606060' : '#D2D2D2'; // Inverse: 深灰色, Standard: 淺灰色
+  return 'rgba(0, 0, 0, 0.25)'; // 黑色25%不透明度
 }
 
 // 檢測手機模式
@@ -52,40 +51,51 @@ function getCanvasSize() {
 
 // 更新旋轉圖標（根據當前狀態）
 function updateRotateIcon() {
+  // 防禦性檢查：確保必要的變數已定義
+  if (typeof letters === 'undefined' || typeof mode === 'undefined') {
+    return;
+  }
+
   const hasText = letters.length > 0;
   const isInverseMode = mode === "Inverse";
   const isWireframeMode = mode === "Wireframe";
 
-  // 在 Wireframe 模式下，根據背景色決定使用黑色或白色 icon
+  // 決定 icon 後綴（黑色或白色版本）
+  // 統一使用當前模式的顏色，透過 CSS opacity 控制 disabled 狀態
   let suffix = "";
-  let disableSuffix = "";
 
   if (isWireframeMode) {
     // 根據 wireframeStrokeColor 判斷是使用黑色還是白色 icon
     const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
     suffix = isWhiteIcon ? "_Inverse" : "";
-    // Wireframe 模式下 disabled icon 也跟隨邊框顏色（白色邊框用白色 icon，黑色邊框用黑色 icon）
-    disableSuffix = isWhiteIcon ? "_Inverse" : "";
   } else {
     suffix = isInverseMode ? "_Inverse" : "";
-    disableSuffix = isInverseMode ? "_Disable_Inverse" : "_Disable_Standard";
   }
 
   let iconSrc = '';
   let isPlayIcon = false;
 
+  // 統一使用當前模式的 icon，CSS 會根據 disabled 狀態調整 opacity
+  // 確保 isAutoRotateMode 有定義
+  const autoRotateMode = (typeof isAutoRotateMode !== 'undefined') ? isAutoRotateMode : false;
+  const isRotating = (typeof autoRotate !== 'undefined') ? autoRotate : false;
+
   if (!hasText) {
-    iconSrc = `Panel Icon/Rotate${disableSuffix}.svg`;
-  } else if (isAutoRotateMode) {
-    if (autoRotate) {
+    // 沒有文字時：顯示 Rotate icon（disabled 狀態）
+    iconSrc = `Panel Icon/Rotate${suffix}.svg`;
+  } else if (autoRotateMode) {
+    // 有文字且在 Auto Rotate 模式
+    if (isRotating) {
+      // 正在自動旋轉：顯示 Pause icon
       iconSrc = `Panel Icon/Pause${suffix}.svg`;
     } else {
+      // Auto 模式但暫停：顯示 Play icon
       iconSrc = `Panel Icon/Play${suffix}.svg`;
       isPlayIcon = true;
     }
   } else {
-    // Custom 模式下，Rotate 按鈕使用 disabled 版本的 icon
-    iconSrc = `Panel Icon/Rotate${disableSuffix}.svg`;
+    // 有文字且在 Custom 模式：顯示 Rotate icon（disabled 狀態）
+    iconSrc = `Panel Icon/Rotate${suffix}.svg`;
   }
 
   if (rotateIcon) {
@@ -121,19 +131,18 @@ function updateIconsForMode() {
   const isInverseMode = mode === "Inverse";
   const isWireframeMode = mode === "Wireframe";
 
-  // 在 Wireframe 模式下，根據背景色決定使用黑色或白色 icon
+  // 決定 icon 後綴（黑色或白色版本）
+  // 所有 icon 統一使用當前模式的顏色，透過 CSS opacity 控制 disabled 狀態
   let suffix = "";
-  let disableSuffix = "";
 
   if (isWireframeMode) {
     // 根據 wireframeStrokeColor 判斷是使用黑色還是白色 icon
     const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
     suffix = isWhiteIcon ? "_Inverse" : "";
-    // Wireframe 模式下 disabled icon 也跟隨邊框顏色（白色邊框用白色 icon，黑色邊框用黑色 icon）
-    disableSuffix = isWhiteIcon ? "_Inverse" : "";
   } else {
+    // Standard 模式：使用黑色 icon（無後綴）
+    // Inverse 模式：使用白色 icon（_Inverse 後綴）
     suffix = isInverseMode ? "_Inverse" : "";
-    disableSuffix = isInverseMode ? "_Disable_Inverse" : "_Disable_Standard";
   }
 
   // Colormode 圖標
@@ -155,20 +164,13 @@ function updateIconsForMode() {
     }
   }
 
-  // Custom 圖標
-  let customIconSrc;
-  if (!hasText) {
-    customIconSrc = `Panel Icon/Custom${disableSuffix}.svg`;
-  } else if (isAutoRotateMode) {
-    customIconSrc = `Panel Icon/Custom${disableSuffix}.svg`;
-  } else {
-    customIconSrc = `Panel Icon/Custom${suffix}.svg`;
-  }
+  // Custom 圖標 - 統一使用當前模式的 icon，CSS 會根據 disabled 狀態調整 opacity
+  const customIconSrc = `Panel Icon/Custom${suffix}.svg`;
 
-  // Download 圖標
-  const downloadIconSrc = hasText ? `Panel Icon/Download${suffix}.svg` : `Panel Icon/Download${disableSuffix}.svg`;
+  // Download 圖標 - 統一使用當前模式的 icon，CSS 會根據 disabled 狀態調整 opacity
+  const downloadIconSrc = `Panel Icon/Download${suffix}.svg`;
 
-  // Random 和 Reset 圖標
+  // Random 和 Reset 圖標 - 統一使用當前模式的 icon
   const randomIconSrc = `Panel Icon/Random${suffix}.svg`;
   const resetIconSrc = `Panel Icon/Reset${suffix}.svg`;
 

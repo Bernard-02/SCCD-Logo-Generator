@@ -21,14 +21,48 @@ function preload() {
   placeholderB_white = loadImage('Placeholder Logo/SCCD_B_white.svg');
 }
 
+// --- 計算去飽和顏色（將 Saturation 設為 0）---
+function calculateDesaturatedColor(r, g, b) {
+  // 將 RGB 轉換為 HSL
+  r = r / 255;
+  g = g / 255;
+  b = b / 255;
+
+  let max = Math.max(r, g, b);
+  let min = Math.min(r, g, b);
+  let l = (max + min) / 2;
+
+  // Saturation = 0 時，RGB 都等於 Lightness 值
+  let gray = Math.round(l * 255);
+  return { r: gray, g: gray, b: gray };
+}
+
+// --- 初始化去飽和的 RGB 顏色 CSS 變數 ---
+function initializeDesaturatedColors() {
+  // R color: rgb(255, 68, 138)
+  let rDesaturated = calculateDesaturatedColor(255, 68, 138);
+  document.documentElement.style.setProperty('--r-color-desaturated', `rgb(${rDesaturated.r}, ${rDesaturated.g}, ${rDesaturated.b})`);
+
+  // G color: rgb(0, 255, 128)
+  let gDesaturated = calculateDesaturatedColor(0, 255, 128);
+  document.documentElement.style.setProperty('--g-color-desaturated', `rgb(${gDesaturated.r}, ${gDesaturated.g}, ${gDesaturated.b})`);
+
+  // B color: rgb(38, 188, 255)
+  let bDesaturated = calculateDesaturatedColor(38, 188, 255);
+  document.documentElement.style.setProperty('--b-color-desaturated', `rgb(${bDesaturated.r}, ${bDesaturated.g}, ${bDesaturated.b})`);
+}
+
 // --- p5.js 初始化設定 ---
 function setup() {
+  // 初始化去飽和顏色
+  initializeDesaturatedColors();
+
   // 選取 HTML 中的 Canvas 容器
   canvasContainer = select('#canvas-container');
-  
+
   // 初始檢測手機模式
   checkMobileMode();
-  
+
   // 根據模式創建合適尺寸的Canvas
   let canvasSize = getCanvasSize();
   let canvas = createCanvas(canvasSize.width, canvasSize.height);
@@ -50,11 +84,13 @@ function setup() {
   rotateButton = select(".custom-button-rotate");
   customButton = select(".custom-button-custom");
   colormodeButton = select("#colormode-button");
-  
+  colormodeBox = select("#colormode-box"); // 選取整個 colormode-box 容器
+
   // 這些按鈕本身是 button，裡面的 img 只是圖示
-  randomButton = select("#random-button"); 
+  randomButton = select("#random-button");
   resetButton = select("#reset-button");
   saveButton = select("#save-button");
+  saveBox = select("#save-box"); // 選取整個 save-box 容器
 
   randomImg = select('#random-img');
   resetImg = select('#reset-img');
@@ -116,8 +152,21 @@ function setup() {
 
   // --- 綁定所有 UI 事件 ---
   inputBox.input(handleInput);
+  // 阻擋空白鍵輸入
+  inputBox.elt.addEventListener('keydown', function(e) {
+    if (e.key === ' ' || e.keyCode === 32) {
+      e.preventDefault();
+    }
+  });
+
   if (inputBoxMobile) {
     inputBoxMobile.input(handleInput);
+    // 阻擋手機版空白鍵輸入
+    inputBoxMobile.elt.addEventListener('keydown', function(e) {
+      if (e.key === ' ' || e.keyCode === 32) {
+        e.preventDefault();
+      }
+    });
   }
   
   // 參考 ref.js:123
@@ -194,7 +243,8 @@ function setup() {
 
   // 新增：Colormode 循環切換按鈕
   // Standard -> Inverse -> Wireframe -> Standard
-  colormodeButton.mousePressed(() => {
+  // 將事件綁定到整個 colormode-box，讓整個容器都可以點擊
+  colormodeBox.mousePressed(() => {
     switch(targetMode) {
       case "Standard":
         targetMode = "Inverse";
@@ -279,6 +329,28 @@ function setup() {
   rSlider.input(() => { if (!isEasterEggActive && !isAutoRotateMode) { updateSliders(); updateUI(); } });
   gSlider.input(() => { if (!isEasterEggActive && !isAutoRotateMode) { updateSliders(); updateUI(); } });
   bSlider.input(() => { if (!isEasterEggActive && !isAutoRotateMode) { updateSliders(); updateUI(); } });
+
+  // --- 為滑桿綁定 hover 事件 ---
+  rSlider.elt.addEventListener('mouseenter', () => {
+    if (rSlider.hasClass('enabled')) {
+      hoveredSlider = 'r';
+    }
+  });
+  rSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
+
+  gSlider.elt.addEventListener('mouseenter', () => {
+    if (gSlider.hasClass('enabled')) {
+      hoveredSlider = 'g';
+    }
+  });
+  gSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
+
+  bSlider.elt.addEventListener('mouseenter', () => {
+    if (bSlider.hasClass('enabled')) {
+      hoveredSlider = 'b';
+    }
+  });
+  bSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
 
   // --- 為角度輸入框綁定事件 ---
   rAngleLabel.elt.addEventListener('input', function(e) {
@@ -529,7 +601,8 @@ function setup() {
   }
 
   // --- 綁定Save按鈕事件 ---
-  saveButton.mousePressed(() => {
+  // 將事件綁定到整個 save-box，讓整個容器都可以點擊
+  saveBox.mousePressed(() => {
     if (letters.length > 0) {
       saveTransparentPNG();
     }
@@ -619,6 +692,49 @@ function startTypewriterAnimation() {
 function draw() {
   // 保持canvas透明，讓CSS控制頁面背景
   clear();
+
+  // --- Slider Hover 效果 ---
+  if (!isMobileMode) {
+    // 選取所有 slider-container
+    let sliderContainers = selectAll('.slider-container');
+
+    // 檢查每個 slider 是否 disabled
+    let rSliderEnabled = rSlider && rSlider.hasClass('enabled');
+    let gSliderEnabled = gSlider && gSlider.hasClass('enabled');
+    let bSliderEnabled = bSlider && bSlider.hasClass('enabled');
+
+    // 移除所有 dimmed class
+    sliderContainers.forEach(container => {
+      container.removeClass('dimmed');
+    });
+
+    // 如果有 hover，添加 dimmed 效果
+    if (hoveredSlider && sliderContainers.length >= 3) {
+      if (hoveredSlider === 'r') {
+        sliderContainers[1].addClass('dimmed'); // G slider
+        sliderContainers[2].addClass('dimmed'); // B slider
+      } else if (hoveredSlider === 'g') {
+        sliderContainers[0].addClass('dimmed'); // R slider
+        sliderContainers[2].addClass('dimmed'); // B slider
+      } else if (hoveredSlider === 'b') {
+        sliderContainers[0].addClass('dimmed'); // R slider
+        sliderContainers[1].addClass('dimmed'); // G slider
+      }
+    }
+
+    // 額外處理：如果有 slider 是 disabled 且沒有被 hover，也要添加 dimmed
+    if (hoveredSlider) {
+      if (!rSliderEnabled && hoveredSlider !== 'r') {
+        sliderContainers[0].addClass('dimmed');
+      }
+      if (!gSliderEnabled && hoveredSlider !== 'g') {
+        sliderContainers[1].addClass('dimmed');
+      }
+      if (!bSliderEnabled && hoveredSlider !== 'b') {
+        sliderContainers[2].addClass('dimmed');
+      }
+    }
+  }
 
   // --- 頁面載入動畫 ---
   let timeSinceLoad = millis() - pageLoadStartTime;
@@ -741,17 +857,7 @@ function draw() {
   if (mode !== targetMode) {
     previousMode = mode; // 保存上一次的模式到全域變數
 
-    // 檢查是否從 Wireframe 切換到其他模式（需要 fade）
-    let isWireframeToOther = (mode === "Wireframe" && targetMode !== "Wireframe");
-
-    // 從 Inverse/Standard 切換到 Wireframe：瞬間切換，不 fade
-    // 從 Wireframe 切換到其他模式：使用 fade 效果
-    if (isWireframeToOther && letters.length > 0) {
-      isFading = true;
-      isModeTransition = true;
-      fadeStartTime = millis();
-      logoAlpha = 255; // 開始淡出
-    }
+    // 所有模式切換都不使用 fade 效果，直接切換
 
     // 如果切換到 Wireframe 模式，重置色環以隨機選擇新顏色
     if (targetMode === "Wireframe" && previousMode !== "Wireframe") {
@@ -777,14 +883,9 @@ function draw() {
         let containerHeight = container.elt.clientHeight;
         let containerSize = Math.min(containerWidth, containerHeight);
 
-        console.log("Container size:", containerWidth, "x", containerHeight);
-        console.log("Using canvas size:", containerSize);
-
         if (containerSize > 0) {
           colorPickerCanvas = createGraphics(containerSize, containerSize);
           colorPickerCanvas.parent('colorpicker-container');
-
-          console.log("Created canvas:", colorPickerCanvas.width, "x", colorPickerCanvas.height);
 
           // 設置 canvas 樣式 - 不要設置 width/height 為 100%，讓它保持原始尺寸
           colorPickerCanvas.elt.style.display = 'block';
@@ -811,6 +912,10 @@ function draw() {
           colorPickerCanvas.elt.addEventListener('mousedown', handleColorPickerMouseDown);
           colorPickerCanvas.elt.addEventListener('mousemove', handleColorPickerMouseMove);
           colorPickerCanvas.elt.addEventListener('mouseup', handleColorPickerMouseUp);
+          colorPickerCanvas.elt.addEventListener('mouseleave', handleColorPickerMouseUp); // 鼠標離開時也停止拖曳
+
+          // 全局 mouseup 事件，確保在 canvas 外放開鼠標也能停止拖曳
+          document.addEventListener('mouseup', handleColorPickerMouseUp);
 
           // 繪製色環
           drawColorWheel();
@@ -1019,13 +1124,16 @@ function drawPlaceholder(pg) {
   let fadeSpeed = (targetPlaceholderAlpha === 0) ? 0.3 : 0.15; // fade out 快，fade in 慢
   placeholderAlpha = lerp(placeholderAlpha, targetPlaceholderAlpha, fadeSpeed);
 
-  // 根據模式決定透明度倍數
-  let opacityMultiplier = 0.5; // 預設 50%（白色版本）
+  // 根據模式決定透明度倍數和版本
+  let opacityMultiplier = 0.25; // 預設 25%（Standard 模式，黑色版本）
+  let isWhiteVersion = false;
 
-  // Wireframe 模式：根據背景亮度決定使用黑色或白色版本及其透明度
-  let isWhiteVersion = (mode === 'Inverse');
-  if (mode === 'Wireframe' && wireframeStrokeColor) {
-    // 判斷是否使用白色版本（亮背景用白色）
+  if (mode === 'Inverse') {
+    // Inverse 模式：使用白色版本 + 50% 透明度
+    isWhiteVersion = true;
+    opacityMultiplier = 0.5;
+  } else if (mode === 'Wireframe' && wireframeStrokeColor) {
+    // Wireframe 模式：根據背景亮度決定使用黑色或白色版本及其透明度
     let r = red(wireframeStrokeColor);
     isWhiteVersion = r > 128;
     // 白色 50%，黑色 25%
@@ -1092,12 +1200,6 @@ function drawLogo(pg, alphaMultiplier = 255) {
 
   // 判斷是否為wireframe模式
   let isWireframeMode = (mode === "Wireframe");
-
-  // Debug: 在控制台輸出當前模式（只輸出一次，避免過多log）
-  if (frameCount % 60 === 0) {
-    console.log("Current mode:", mode, "isWireframeMode:", isWireframeMode);
-  }
-
   // 根據當前模式設定混合模式（wireframe模式使用BLEND，不需要特殊混合）
   if (!isWireframeMode) {
     pg.blendMode(mode === "Inverse" ? SCREEN : MULTIPLY);
@@ -1226,28 +1328,46 @@ function drawLogo(pg, alphaMultiplier = 255) {
     }
   }
 
-  for (let i = 0; i < totalLetters; i++) {
-    let letter = letters[i];
+  // Hover 時需要分兩批繪製：先繪製非 hover 的（半透明），再繪製 hover 的（置頂）
+  let drawingPasses = hoveredSlider ? 2 : 1;
 
-    // 獲取當前 textSize（從 pg 的設定中）
-    // 注意：p5.Graphics 沒有直接的 getter，所以我們需要用其他方式
-    // 在這裡直接使用全域的 textSize，因為 setup 時設定為 350
-    // 但在保存時會臨時修改為 700
-    let currentTextSize = pg._renderer._textSize || 350;
+  for (let pass = 0; pass < drawingPasses; pass++) {
+    for (let i = 0; i < totalLetters; i++) {
+      let letter = letters[i];
 
-    // 獲取字母的邊界，以計算垂直偏移，使其中心對齊
-    let bounds = font.textBounds(letter, 0, 0, currentTextSize);
-    let offsetY = bounds.y + bounds.h / 2;
-    
-    // 決定當前字母的顏色
-    let colorIndex;
-    if (i < rCount) {
-      colorIndex = 0; // 紅色組
-    } else if (i < rCount + gCount) {
-      colorIndex = 1; // 綠色組
-    } else {
-      colorIndex = 2; // 藍色組
-    }
+      // 獲取當前 textSize（從 pg 的設定中）
+      // 注意：p5.Graphics 沒有直接的 getter，所以我們需要用其他方式
+      // 在這裡直接使用全域的 textSize，因為 setup 時設定為 350
+      // 但在保存時會臨時修改為 700
+      let currentTextSize = pg._renderer._textSize || 350;
+
+      // 獲取字母的邊界，以計算垂直偏移，使其中心對齊
+      let bounds = font.textBounds(letter, 0, 0, currentTextSize);
+      let offsetY = bounds.y + bounds.h / 2;
+
+      // 決定當前字母的顏色
+      let colorIndex;
+      if (i < rCount) {
+        colorIndex = 0; // 紅色組
+      } else if (i < rCount + gCount) {
+        colorIndex = 1; // 綠色組
+      } else {
+        colorIndex = 2; // 藍色組
+      }
+
+      // Hover 邏輯
+      let isHoveredColor = false;
+      if (hoveredSlider) {
+        if (hoveredSlider === 'r' && colorIndex === 0) isHoveredColor = true;
+        if (hoveredSlider === 'g' && colorIndex === 1) isHoveredColor = true;
+        if (hoveredSlider === 'b' && colorIndex === 2) isHoveredColor = true;
+      }
+
+      // 第一次繪製時跳過 hover 的顏色，第二次只繪製 hover 的顏色
+      if (drawingPasses === 2) {
+        if (pass === 0 && isHoveredColor) continue; // 第一批：跳過 hover 的
+        if (pass === 1 && !isHoveredColor) continue; // 第二批：只繪製 hover 的
+      }
     
     // --- 更新每個字母的旋轉角度 ---
     // 只有在不是 ease 回 0° 的狀態下，才累積旋轉角度
@@ -1276,37 +1396,44 @@ function drawLogo(pg, alphaMultiplier = 255) {
     }
 
     // 根據模式設定文字樣式並繪製
+    // Hover 時，非 hover 的字母 25% 不透明度
+    let letterAlpha = (hoveredSlider && !isHoveredColor) ? 64 : 255;
+
     if (isWireframeMode) {
       // Wireframe模式：使用色彩選擇器選擇的顏色
+
       // 第一次：繪製描邊（根據填充顏色亮度自動選擇黑色或白色）
       pg.noFill();
       if (wireframeStrokeColor) {
-        pg.stroke(red(wireframeStrokeColor), green(wireframeStrokeColor), blue(wireframeStrokeColor));
+        pg.stroke(red(wireframeStrokeColor), green(wireframeStrokeColor), blue(wireframeStrokeColor), letterAlpha);
       } else {
-        pg.stroke(0, 0, 0); // 預設黑色
+        pg.stroke(0, 0, 0, letterAlpha); // 預設黑色
       }
       pg.strokeWeight(5);
       pg.text(letter, 0, -offsetY);
 
       // 第二次：繪製填充顏色（來自色彩選擇器）
       if (wireframeColor) {
-        pg.fill(red(wireframeColor), green(wireframeColor), blue(wireframeColor));
+        pg.fill(red(wireframeColor), green(wireframeColor), blue(wireframeColor), letterAlpha);
       } else {
-        pg.fill(255, 255, 255); // 預設白色
+        pg.fill(255, 255, 255, letterAlpha); // 預設白色
       }
       pg.noStroke();
       pg.text(letter, 0, -offsetY);
     } else {
       // 一般模式：使用RGB顏色，無stroke
+      // 結合 alphaMultiplier（頁面載入動畫）和 letterAlpha（hover 效果）
       let [r, g, b] = colors[colorIndex];
-      pg.fill(r, g, b, alphaMultiplier);
+      let finalAlpha = alphaMultiplier * (letterAlpha / 255);
+      pg.fill(r, g, b, finalAlpha);
       pg.noStroke();
       pg.text(letter, 0, -offsetY);
     }
 
     pg.pop();
+    }
   }
-  
+
   // 恢復混合模式和坐標系
   pg.blendMode(BLEND);
   pg.pop();
@@ -1337,9 +1464,11 @@ function adjustInputFontSize() {
 
     // 根據字元數決定字體大小（彩蛋模式和正常模式使用相同邏輯）
     if (charCount === 0) {
-        targetFontSize = largeFontSize; // 空白時使用大字體
+        targetFontSize = largeFontSize; // 空白時使用 120px（配合 placeholder）
+    } else if (charCount <= 3) {
+        targetFontSize = extraLargeFontSize; // 1-3 字：180px
     } else if (charCount <= 15) {
-        targetFontSize = largeFontSize; // 1-15 字：120px
+        targetFontSize = largeFontSize; // 4-15 字：120px
     } else if (charCount <= 30) {
         targetFontSize = mediumFontSize; // 16-30 字：90px
     } else {
@@ -1348,6 +1477,9 @@ function adjustInputFontSize() {
 
     // 更新字體大小
     inputBox.style("font-size", targetFontSize);
+
+    // 所有字體大小都使用統一的 line-height
+    inputBox.style("line-height", "1.1");
 
     // 等待 CSS transition 完成後再測量（font-size transition 是 0.2s = 200ms）
     // 加上一點緩衝時間確保渲染完成
@@ -2148,7 +2280,6 @@ function keyPressed() {
 // 繪製色環（甜甜圈形狀）
 function drawColorWheel() {
   if (!colorPickerCanvas) {
-    console.log("drawColorWheel: colorPickerCanvas is null");
     return;
   }
 
@@ -2296,6 +2427,20 @@ function updateColorFromMouse(e) {
   // 計算相對於中心的位置
   let dx = x - centerX;
   let dy = y - centerY;
+
+  // 計算距離中心的距離
+  let distance = Math.sqrt(dx * dx + dy * dy);
+
+  // 計算 color wheel 的內外半徑（與繪製邏輯一致）
+  let outerRadius = w * 0.45;
+  let innerRadius = w * 0.25;
+
+  // 檢查是否在 wheel 的環形範圍內
+  if (distance < innerRadius || distance > outerRadius) {
+    // 鼠標不在有效範圍內，停止拖曳
+    colorPickerDragging = false;
+    return;
+  }
 
   // 計算角度（弧度）- atan2 返回 -PI 到 PI
   let angle = Math.atan2(dy, dx);

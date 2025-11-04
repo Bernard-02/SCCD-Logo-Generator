@@ -26,9 +26,10 @@ const baseSpeeds = [0.125, -0.125, 0.25]; // R, G, B 各自的基礎旋轉速度
 const placeholderBaseSpeeds = [0.125, -0.125, 0.25]; // Placeholder SVG 的旋轉速度
 
 // --- 字體大小設定 ---
-const largeFontSize = '120px';   // 1-15 字
-const mediumFontSize = '90px';   // 16-30 字
-const smallFontSize = '60px';    // 31-40 字
+const extraLargeFontSize = '180px';  // 1-3 字
+const largeFontSize = '120px';       // 4-15 字
+const mediumFontSize = '90px';       // 16-30 字
+const smallFontSize = '60px';        // 31-40 字
 
 // --- 彩蛋相關 ---
 const easterEggString = "SHIHCHIENCOMMUNICATIONSDESIGN";
@@ -62,10 +63,13 @@ let currentRSliderValue = 0, currentGSliderValue = 0, currentBSliderValue = 0;
 let targetRSliderValue = 0, targetGSliderValue = 0, targetBSliderValue = 0;
 let isEasingSlider = false;
 
+// --- Slider Hover 狀態 ---
+let hoveredSlider = null; // 'r', 'g', 'b', or null
+
 // --- DOM 元素 ---
 let inputBox, inputBoxMobile;
-let rotateButton, customButton, colormodeButton;
-let randomButton, resetButton, saveButton, saveButtonMobile;
+let rotateButton, customButton, colormodeButton, colormodeBox;
+let randomButton, resetButton, saveButton, saveButtonMobile, saveBox;
 let rSlider, gSlider, bSlider;
 let rAngleLabel, gAngleLabel, bAngleLabel;
 let randomImg, resetImg, saveImg, saveImgMobile, rotateIcon;
@@ -83,7 +87,7 @@ let colorPickerIndicatorY = 0.5; // 指示器 Y 位置 (0-1)
 let colorPickerDragging = false;
 
 // --- 禁用顏色 ---
-let disabledColor = '#D2D2D2'; // 預設禁用顏色（Standard 模式）
+let disabledColor = 'rgba(0, 0, 0, 0.25)'; // 黑色25%不透明度
 
 // --- 響應式相關 ---
 let isMobileMode = false;

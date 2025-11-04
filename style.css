@@ -18,11 +18,15 @@
   --wireframe-bg: white; /* Wireframe 模式的背景色，由 JS 動態更新 */
   --wireframe-border: black; /* Wireframe 模式的邊框顏色，由 JS 根據背景亮度動態更新 */
   --wireframe-opacity: 0.5; /* Wireframe 模式的透明度（白色版本預設 50%） */
-  --disabled-color: rgb(210, 210, 210); /* Standard 模式的 disabled 顏色 */
-  --disabled-color-inverse: rgb(96, 96, 96); /* Inverse 模式的 disabled 顏色 */
+  --disabled-color: rgba(0, 0, 0, 0.25); /* 統一使用黑色25%不透明度 */
+  --disabled-color-inverse: rgba(0, 0, 0, 0.25); /* 統一使用黑色25%不透明度 */
   --r-color: rgb(255, 68, 138);
   --g-color: rgb(0, 255, 128);
   --b-color: rgb(38, 188, 255);
+  /* 去飽和的 RGB 顏色（Saturation = 0），由 JS 動態計算 */
+  --r-color-desaturated: rgb(161, 161, 161);
+  --g-color-desaturated: rgb(127, 127, 127);
+  --b-color-desaturated: rgb(146, 146, 146);
 
   /* 縮放系統 */
   --scale: 1; /* 整體縮放比例 */
@@ -171,22 +175,28 @@ body.wireframe-mode #canvas-container {
   box-sizing: border-box;
   line-height: 1.1;
   caret-color: inherit; /* 游標顏色跟隨文字顏色 */
-  transition: font-size 0.2s ease-out, padding-top 0.2s ease-out; /* 平滑過渡，同步動畫 */
+  transition: font-size 0.2s ease-out, padding-top 0.2s ease-out, line-height 0.2s ease-out; /* 平滑過渡，同步動畫 */
 }
 
-#input-box::placeholder {
-  color: var(--disabled-color);
+/* Standard 模式下的 placeholder 顏色：黑色 + 25% 透明度 */
+body.standard-mode #input-box::placeholder {
+  color: black;
+  opacity: 0.25;
+  font-size: 120px; /* 固定 placeholder 字體大小 */
+}
+
+/* Inverse 模式下的 placeholder 顏色：白色 + 50% 透明度 */
+body.inverse-mode #input-box::placeholder {
+  color: white;
+  opacity: 0.5;
+  font-size: 120px; /* 固定 placeholder 字體大小 */
 }
 
 /* Wireframe 模式下的 placeholder */
 body.wireframe-mode #input-box::placeholder {
   color: var(--wireframe-border);
   opacity: var(--wireframe-opacity);
-}
-
-/* Inverse 模式下的 placeholder 顏色 */
-body.inverse-mode #input-box::placeholder {
-  color: var(--disabled-color-inverse);
+  font-size: 120px; /* 固定 placeholder 字體大小 */
 }
 
 #hidden-measurer {
@@ -209,6 +219,12 @@ body.inverse-mode #input-box::placeholder {
   transition: border-color 0s ease, background-color 1s ease, opacity 0s ease;
 }
 
+/* 讓 colormode-box 和 save-box 整個區域都可以點擊 */
+#colormode-box,
+#save-box {
+  cursor: pointer;
+}
+
 /* 根據模式切換邊框顏色和背景色 */
 body.standard-mode .control-box {
   border-color: black;
@@ -223,22 +239,24 @@ body.wireframe-mode .control-box {
   background-color: rgba(255, 255, 255, 0.28); /* 半透明 30% 白色 */
 }
 
-/* 當 control-box 處於 disabled 狀態時，邊框變成灰色 */
+/* 當 control-box 處於 disabled 狀態時，使用對應顏色 + 透明度 */
 body.standard-mode .control-box.disabled {
-  border-color: var(--disabled-color) !important;
-  transition: border-color 0.2s ease, background-color 1s ease; /* 邊框快速轉換，背景同步模式切換 */
+  border-color: black !important;
+  opacity: 0.25;
+  transition: border-color 0.2s ease, background-color 1s ease; /* 移除 opacity transition 避免延遲 */
 }
 
 body.inverse-mode .control-box.disabled {
-  border-color: var(--disabled-color-inverse) !important;
-  transition: border-color 0.2s ease, background-color 1s ease; /* 邊框快速轉換，背景同步模式切換 */
+  border-color: white !important;
+  opacity: 0.5;
+  transition: border-color 0.2s ease, background-color 1s ease; /* 移除 opacity transition 避免延遲 */
 }
 
 /* Wireframe 模式下 disabled 狀態的邊框使用對比色 + 透明度 */
 body.wireframe-mode .control-box.disabled {
   border-color: var(--wireframe-border) !important;
   opacity: var(--wireframe-opacity);
-  transition: border-color 0.2s ease, background-color 1s ease, opacity 0.2s ease;
+  transition: border-color 0.2s ease, background-color 1s ease; /* 移除 opacity transition 避免延遲 */
 }
 
 /* 顏色模式控制盒：讓它延伸填滿高度 */
@@ -445,6 +463,16 @@ body.inverse-mode .button-indicator {
   justify-content: center;
 }
 
+/* 確保按鈕內的圖片不會阻擋點擊事件 */
+.image-button img {
+  pointer-events: none;
+}
+
+/* 確保 custom-button 內的圖片不會阻擋點擊事件 */
+.custom-button img {
+  pointer-events: none;
+}
+
 /* Random/Reset 按鈕 */
 #random-button,
 #reset-button {
@@ -541,13 +569,13 @@ body.inverse-mode .button-indicator {
 
 /* Custom 按鈕的顯示/隱藏過渡效果 */
 .custom-button-custom:not(:disabled) {
-  /* 當按鈕從 disabled 變為 enabled 時，添加延遲和過渡 */
-  transition: color 0.2s, border-color 0.1s, opacity 0.3s ease 0.15s, transform 0.3s ease;
+  /* 當按鈕從 disabled 變為 enabled 時，添加延遲和過渡（移除 opacity transition 避免延遲） */
+  transition: color 0.2s, border-color 0.1s, transform 0.3s ease;
 }
 
 .custom-button-custom:disabled {
-  /* 當按鈕變為 disabled 時，快速隱藏（沒有延遲） */
-  transition: color 0.2s, border-color 0.1s, opacity 0.2s ease, transform 0.2s ease;
+  /* 當按鈕變為 disabled 時，快速隱藏（移除 opacity transition 避免延遲） */
+  transition: color 0.2s, border-color 0.1s, transform 0.2s ease;
 }
 
 /* rotation 按鈕的 active 狀態：按鈕本身需要邊框 */
@@ -570,6 +598,16 @@ body.wireframe-mode .custom-button-rotate.active {
 .custom-button:disabled {
   cursor: default;
   color: var(--disabled-color);
+}
+
+/* Standard 模式下 Disabled 狀態的 custom button icon 圖片設定透明度（25%） */
+body.standard-mode .control-box:not(.disabled) .custom-button:disabled img {
+  opacity: 0.25;
+}
+
+/* Inverse 模式下 Disabled 狀態的 custom button icon 圖片設定透明度（50%） */
+body.inverse-mode .control-box:not(.disabled) .custom-button:disabled img {
+  opacity: 0.5;
 }
 
 /* Wireframe 模式下 Disabled 狀態的 custom button icon 圖片設定透明度 */
@@ -597,31 +635,56 @@ body.wireframe-mode .custom-button:not(.active):not(:disabled):hover {
   color: #888; /* Wireframe 模式下的 hover 顏色 */
 }
 
+/* Rotate 按鈕：未選中時無 border，hover 時顯示帶透明度的 border */
+body.standard-mode .custom-button-rotate:not(.active):not(:disabled) {
+  border-color: transparent;
+  opacity: 0.25;
+}
+body.standard-mode .custom-button-rotate:not(.active):not(:disabled):hover {
+  border-color: black;
+  opacity: 0.25;
+}
 
-/* Rotate 按鈕：未選中時（Custom模式下） hover 顯示 disabled 色邊框 */
-.custom-button-rotate:not(.active):not(:disabled):hover {
-  border-color: var(--disabled-color);
+body.inverse-mode .custom-button-rotate:not(.active):not(:disabled) {
+  border-color: transparent;
+  opacity: 0.5;
 }
 body.inverse-mode .custom-button-rotate:not(.active):not(:disabled):hover {
-  border-color: var(--disabled-color-inverse);
+  border-color: white;
+  opacity: 0.5;
 }
-/* Wireframe 模式下未選中的 Rotate 按鈕：使用變數透明度（包括 hover） */
+
+/* Wireframe 模式下未選中的 Rotate 按鈕：使用變數透明度 */
 body.wireframe-mode .custom-button-rotate:not(.active):not(:disabled) {
+  border-color: transparent;
   opacity: var(--wireframe-opacity);
 }
 body.wireframe-mode .custom-button-rotate:not(.active):not(:disabled):hover {
   border-color: var(--wireframe-border);
 }
 
-/* Custom 按鈕：未選中時（Rotate模式下） hover 顯示 disabled 色邊框 */
-.custom-button-custom:not(.active):not(:disabled):hover {
-  border-color: var(--disabled-color);
+/* Custom 按鈕：未選中時無 border，hover 時顯示帶透明度的 border */
+body.standard-mode .custom-button-custom:not(.active):not(:disabled) {
+  border-color: transparent;
+  opacity: 0.25;
+}
+body.standard-mode .custom-button-custom:not(.active):not(:disabled):hover {
+  border-color: black;
+  opacity: 0.25;
+}
+
+body.inverse-mode .custom-button-custom:not(.active):not(:disabled) {
+  border-color: transparent;
+  opacity: 0.5;
 }
 body.inverse-mode .custom-button-custom:not(.active):not(:disabled):hover {
-  border-color: var(--disabled-color-inverse);
+  border-color: white;
+  opacity: 0.5;
 }
-/* Wireframe 模式下未選中的 Custom 按鈕：使用變數透明度（包括 hover） */
+
+/* Wireframe 模式下未選中的 Custom 按鈕：使用變數透明度 */
 body.wireframe-mode .custom-button-custom:not(.active):not(:disabled) {
+  border-color: transparent;
   opacity: var(--wireframe-opacity);
 }
 body.wireframe-mode .custom-button-custom:not(.active):not(:disabled):hover {
@@ -632,13 +695,18 @@ body.inverse-mode .custom-button.active {
   color: var(--inverse-text); /* 反色模式下為白色文字 */
 }
 
-/* 移除 hover 效果 */
-/* .custom-button:not(:disabled):not(.active):hover {
-    color: gray;
-} */
-
 .image-button:disabled {
   cursor: not-allowed;
+}
+
+/* Standard 模式下 Disabled 狀態的 image button icon 圖片設定透明度（25%） */
+body.standard-mode .control-box:not(.disabled) .image-button:disabled img {
+  opacity: 0.25;
+}
+
+/* Inverse 模式下 Disabled 狀態的 image button icon 圖片設定透明度（50%） */
+body.inverse-mode .control-box:not(.disabled) .image-button:disabled img {
+  opacity: 0.5;
 }
 
 /* Wireframe 模式下 Disabled 狀態的 icon 圖片設定透明度 */
@@ -668,13 +736,8 @@ body.wireframe-mode .control-box:not(.disabled) .image-button:disabled img {
   border-radius: var(--slider-height);
   background: #e6e6e6; /* 軌道顏色 */
   outline: none;
-  opacity: 0.9;
-  transition: opacity 0.15s ease-in-out;
+  transition: none; /* 移除 transition 避免延遲 */
   margin: 0; /* 移除預設 margin */
-}
-
-.custom-slider:hover {
-  opacity: 1;
 }
 
 .custom-slider::-webkit-slider-thumb {
@@ -686,7 +749,7 @@ body.wireframe-mode .control-box:not(.disabled) .image-button:disabled img {
   cursor: pointer;
   border: none; /* 移除邊框 */
   background: #e6e6e6; /* 滑塊顏色 */
-  transition: background 0.2s;
+  transition: none; /* 移除 transition 避免顏色切換延遲 */
 }
 
 .custom-slider::-moz-range-thumb {
@@ -696,31 +759,57 @@ body.wireframe-mode .control-box:not(.disabled) .image-button:disabled img {
   cursor: pointer;
   border: none; /* 移除邊框 */
   background: #e6e6e6; /* 滑塊顏色 */
-  transition: background 0.2s;
+  transition: none; /* 移除 transition 避免顏色切換延遲 */
 }
 
 /* 當啟用時，根據變數改變顏色 */
 .custom-slider.enabled {
   background-color: var(--track-color);
+  transition: background 0.3s ease, opacity 0.3s ease; /* 添加 transition 讓切換更平滑 */
 }
 .custom-slider.enabled::-webkit-slider-thumb {
   background-color: var(--thumb-color);
   border: none;
+  transition: background 0.3s ease, box-shadow 0.3s ease; /* 添加 transition */
 }
 .custom-slider.enabled::-moz-range-thumb {
   background-color: var(--thumb-color);
   border: none;
+  transition: background 0.3s ease, box-shadow 0.3s ease; /* 添加 transition */
 }
 
-/* Inverse 模式下，disabled slider 使用較深的灰色 */
+/* Standard 模式下，disabled slider 使用黑色 + 25% 透明度 */
+body.standard-mode .custom-slider:not(.enabled) {
+  background: black;
+  opacity: 0.25;
+  transition: background 0.3s ease, opacity 0.3s ease; /* 添加 transition 讓切換更平滑 */
+}
+body.standard-mode .custom-slider:not(.enabled)::-webkit-slider-thumb {
+  background: white;
+  box-shadow: inset 0 0 0 2.5px black;
+  transition: background 0.3s ease, box-shadow 0.3s ease; /* 添加 transition */
+}
+body.standard-mode .custom-slider:not(.enabled)::-moz-range-thumb {
+  background: white;
+  box-shadow: inset 0 0 0 2.5px black;
+  transition: background 0.3s ease, box-shadow 0.3s ease; /* 添加 transition */
+}
+
+/* Inverse 模式下，disabled slider 使用白色 + 50% 透明度 */
 body.inverse-mode .custom-slider:not(.enabled) {
-  background: var(--disabled-color-inverse);
+  background: white;
+  opacity: 0.5;
+  transition: background 0.3s ease, opacity 0.3s ease; /* 添加 transition 讓切換更平滑 */
 }
 body.inverse-mode .custom-slider:not(.enabled)::-webkit-slider-thumb {
-  background: var(--disabled-color-inverse);
+  background: black;
+  box-shadow: inset 0 0 0 2.5px white;
+  transition: background 0.3s ease, box-shadow 0.3s ease; /* 添加 transition */
 }
 body.inverse-mode .custom-slider:not(.enabled)::-moz-range-thumb {
-  background: var(--disabled-color-inverse);
+  background: black;
+  box-shadow: inset 0 0 0 2.5px white;
+  transition: background 0.3s ease, box-shadow 0.3s ease; /* 添加 transition */
 }
 
 /* Wireframe 模式下，disabled slider 使用黑色或白色 + 透明度（桌面版） */
@@ -732,24 +821,37 @@ body.wireframe-mode .custom-slider:not(.enabled)::-webkit-slider-thumb {
   background: var(--wireframe-bg); /* 使用當前背景色作為基底 */
   box-shadow:
     inset 0 0 0 100px rgba(255, 255, 255, 0.28), /* 在背景色上疊加 28% 白色 */
-    inset 0 0 0 2px var(--wireframe-border); /* 描邊 */
+    inset 0 0 0 2.5px var(--wireframe-border); /* 描邊顏色，透明度由父元素的 opacity 控制 */
 }
 body.wireframe-mode .custom-slider:not(.enabled)::-moz-range-thumb {
   background: var(--wireframe-bg); /* 使用當前背景色作為基底 */
   box-shadow:
     inset 0 0 0 100px rgba(255, 255, 255, 0.28), /* 在背景色上疊加 28% 白色 */
-    inset 0 0 0 2px var(--wireframe-border); /* 描邊 */
+    inset 0 0 0 2.5px var(--wireframe-border); /* 描邊顏色，透明度由父元素的 opacity 控制 */
 }
 
 /* Wireframe 模式下，enabled slider 使用黑色或白色（桌面版） */
 body.wireframe-mode .custom-slider.enabled {
   background-color: var(--wireframe-border);
+  transition: opacity 0.2s ease;
 }
 body.wireframe-mode .custom-slider.enabled::-webkit-slider-thumb {
   background-color: var(--wireframe-border);
 }
 body.wireframe-mode .custom-slider.enabled::-moz-range-thumb {
   background-color: var(--wireframe-border);
+}
+
+/* Slider hover 效果 */
+/* 當 hover 在某個 slider 上時，其他 slider 變成 50% 透明 */
+.slider-container.dimmed .custom-slider {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+/* Disabled slider 也要保持 50% 透明度（所有模式） */
+.custom-slider:not(.enabled) {
+  opacity: 0.5;
 }
 
 /* --- 滑桿標籤 / 角度輸入框 --- */
@@ -768,7 +870,7 @@ body.wireframe-mode .custom-slider.enabled::-moz-range-thumb {
   cursor: text;
 }
 
-/* Standard/Inverse 模式下的 label 顏色 */
+/* Standard/Inverse 模式下的 enabled label 顏色 */
 body:not(.wireframe-mode) #r-angle-label.enabled,
 body:not(.wireframe-mode) .mobile-r-angle-label.enabled {
   color: var(--r-color);
@@ -780,6 +882,18 @@ body:not(.wireframe-mode) .mobile-g-angle-label.enabled {
 body:not(.wireframe-mode) #b-angle-label.enabled,
 body:not(.wireframe-mode) .mobile-b-angle-label.enabled {
   color: var(--b-color);
+}
+
+/* Standard 模式下，disabled label 使用黑色 + 25% 透明度 */
+body.standard-mode .angle-input:not(.enabled) {
+  color: black !important;
+  opacity: 0.25;
+}
+
+/* Inverse 模式下，disabled label 使用白色 + 50% 透明度 */
+body.inverse-mode .angle-input:not(.enabled) {
+  color: white !important;
+  opacity: 0.5;
 }
 
 /* Wireframe 模式下，enabled label 使用黑色或白色 */
@@ -910,22 +1024,24 @@ body.wireframe-mode .angle-input:not(.enabled) {
     border-color: white;
   }
 
-  /* 手機版：當處於 disabled 狀態時，邊框變成灰色 */
+  /* 手機版：當處於 disabled 狀態時，使用對應顏色 + 透明度 */
   body.standard-mode .mobile-rotation-box.disabled {
-    border-color: var(--disabled-color) !important;
-    transition: border-color 0.2s ease; /* 變成 disabled 時快速轉換 */
+    border-color: black !important;
+    opacity: 0.25;
+    transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
   body.inverse-mode .mobile-rotation-box.disabled {
-    border-color: var(--disabled-color-inverse) !important;
-    transition: border-color 0.2s ease; /* 變成 disabled 時快速轉換 */
+    border-color: white !important;
+    opacity: 0.5;
+    transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
   /* 手機版 Wireframe 模式下 disabled 狀態的邊框使用對比色 + 透明度 */
   body.wireframe-mode .mobile-rotation-box.disabled {
     border-color: var(--wireframe-border) !important;
     opacity: 0.5; /* 白色邊框時的透明度 */
-    transition: border-color 0.2s ease, opacity 0.2s ease;
+    transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
   /* 手機版 Wireframe 模式下黑色邊框時的透明度 */
@@ -1179,19 +1295,22 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
   /* 根據模式切換邊框顏色 */
   body.standard-mode .mobile-input-container #input-box-mobile {
-    border-color: black;
+    border-color: rgba(0, 0, 0, 0.25);
   }
   body.inverse-mode .mobile-input-container #input-box-mobile {
-    border-color: white;
+    border-color: rgba(0, 0, 0, 0.25);
   }
 
-  .mobile-input-container #input-box-mobile::placeholder {
-    color: var(--disabled-color);
+  /* Standard 模式下的手機版 placeholder 顏色：黑色 + 25% 透明度 */
+  body.standard-mode .mobile-input-container #input-box-mobile::placeholder {
+    color: black;
+    opacity: 0.25;
   }
 
-  /* Inverse 模式下的手機版 placeholder 顏色 */
+  /* Inverse 模式下的手機版 placeholder 顏色：白色 + 50% 透明度 */
   body.inverse-mode .mobile-input-container #input-box-mobile::placeholder {
-    color: var(--disabled-color-inverse);
+    color: white;
+    opacity: 0.5;
   }
 
   /* Wireframe 模式下的手機版 placeholder */
@@ -1231,22 +1350,24 @@ body.wireframe-mode .angle-input:not(.enabled) {
     border-color: white;
   }
 
-  /* 手機版：當 Save 容器處於 disabled 狀態時，邊框變成灰色 */
+  /* 手機版：當 Save 容器處於 disabled 狀態時，使用對應顏色 + 透明度 */
   body.standard-mode .mobile-save-container.disabled {
-    border-color: var(--disabled-color) !important;
-    transition: border-color 0.2s ease; /* 變成 disabled 時快速轉換 */
+    border-color: black !important;
+    opacity: 0.25;
+    transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
   body.inverse-mode .mobile-save-container.disabled {
-    border-color: var(--disabled-color-inverse) !important;
-    transition: border-color 0.2s ease; /* 變成 disabled 時快速轉換 */
+    border-color: white !important;
+    opacity: 0.5;
+    transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
   /* 手機版 Wireframe 模式下 disabled 狀態的邊框使用對比色 + 透明度 */
   body.wireframe-mode .mobile-save-container.disabled {
     border-color: var(--wireframe-border) !important;
     opacity: 0.5; /* 白色邊框時的透明度 */
-    transition: border-color 0.2s ease, opacity 0.2s ease;
+    transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
   /* 手機版 Wireframe 模式下黑色邊框時的透明度 */

@@ -4,7 +4,11 @@
       "Bash(python -m http.server:*)",
       "Bash(node -c:*)",
       "Bash(npm run dev:*)",
-      "Bash(npx http-server:*)"
+      "Bash(npx http-server:*)",
+      "Bash(node --check:*)",
+      "Bash(node -e:*)",
+      "Bash(eslint:*)",
+      "Bash(node -pe:*)"
     ],
     "deny": [],
     "ask": []
