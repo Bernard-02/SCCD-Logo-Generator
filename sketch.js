@@ -9,9 +9,16 @@
 // --- p5.js 預載入 ---
 function preload() {
   font = loadFont("Inter-Medium.ttf");
-  // 載入彩蛋圖片
+  // 載入彩蛋圖片 - 用於下載
   sccdBlackImg = loadImage('Easter Egg/sccd_black.png');
   sccdWhiteImg = loadImage('Easter Egg/sccd_white.png');
+  sccdBlackWireframeImg = loadImage('Easter Egg/SCCD_Black Wireframe.png');
+  sccdWhiteWireframeImg = loadImage('Easter Egg/SCCD_White Wireframe.png');
+  // 載入彩蛋圖片 - 用於顯示 (_2 版本)
+  sccdBlackImg_2 = loadImage('Easter Egg/sccd_black_2.png');
+  sccdWhiteImg_2 = loadImage('Easter Egg/sccd_white_2.png');
+  sccdBlackWireframeImg_2 = loadImage('Easter Egg/SCCD_Black Wireframe_2.png');
+  sccdWhiteWireframeImg_2 = loadImage('Easter Egg/SCCD_White Wireframe_2.png');
   // 載入 placeholder SVG wireframe (三層分離 - 黑色和白色版本)
   placeholderR = loadImage('Placeholder Logo/SCCD_R.svg');
   placeholderG = loadImage('Placeholder Logo/SCCD_G.svg');
@@ -148,6 +155,8 @@ function setup() {
 
   // --- 初始化色彩選擇器 ---
   colorPickerContainer = select("#colorpicker-container");
+  colorWheelPlayButton = select("#colorwheel-play-button");
+  colorWheelPlayIcon = select("#colorwheel-play-icon");
   // Color picker initialization moved inline to draw() function
 
   // --- 綁定所有 UI 事件 ---
@@ -261,6 +270,16 @@ function setup() {
     updateUI();
   });
 
+  // Color Wheel Play/Pause 按鈕
+  if (colorWheelPlayButton) {
+    colorWheelPlayButton.mousePressed(() => {
+      if (mode === "Wireframe") {
+        isColorWheelRotating = !isColorWheelRotating;
+        updateColorWheelIcon();
+      }
+    });
+  }
+
   // 參考 ref.js:126
   randomButton.mousePressed(() => {
       if (letters.length > 0 && !isAutoRotateMode && !isEasterEggActive) {
@@ -331,26 +350,26 @@ function setup() {
   bSlider.input(() => { if (!isEasterEggActive && !isAutoRotateMode) { updateSliders(); updateUI(); } });
 
   // --- 為滑桿綁定 hover 事件 ---
-  rSlider.elt.addEventListener('mouseenter', () => {
-    if (rSlider.hasClass('enabled')) {
-      hoveredSlider = 'r';
-    }
-  });
-  rSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
+  // rSlider.elt.addEventListener('mouseenter', () => {
+  //   if (rSlider.hasClass('enabled')) {
+  //     hoveredSlider = 'r';
+  //   }
+  // });
+  // rSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
 
-  gSlider.elt.addEventListener('mouseenter', () => {
-    if (gSlider.hasClass('enabled')) {
-      hoveredSlider = 'g';
-    }
-  });
-  gSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
+  // gSlider.elt.addEventListener('mouseenter', () => {
+  //   if (gSlider.hasClass('enabled')) {
+  //     hoveredSlider = 'g';
+  //   }
+  // });
+  // gSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
 
-  bSlider.elt.addEventListener('mouseenter', () => {
-    if (bSlider.hasClass('enabled')) {
-      hoveredSlider = 'b';
-    }
-  });
-  bSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
+  // bSlider.elt.addEventListener('mouseenter', () => {
+  //   if (bSlider.hasClass('enabled')) {
+  //     hoveredSlider = 'b';
+  //   }
+  // });
+  // bSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
 
   // --- 為角度輸入框綁定事件 ---
   rAngleLabel.elt.addEventListener('input', function(e) {
@@ -694,75 +713,75 @@ function draw() {
   clear();
 
   // --- Slider Hover 效果 ---
-  if (!isMobileMode) {
-    // 選取所有 slider-container
-    let sliderContainers = selectAll('.slider-container');
+  // if (!isMobileMode) {
+  //   // 選取所有 slider-container
+  //   let sliderContainers = selectAll('.slider-container');
 
-    // 檢查每個 slider 是否 disabled
-    let rSliderEnabled = rSlider && rSlider.hasClass('enabled');
-    let gSliderEnabled = gSlider && gSlider.hasClass('enabled');
-    let bSliderEnabled = bSlider && bSlider.hasClass('enabled');
+  //   // 檢查每個 slider 是否 disabled
+  //   let rSliderEnabled = rSlider && rSlider.hasClass('enabled');
+  //   let gSliderEnabled = gSlider && gSlider.hasClass('enabled');
+  //   let bSliderEnabled = bSlider && bSlider.hasClass('enabled');
 
-    // 移除所有 dimmed class
-    sliderContainers.forEach(container => {
-      container.removeClass('dimmed');
-    });
+  //   // 移除所有 dimmed class
+  //   sliderContainers.forEach(container => {
+  //     container.removeClass('dimmed');
+  //   });
 
-    // 如果有 hover，添加 dimmed 效果
-    if (hoveredSlider && sliderContainers.length >= 3) {
-      if (hoveredSlider === 'r') {
-        sliderContainers[1].addClass('dimmed'); // G slider
-        sliderContainers[2].addClass('dimmed'); // B slider
-      } else if (hoveredSlider === 'g') {
-        sliderContainers[0].addClass('dimmed'); // R slider
-        sliderContainers[2].addClass('dimmed'); // B slider
-      } else if (hoveredSlider === 'b') {
-        sliderContainers[0].addClass('dimmed'); // R slider
-        sliderContainers[1].addClass('dimmed'); // G slider
-      }
-    }
+  //   // 如果有 hover，添加 dimmed 效果
+  //   if (hoveredSlider && sliderContainers.length >= 3) {
+  //     if (hoveredSlider === 'r') {
+  //       sliderContainers[1].addClass('dimmed'); // G slider
+  //       sliderContainers[2].addClass('dimmed'); // B slider
+  //     } else if (hoveredSlider === 'g') {
+  //       sliderContainers[0].addClass('dimmed'); // R slider
+  //       sliderContainers[2].addClass('dimmed'); // B slider
+  //     } else if (hoveredSlider === 'b') {
+  //       sliderContainers[0].addClass('dimmed'); // R slider
+  //       sliderContainers[1].addClass('dimmed'); // G slider
+  //     }
+  //   }
 
-    // 額外處理：如果有 slider 是 disabled 且沒有被 hover，也要添加 dimmed
-    if (hoveredSlider) {
-      if (!rSliderEnabled && hoveredSlider !== 'r') {
-        sliderContainers[0].addClass('dimmed');
-      }
-      if (!gSliderEnabled && hoveredSlider !== 'g') {
-        sliderContainers[1].addClass('dimmed');
-      }
-      if (!bSliderEnabled && hoveredSlider !== 'b') {
-        sliderContainers[2].addClass('dimmed');
-      }
-    }
-  }
+  //   // 額外處理：如果有 slider 是 disabled 且沒有被 hover，也要添加 dimmed
+  //   if (hoveredSlider) {
+  //     if (!rSliderEnabled && hoveredSlider !== 'r') {
+  //       sliderContainers[0].addClass('dimmed');
+  //     }
+  //     if (!gSliderEnabled && hoveredSlider !== 'g') {
+  //       sliderContainers[1].addClass('dimmed');
+  //     }
+  //     if (!bSliderEnabled && hoveredSlider !== 'b') {
+  //       sliderContainers[2].addClass('dimmed');
+  //     }
+  //   }
+  // }
 
   // --- 頁面載入動畫 ---
   let timeSinceLoad = millis() - pageLoadStartTime;
 
-  // 1. 輸入框 fade in (0ms - 400ms)
+  // 1. 輸入框 fade in (0ms - fadeInDuration)
   if (timeSinceLoad < fadeInDuration) {
     inputBoxOpacity = map(timeSinceLoad, 0, fadeInDuration, 0, 1);
   } else {
     inputBoxOpacity = 1;
   }
 
-  // 2. Logo placeholder fade in (等待 typewriter 動畫完成後才開始)
-  // typewriter 動畫從 0ms 開始，持續 1500ms
-  // logo 在 typewriter 完成後才開始 fade in
-  let logoStartTime = typewriterDuration; // 1500ms
-  if (timeSinceLoad >= logoStartTime && timeSinceLoad < logoStartTime + fadeInDuration) {
-    logoOpacity = map(timeSinceLoad, logoStartTime, logoStartTime + fadeInDuration, 0, 1);
-  } else if (timeSinceLoad >= logoStartTime + fadeInDuration) {
+  // 2. Logo 和 Control panel 在打字機動畫結束後 + fadeInDelay 延遲後同時 fade in
+  // 打字機動畫持續時間：typewriterDuration (1200ms)
+  // 延遲時間：fadeInDelay (400ms)
+  // Logo 和 Panel 同時開始時間：typewriterDuration + fadeInDelay (1600ms)
+  let logoAndPanelStartTime = typewriterDuration + fadeInDelay;
+
+  // Logo fade in
+  if (timeSinceLoad >= logoAndPanelStartTime && timeSinceLoad < logoAndPanelStartTime + fadeInDuration) {
+    logoOpacity = map(timeSinceLoad, logoAndPanelStartTime, logoAndPanelStartTime + fadeInDuration, 0, 1);
+  } else if (timeSinceLoad >= logoAndPanelStartTime + fadeInDuration) {
     logoOpacity = 1;
   }
 
-  // 3. Control panel fade in (Logo開始後 + 原本的delay時間)
-  // 原本的delay是 fadeInDelay * 2 = 1000ms，但這是從頁面載入開始算
-  // 現在改為：Logo開始時間(1500ms) + 原本兩個元素之間的間隔(fadeInDelay = 500ms)
-  let panelStartTime = logoStartTime + fadeInDelay;
-  if (timeSinceLoad >= panelStartTime && timeSinceLoad < panelStartTime + fadeInDuration) {
-    controlPanelOpacity = map(timeSinceLoad, panelStartTime, panelStartTime + fadeInDuration, 0, 1);
-  } else if (timeSinceLoad >= panelStartTime + fadeInDuration) {
+  // Control panel fade in (與 Logo 同時開始)
+  if (timeSinceLoad >= logoAndPanelStartTime && timeSinceLoad < logoAndPanelStartTime + fadeInDuration) {
+    controlPanelOpacity = map(timeSinceLoad, logoAndPanelStartTime, logoAndPanelStartTime + fadeInDuration, 0, 1);
+  } else if (timeSinceLoad >= logoAndPanelStartTime + fadeInDuration) {
     controlPanelOpacity = 1;
   }
 
@@ -867,9 +886,60 @@ function draw() {
       }
     }
 
+    // 如果離開 Wireframe 模式，停止 color wheel 旋轉
+    if (previousMode === "Wireframe" && targetMode !== "Wireframe") {
+      isColorWheelRotating = false;
+      updateColorWheelIcon();
+    }
+
     mode = targetMode; // 立即切換模式
 
     updateUI(); // 立即更新UI，包括body class
+  }
+
+  // --- Color Wheel 旋轉動畫 ---
+  if (mode === "Wireframe" && isColorWheelRotating) {
+    // 使用與 R slider 相同的旋轉速度 (baseSpeeds[0] = 0.125)
+    // 直接更新 selectedHue，讓旋轉跟隨當前選擇的顏色
+    selectedHue += baseSpeeds[0];
+
+    // 保持角度在 0-360 範圍內
+    if (selectedHue >= 360) {
+      selectedHue -= 360;
+    } else if (selectedHue < 0) {
+      selectedHue += 360;
+    }
+
+    // 計算 indicator 在色環上的位置
+    let angleRad = radians(selectedHue - 90); // -90 因為從頂部開始
+    let container = select('#colorpicker-container');
+    if (container) {
+      let containerSize = Math.min(container.elt.clientWidth, container.elt.clientHeight);
+      let outerRadius = containerSize / 2 - 2;
+      let innerRadius = outerRadius * 0.55;
+      let arcRadius = (outerRadius + innerRadius) / 2;
+
+      // 將極坐標轉換為 0-1 範圍的 X, Y
+      colorPickerIndicatorX = (cos(angleRad) * arcRadius + containerSize / 2) / containerSize;
+      colorPickerIndicatorY = (sin(angleRad) * arcRadius + containerSize / 2) / containerSize;
+    }
+
+    // 更新 wireframe 顏色（使用 HSB 模式：飽和度 80%，亮度 100%）
+    colorMode(HSB, 360, 100, 100);
+    wireframeColor = color(selectedHue, 80, 100);
+    colorMode(RGB, 255);
+
+    // 根據亮度決定描邊顏色（黑色或白色）
+    wireframeStrokeColor = getContrastColor(wireframeColor);
+
+    // 更新背景顏色（即時更新）
+    updateBackgroundColor(wireframeColor, true);
+
+    // 更新輸入框文字顏色（即時更新，與背景同步）
+    updateInputTextColor();
+
+    // 更新所有 icon 顏色（包括 play/pause icon）
+    updateIconsForMode();
   }
 
   // --- 色環繪製 (Wireframe 模式) ---
@@ -982,8 +1052,17 @@ function draw() {
   if (isEasterEggActive && currentEasterEggAlpha > 0) {
     push();
     tint(255, currentEasterEggAlpha);
-    // 根據模式選擇要顯示的彩蛋圖片
-    let imgToShow = (mode === 'Inverse') ? sccdWhiteImg : sccdBlackImg;
+    // 根據模式選擇要顯示的彩蛋圖片 (使用 _2 版本)
+    let imgToShow;
+    if (mode === 'Wireframe') {
+      // Wireframe 模式：根據描邊顏色選擇黑色或白色線框版本
+      imgToShow = (wireframeStrokeColor && red(wireframeStrokeColor) > 128)
+        ? sccdWhiteWireframeImg_2
+        : sccdBlackWireframeImg_2;
+    } else {
+      // Standard/Inverse 模式
+      imgToShow = (mode === 'Inverse') ? sccdWhiteImg_2 : sccdBlackImg_2;
+    }
     image(imgToShow, width / 2, height / 2, 360, 360); // 放大 1.2 倍 (300 * 1.2 = 360)
     pop();
   }
@@ -1329,7 +1408,8 @@ function drawLogo(pg, alphaMultiplier = 255) {
   }
 
   // Hover 時需要分兩批繪製：先繪製非 hover 的（半透明），再繪製 hover 的（置頂）
-  let drawingPasses = hoveredSlider ? 2 : 1;
+  // let drawingPasses = hoveredSlider ? 2 : 1;
+  let drawingPasses = 1; // 注解 hover 功能
 
   for (let pass = 0; pass < drawingPasses; pass++) {
     for (let i = 0; i < totalLetters; i++) {
@@ -1356,18 +1436,18 @@ function drawLogo(pg, alphaMultiplier = 255) {
       }
 
       // Hover 邏輯
-      let isHoveredColor = false;
-      if (hoveredSlider) {
-        if (hoveredSlider === 'r' && colorIndex === 0) isHoveredColor = true;
-        if (hoveredSlider === 'g' && colorIndex === 1) isHoveredColor = true;
-        if (hoveredSlider === 'b' && colorIndex === 2) isHoveredColor = true;
-      }
+      // let isHoveredColor = false;
+      // if (hoveredSlider) {
+      //   if (hoveredSlider === 'r' && colorIndex === 0) isHoveredColor = true;
+      //   if (hoveredSlider === 'g' && colorIndex === 1) isHoveredColor = true;
+      //   if (hoveredSlider === 'b' && colorIndex === 2) isHoveredColor = true;
+      // }
 
       // 第一次繪製時跳過 hover 的顏色，第二次只繪製 hover 的顏色
-      if (drawingPasses === 2) {
-        if (pass === 0 && isHoveredColor) continue; // 第一批：跳過 hover 的
-        if (pass === 1 && !isHoveredColor) continue; // 第二批：只繪製 hover 的
-      }
+      // if (drawingPasses === 2) {
+      //   if (pass === 0 && isHoveredColor) continue; // 第一批：跳過 hover 的
+      //   if (pass === 1 && !isHoveredColor) continue; // 第二批：只繪製 hover 的
+      // }
     
     // --- 更新每個字母的旋轉角度 ---
     // 只有在不是 ease 回 0° 的狀態下，才累積旋轉角度
@@ -1397,7 +1477,8 @@ function drawLogo(pg, alphaMultiplier = 255) {
 
     // 根據模式設定文字樣式並繪製
     // Hover 時，非 hover 的字母 25% 不透明度
-    let letterAlpha = (hoveredSlider && !isHoveredColor) ? 64 : 255;
+    // let letterAlpha = (hoveredSlider && !isHoveredColor) ? 64 : 255;
+    let letterAlpha = 255; // 注解 hover 功能，固定為 100% 不透明度
 
     if (isWireframeMode) {
       // Wireframe模式：使用色彩選擇器選擇的顏色
@@ -2161,12 +2242,20 @@ function performDownload() {
   let fileName = generateFileName();
 
   if (isEasterEggActive) {
-    // 彩蛋模式：保存靜態圖片
-    let imgToSave = (mode === 'Inverse') ? sccdWhiteImg : sccdBlackImg;
+    // 彩蛋模式：直接保存圖片（已經是 1080x1080）
+    let imgToSave;
+    if (mode === 'Wireframe') {
+      // Wireframe 模式：根據描邊顏色選擇黑色或白色線框版本
+      imgToSave = (wireframeStrokeColor && red(wireframeStrokeColor) > 128)
+        ? sccdWhiteWireframeImg
+        : sccdBlackWireframeImg;
+    } else {
+      // Standard/Inverse 模式
+      imgToSave = (mode === 'Inverse') ? sccdWhiteImg : sccdBlackImg;
+    }
     if (imgToSave) {
-      let pg = createGraphics(imgToSave.width, imgToSave.height);
-      pg.image(imgToSave, 0, 0);
-      pg.save(fileName);
+      // 直接保存圖片，不需要調整大小
+      save(imgToSave, fileName);
     }
   } else {
     // 正常模式：創建一個 1080x1080 的高解析度畫布來儲存
@@ -2233,8 +2322,18 @@ function generateFileName() {
     }
   }
 
-  // 模式部分：Standard 或 Inverse
-  let modePart = mode; // "Standard" 或 "Inverse"
+  // 模式部分：Standard、Inverse 或 Wireframe
+  let modePart = mode; // "Standard"、"Inverse" 或 "Wireframe"
+
+  // 如果是 Wireframe 模式，根據描邊顏色添加 Black 或 White
+  if (mode === "Wireframe") {
+    // 根據 wireframeStrokeColor 判斷是黑色還是白色
+    let strokeColorName = "Black"; // 預設黑色
+    if (wireframeStrokeColor && red(wireframeStrokeColor) > 128) {
+      strokeColorName = "White";
+    }
+    modePart = `${strokeColorName} Wireframe`;
+  }
 
   // 組合檔案名稱：文字 - 模式.png
   return `${textPart} - ${modePart}.png`;

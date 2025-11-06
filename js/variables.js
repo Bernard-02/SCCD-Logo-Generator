@@ -34,7 +34,10 @@ const smallFontSize = '60px';        // 31-40 字
 // --- 彩蛋相關 ---
 const easterEggString = "SHIHCHIENCOMMUNICATIONSDESIGN";
 let isEasterEggActive = false;
-let sccdBlackImg, sccdWhiteImg;
+let sccdBlackImg, sccdWhiteImg; // 用於下載
+let sccdBlackWireframeImg, sccdWhiteWireframeImg; // 用於下載
+let sccdBlackImg_2, sccdWhiteImg_2; // 用於顯示
+let sccdBlackWireframeImg_2, sccdWhiteWireframeImg_2; // 用於顯示
 
 // --- 淡入淡出動畫 ---
 let isFading = false;
@@ -64,7 +67,7 @@ let targetRSliderValue = 0, targetGSliderValue = 0, targetBSliderValue = 0;
 let isEasingSlider = false;
 
 // --- Slider Hover 狀態 ---
-let hoveredSlider = null; // 'r', 'g', 'b', or null
+// let hoveredSlider = null; // 'r', 'g', 'b', or null
 
 // --- DOM 元素 ---
 let inputBox, inputBoxMobile;
@@ -86,6 +89,11 @@ let colorPickerIndicatorX = 0; // 指示器 X 位置 (0-1)
 let colorPickerIndicatorY = 0.5; // 指示器 Y 位置 (0-1)
 let colorPickerDragging = false;
 
+// --- Color Wheel 動畫相關 ---
+let isColorWheelRotating = false; // Color wheel 是否正在旋轉
+let colorWheelPlayButton; // Play/Pause 按鈕元素
+let colorWheelPlayIcon; // Play/Pause icon 元素
+
 // --- 禁用顏色 ---
 let disabledColor = 'rgba(0, 0, 0, 0.25)'; // 黑色25%不透明度
 
@@ -102,7 +110,7 @@ let typewriterLines = [];
 let typewriterCurrentLine = 0;
 let typewriterCurrentChar = 0;
 let typewriterStartTime = 0;
-const typewriterDuration = 800; // ms
+const typewriterDuration = 1200; // ms
 let typewriterTotalChars = 0;
 
 // --- Logo 繪製相關常數 ---
@@ -120,5 +128,5 @@ let pageLoadStartTime = 0;
 let inputBoxOpacity = 0;
 let logoOpacity = 0;
 let controlPanelOpacity = 0;
-const fadeInDuration = 300; // ms
-const fadeInDelay = 600; // ms
+const fadeInDuration = 500; // ms
+const fadeInDelay = 300; // ms

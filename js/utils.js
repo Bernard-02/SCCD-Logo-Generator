@@ -167,8 +167,10 @@ function updateIconsForMode() {
   // Custom 圖標 - 統一使用當前模式的 icon，CSS 會根據 disabled 狀態調整 opacity
   const customIconSrc = `Panel Icon/Custom${suffix}.svg`;
 
-  // Download 圖標 - 統一使用當前模式的 icon，CSS 會根據 disabled 狀態調整 opacity
-  const downloadIconSrc = `Panel Icon/Download${suffix}.svg`;
+  // Download 圖標 - 彩蛋模式下使用 Gift icon，否則使用 Download icon
+  const downloadIconSrc = isEasterEggActive
+    ? `Panel Icon/Gift${suffix}.svg`
+    : `Panel Icon/Download${suffix}.svg`;
 
   // Random 和 Reset 圖標 - 統一使用當前模式的 icon
   const randomIconSrc = `Panel Icon/Random${suffix}.svg`;
@@ -189,4 +191,32 @@ function updateIconsForMode() {
 
   // 更新 Rotate 圖標
   updateRotateIcon();
+
+  // 更新 Color Wheel Play/Pause 圖標
+  updateColorWheelIcon();
+}
+
+// 更新 Color Wheel Play/Pause 圖標
+function updateColorWheelIcon() {
+  if (!colorWheelPlayIcon || !colorWheelPlayButton) return;
+
+  // 根據背景色決定使用黑色或白色 icon
+  let suffix = "";
+  if (wireframeStrokeColor && red(wireframeStrokeColor) > 128) {
+    suffix = "_Inverse";
+  }
+
+  // 根據旋轉狀態選擇 Play 或 Pause icon
+  let iconSrc = isColorWheelRotating
+    ? `Panel Icon/Pause${suffix}.svg`
+    : `Panel Icon/Play${suffix}.svg`;
+
+  colorWheelPlayIcon.attribute('src', iconSrc);
+
+  // 添加或移除 is-play class（Play 狀態向右移 1px）
+  if (isColorWheelRotating) {
+    colorWheelPlayButton.removeClass('is-play');
+  } else {
+    colorWheelPlayButton.addClass('is-play');
+  }
 }

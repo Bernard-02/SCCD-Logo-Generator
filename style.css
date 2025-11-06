@@ -30,8 +30,8 @@
 
   /* 縮放系統 */
   --scale: 1; /* 整體縮放比例 */
-  --border-radius: calc(24px * var(--scale)); /* 按鈕的圓角 */
-  --panel-border-radius: calc(32px * var(--scale)); /* control-box 的圓角 */
+  --border-radius: calc(20px * var(--scale)); /* 按鈕的圓角 */
+  --panel-border-radius: calc(28px * var(--scale)); /* control-box 的圓角 */
 
   /* 按鈕尺寸基準值 */
   --button-font-size: calc(1rem * var(--scale));
@@ -219,10 +219,18 @@ body.wireframe-mode #input-box::placeholder {
   transition: border-color 0s ease, background-color 1s ease, opacity 0s ease;
 }
 
-/* 讓 colormode-box 和 save-box 整個區域都可以點擊 */
+/* 讓 colormode-box、rotation-box 和 save-box 整個區域都可以點擊 */
 #colormode-box,
+#rotation-box,
 #save-box {
   cursor: pointer;
+}
+
+/* Disabled 狀態下覆蓋 cursor */
+#colormode-box.disabled,
+#rotation-box.disabled,
+#save-box.disabled {
+  cursor: not-allowed !important;
 }
 
 /* 根據模式切換邊框顏色和背景色 */
@@ -243,12 +251,14 @@ body.wireframe-mode .control-box {
 body.standard-mode .control-box.disabled {
   border-color: black !important;
   opacity: 0.25;
+  cursor: not-allowed;
   transition: border-color 0.2s ease, background-color 1s ease; /* 移除 opacity transition 避免延遲 */
 }
 
 body.inverse-mode .control-box.disabled {
   border-color: white !important;
   opacity: 0.5;
+  cursor: not-allowed;
   transition: border-color 0.2s ease, background-color 1s ease; /* 移除 opacity transition 避免延遲 */
 }
 
@@ -256,6 +266,7 @@ body.inverse-mode .control-box.disabled {
 body.wireframe-mode .control-box.disabled {
   border-color: var(--wireframe-border) !important;
   opacity: var(--wireframe-opacity);
+  cursor: not-allowed;
   transition: border-color 0.2s ease, background-color 1s ease; /* 移除 opacity transition 避免延遲 */
 }
 
@@ -461,6 +472,11 @@ body.inverse-mode .button-indicator {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: opacity 0.3s ease;
+}
+
+.image-button img {
+  transition: opacity 0.3s ease;
 }
 
 /* 確保按鈕內的圖片不會阻擋點擊事件 */
@@ -514,7 +530,7 @@ body.inverse-mode .button-indicator {
   align-items: center;
   justify-content: center;
   color: var(--disabled-color);
-  transition: color 0.2s;
+  transition: color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
   position: relative;
   z-index: 1;
   gap: 2px;
@@ -543,6 +559,7 @@ body.inverse-mode .button-indicator {
   display: block;
   line-height: 1.2;
   white-space: nowrap;
+  pointer-events: none; /* 確保文字不會阻擋點擊事件，cursor 從 button 繼承 */
 }
 
 /* --- 個別按鈕尺寸 --- */
@@ -554,28 +571,13 @@ body.inverse-mode .button-indicator {
 
 /* Rotate 按鈕有過渡效果 */
 .custom-button-rotate {
-  transition: color 0.2s, border-color 0.3s;
+  transition: color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
 }
 
-/* Custom 按鈕的邊框過渡效果較快（0.1s） */
+/* Custom 按鈕的過渡效果 */
 .custom-button-custom {
-  transition: color 0.2s, border-color 0.1s;
-}
-
-/* Custom 按鈕放大 1.05 倍 */
-.custom-button-custom {
+  transition: color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
   transform: scale(1.07);
-}
-
-/* Custom 按鈕的顯示/隱藏過渡效果 */
-.custom-button-custom:not(:disabled) {
-  /* 當按鈕從 disabled 變為 enabled 時，添加延遲和過渡（移除 opacity transition 避免延遲） */
-  transition: color 0.2s, border-color 0.1s, transform 0.3s ease;
-}
-
-.custom-button-custom:disabled {
-  /* 當按鈕變為 disabled 時，快速隱藏（移除 opacity transition 避免延遲） */
-  transition: color 0.2s, border-color 0.1s, transform 0.2s ease;
 }
 
 /* rotation 按鈕的 active 狀態：按鈕本身需要邊框 */
@@ -592,11 +594,13 @@ body.wireframe-mode .custom-button-rotate.active {
 /* Custom 按鈕選中時：按鈕本身不要邊框，保持透明 */
 .custom-button-custom.active {
   border-color: transparent;
+  transition: color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+  /* 移除 border-color 的 transition，讓 border 瞬間消失 */
 }
 /* wireframe模式下Custom按鈕的邊框顏色也保持透明 */
 
 .custom-button:disabled {
-  cursor: default;
+  cursor: not-allowed;
   color: var(--disabled-color);
 }
 
@@ -635,14 +639,14 @@ body.wireframe-mode .custom-button:not(.active):not(:disabled):hover {
   color: #888; /* Wireframe 模式下的 hover 顏色 */
 }
 
-/* Rotate 按鈕：未選中時無 border，hover 時顯示帶透明度的 border */
+/* Rotate 按鈕：未選中時無 border，hover 時顯示不透明的 border 和 icon */
 body.standard-mode .custom-button-rotate:not(.active):not(:disabled) {
   border-color: transparent;
   opacity: 0.25;
 }
 body.standard-mode .custom-button-rotate:not(.active):not(:disabled):hover {
   border-color: black;
-  opacity: 0.25;
+  opacity: 1; /* hover 時完全不透明 */
 }
 
 body.inverse-mode .custom-button-rotate:not(.active):not(:disabled) {
@@ -651,7 +655,7 @@ body.inverse-mode .custom-button-rotate:not(.active):not(:disabled) {
 }
 body.inverse-mode .custom-button-rotate:not(.active):not(:disabled):hover {
   border-color: white;
-  opacity: 0.5;
+  opacity: 1; /* hover 時完全不透明 */
 }
 
 /* Wireframe 模式下未選中的 Rotate 按鈕：使用變數透明度 */
@@ -661,16 +665,17 @@ body.wireframe-mode .custom-button-rotate:not(.active):not(:disabled) {
 }
 body.wireframe-mode .custom-button-rotate:not(.active):not(:disabled):hover {
   border-color: var(--wireframe-border);
+  opacity: 1; /* hover 時完全不透明 */
 }
 
-/* Custom 按鈕：未選中時無 border，hover 時顯示帶透明度的 border */
+/* Custom 按鈕：未選中時無 border，hover 時顯示不透明的 border 和 icon */
 body.standard-mode .custom-button-custom:not(.active):not(:disabled) {
   border-color: transparent;
   opacity: 0.25;
 }
 body.standard-mode .custom-button-custom:not(.active):not(:disabled):hover {
   border-color: black;
-  opacity: 0.25;
+  opacity: 1; /* hover 時完全不透明 */
 }
 
 body.inverse-mode .custom-button-custom:not(.active):not(:disabled) {
@@ -679,7 +684,7 @@ body.inverse-mode .custom-button-custom:not(.active):not(:disabled) {
 }
 body.inverse-mode .custom-button-custom:not(.active):not(:disabled):hover {
   border-color: white;
-  opacity: 0.5;
+  opacity: 1; /* hover 時完全不透明 */
 }
 
 /* Wireframe 模式下未選中的 Custom 按鈕：使用變數透明度 */
@@ -689,6 +694,7 @@ body.wireframe-mode .custom-button-custom:not(.active):not(:disabled) {
 }
 body.wireframe-mode .custom-button-custom:not(.active):not(:disabled):hover {
   border-color: var(--wireframe-border);
+  opacity: 1; /* hover 時完全不透明 */
 }
 
 body.inverse-mode .custom-button.active {
@@ -844,10 +850,10 @@ body.wireframe-mode .custom-slider.enabled::-moz-range-thumb {
 
 /* Slider hover 效果 */
 /* 當 hover 在某個 slider 上時，其他 slider 變成 50% 透明 */
-.slider-container.dimmed .custom-slider {
+/* .slider-container.dimmed .custom-slider {
   opacity: 0.5;
   transition: opacity 0.2s ease;
-}
+} */
 
 /* Disabled slider 也要保持 50% 透明度（所有模式） */
 .custom-slider:not(.enabled) {
@@ -862,7 +868,7 @@ body.wireframe-mode .custom-slider.enabled::-moz-range-thumb {
   width: calc(40px * var(--scale));
   text-align: center;
   color: #999; /* 預設顏色 */
-  transition: color 0.3s ease;
+  transition: color 0.3s ease, opacity 0.3s ease;
   background: none;
   border: none;
   outline: none;
@@ -1028,12 +1034,14 @@ body.wireframe-mode .angle-input:not(.enabled) {
   body.standard-mode .mobile-rotation-box.disabled {
     border-color: black !important;
     opacity: 0.25;
+    cursor: not-allowed;
     transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
   body.inverse-mode .mobile-rotation-box.disabled {
     border-color: white !important;
     opacity: 0.5;
+    cursor: not-allowed;
     transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
@@ -1041,6 +1049,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
   body.wireframe-mode .mobile-rotation-box.disabled {
     border-color: var(--wireframe-border) !important;
     opacity: 0.5; /* 白色邊框時的透明度 */
+    cursor: not-allowed;
     transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
@@ -1354,12 +1363,14 @@ body.wireframe-mode .angle-input:not(.enabled) {
   body.standard-mode .mobile-save-container.disabled {
     border-color: black !important;
     opacity: 0.25;
+    cursor: not-allowed;
     transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
   body.inverse-mode .mobile-save-container.disabled {
     border-color: white !important;
     opacity: 0.5;
+    cursor: not-allowed;
     transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
@@ -1367,6 +1378,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
   body.wireframe-mode .mobile-save-container.disabled {
     border-color: var(--wireframe-border) !important;
     opacity: 0.5; /* 白色邊框時的透明度 */
+    cursor: not-allowed;
     transition: border-color 0.2s ease; /* 移除 opacity transition 避免延遲 */
   }
 
@@ -1391,4 +1403,44 @@ body.wireframe-mode .angle-input:not(.enabled) {
   }
 
   /* 手機版不需要額外的樣式，因為不顯示 control-panel */
+}
+
+/* --- Color Wheel Play/Pause 按鈕樣式 --- */
+.colorwheel-play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 10;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Play 狀態時向右移動 1px */
+.colorwheel-play-button.is-play {
+  transform: translate(calc(-50% + 1px), -50%);
+}
+
+.colorwheel-play-button:hover {
+  opacity: 0.7;
+}
+
+.colorwheel-play-button img {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+/* Wireframe 模式下才顯示 */
+body:not(.wireframe-mode) .colorwheel-play-button {
+  display: none;
 }
