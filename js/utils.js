@@ -181,13 +181,15 @@ function updateIconsForMode() {
   if (colormodeIcon) colormodeIcon.attribute('src', colormodeIconSrc);
   if (randomImg) randomImg.attribute('src', randomIconSrc);
   if (resetImg) resetImg.attribute('src', resetIconSrc);
-  if (saveImg) saveImg.attribute('src', downloadIconSrc);
+  // 只在下載動畫未執行時更新下載按鈕icon（避免干擾動畫）
+  if (saveImg && !isDownloading) saveImg.attribute('src', downloadIconSrc);
 
   // 更新手機版圖標
   if (mobileCustomIcon) mobileCustomIcon.attribute('src', customIconSrc);
   if (mobileRandomImg) mobileRandomImg.attribute('src', randomIconSrc);
   if (mobileResetImg) mobileResetImg.attribute('src', resetIconSrc);
-  if (saveImgMobile) saveImgMobile.attribute('src', downloadIconSrc);
+  // 只在下載動畫未執行時更新下載按鈕icon（避免干擾動畫）
+  if (saveImgMobile && !isDownloading) saveImgMobile.attribute('src', downloadIconSrc);
 
   // 更新 Rotate 圖標
   updateRotateIcon();

@@ -8,24 +8,36 @@
 
 // --- p5.js 預載入 ---
 function preload() {
+  // 載入必要的字體
   font = loadFont("Inter-Medium.ttf");
-  // 載入彩蛋圖片 - 用於下載
-  sccdBlackImg = loadImage('Easter Egg/sccd_black.png');
-  sccdWhiteImg = loadImage('Easter Egg/sccd_white.png');
-  sccdBlackWireframeImg = loadImage('Easter Egg/SCCD_Black Wireframe.png');
-  sccdWhiteWireframeImg = loadImage('Easter Egg/SCCD_White Wireframe.png');
-  // 載入彩蛋圖片 - 用於顯示 (_2 版本)
+
+  // 預載入彩蛋顯示圖片（_2 版本），確保彩蛋激活時能即時顯示
   sccdBlackImg_2 = loadImage('Easter Egg/sccd_black_2.png');
   sccdWhiteImg_2 = loadImage('Easter Egg/sccd_white_2.png');
   sccdBlackWireframeImg_2 = loadImage('Easter Egg/SCCD_Black Wireframe_2.png');
   sccdWhiteWireframeImg_2 = loadImage('Easter Egg/SCCD_White Wireframe_2.png');
-  // 載入 placeholder SVG wireframe (三層分離 - 黑色和白色版本)
-  placeholderR = loadImage('Placeholder Logo/SCCD_R.svg');
-  placeholderG = loadImage('Placeholder Logo/SCCD_G.svg');
-  placeholderB = loadImage('Placeholder Logo/SCCD_B.svg');
-  placeholderR_white = loadImage('Placeholder Logo/SCCD_R_white.svg');
-  placeholderG_white = loadImage('Placeholder Logo/SCCD_G_white.svg');
-  placeholderB_white = loadImage('Placeholder Logo/SCCD_B_white.svg');
+}
+
+// --- 延遲載入彩蛋下載圖片（只在需要下載時載入）---
+function loadEasterEggDownloadImages() {
+  if (!sccdBlackImg) {
+    sccdBlackImg = loadImage('Easter Egg/sccd_black.png');
+    sccdWhiteImg = loadImage('Easter Egg/sccd_white.png');
+    sccdBlackWireframeImg = loadImage('Easter Egg/SCCD_Black Wireframe.png');
+    sccdWhiteWireframeImg = loadImage('Easter Egg/SCCD_White Wireframe.png');
+  }
+}
+
+// --- 延遲載入 placeholder SVG（只在沒有文字時載入）---
+function loadPlaceholderImages() {
+  if (!placeholderR) {
+    placeholderR = loadImage('Placeholder Logo/SCCD_R.svg');
+    placeholderG = loadImage('Placeholder Logo/SCCD_G.svg');
+    placeholderB = loadImage('Placeholder Logo/SCCD_B.svg');
+    placeholderR_white = loadImage('Placeholder Logo/SCCD_R_white.svg');
+    placeholderG_white = loadImage('Placeholder Logo/SCCD_G_white.svg');
+    placeholderB_white = loadImage('Placeholder Logo/SCCD_B_white.svg');
+  }
 }
 
 // --- 計算去飽和顏色（將 Saturation 設為 0）---
@@ -168,6 +180,31 @@ function setup() {
     }
   });
 
+  // --- 讓輸入框永遠保持 focus 狀態（桌面版）---
+  // 頁面載入時自動 focus
+  inputBox.elt.focus();
+
+  // 當輸入框失去 focus 時，檢查新焦點是否為角度 label，如果不是則重新 focus
+  inputBox.elt.addEventListener('blur', function() {
+    // 使用 setTimeout 確保在事件循環後重新 focus
+    setTimeout(() => {
+      if (!isMobileMode) {
+        // 檢查當前 focus 的元素是否為角度 label
+        const activeElement = document.activeElement;
+        const isAngleLabel = activeElement && (
+          activeElement.id === 'r-angle-label' ||
+          activeElement.id === 'g-angle-label' ||
+          activeElement.id === 'b-angle-label'
+        );
+
+        // 如果當前焦點不是角度 label，則重新 focus 到輸入框
+        if (!isAngleLabel) {
+          inputBox.elt.focus();
+        }
+      }
+    }, 0);
+  });
+
   if (inputBoxMobile) {
     inputBoxMobile.input(handleInput);
     // 阻擋手機版空白鍵輸入
@@ -175,6 +212,16 @@ function setup() {
       if (e.key === ' ' || e.keyCode === 32) {
         e.preventDefault();
       }
+    });
+
+    // --- 讓輸入框永遠保持 focus 狀態（手機版）---
+    // 當輸入框失去 focus 時，立即重新 focus（確保 caret 永遠顯示）
+    inputBoxMobile.elt.addEventListener('blur', function() {
+      setTimeout(() => {
+        if (isMobileMode) { // 只在手機版自動重新 focus
+          inputBoxMobile.elt.focus();
+        }
+      }, 0);
     });
   }
   
@@ -372,35 +419,80 @@ function setup() {
   // bSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
 
   // --- 為角度輸入框綁定事件 ---
-  rAngleLabel.elt.addEventListener('input', function(e) {
+  // 限制輸入只能是數字、- 和 +
+  const filterAngleInput = function(e) {
+    // 允許控制鍵（Backspace, Delete, Arrow keys, Tab, Enter 等）
+    const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter', 'Home', 'End'];
+    if (allowedKeys.includes(e.key)) {
+      return; // 允許這些按鍵
+    }
+
+    // 只允許數字、- 和 +
+    if (!/^[0-9\-+]$/.test(e.key)) {
+      e.preventDefault(); // 阻止其他字符輸入
+    }
+  };
+
+  // 處理 R 角度輸入
+  const handleRAngleInput = function(e) {
     if (!isEasterEggActive && !isAutoRotateMode) {
       let normalizedAngle = convertAngleInput(e.target.value);
       rSlider.value(normalizedAngle);
       updateSliders();
       updateUI();
     }
+  };
+  rAngleLabel.elt.addEventListener('keydown', function(e) {
+    filterAngleInput(e); // 先過濾輸入
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleRAngleInput(e);
+      e.target.blur(); // 移除焦點，隱藏 caret
+    }
   });
+  rAngleLabel.elt.addEventListener('blur', handleRAngleInput);
 
-  gAngleLabel.elt.addEventListener('input', function(e) {
+  // 處理 G 角度輸入
+  const handleGAngleInput = function(e) {
     if (!isEasterEggActive && !isAutoRotateMode) {
       let normalizedAngle = convertAngleInput(e.target.value);
       gSlider.value(normalizedAngle);
       updateSliders();
       updateUI();
     }
+  };
+  gAngleLabel.elt.addEventListener('keydown', function(e) {
+    filterAngleInput(e); // 先過濾輸入
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleGAngleInput(e);
+      e.target.blur(); // 移除焦點，隱藏 caret
+    }
   });
+  gAngleLabel.elt.addEventListener('blur', handleGAngleInput);
 
-  bAngleLabel.elt.addEventListener('input', function(e) {
+  // 處理 B 角度輸入
+  const handleBAngleInput = function(e) {
     if (!isEasterEggActive && !isAutoRotateMode) {
       let normalizedAngle = convertAngleInput(e.target.value);
       bSlider.value(normalizedAngle);
       updateSliders();
       updateUI();
     }
+  };
+  bAngleLabel.elt.addEventListener('keydown', function(e) {
+    filterAngleInput(e); // 先過濾輸入
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleBAngleInput(e);
+      e.target.blur(); // 移除焦點，隱藏 caret
+    }
   });
+  bAngleLabel.elt.addEventListener('blur', handleBAngleInput);
 
   // --- 綁定手機版角度輸入框事件 ---
   if (mobileRAngleLabel) {
+    mobileRAngleLabel.elt.addEventListener('keydown', filterAngleInput); // 過濾輸入
     mobileRAngleLabel.elt.addEventListener('input', function(e) {
       if (!isEasterEggActive && !isAutoRotateMode) {
         let normalizedAngle = convertAngleInput(e.target.value);
@@ -415,6 +507,7 @@ function setup() {
   }
 
   if (mobileGAngleLabel) {
+    mobileGAngleLabel.elt.addEventListener('keydown', filterAngleInput); // 過濾輸入
     mobileGAngleLabel.elt.addEventListener('input', function(e) {
       if (!isEasterEggActive && !isAutoRotateMode) {
         let normalizedAngle = convertAngleInput(e.target.value);
@@ -429,6 +522,7 @@ function setup() {
   }
 
   if (mobileBAngleLabel) {
+    mobileBAngleLabel.elt.addEventListener('keydown', filterAngleInput); // 過濾輸入
     mobileBAngleLabel.elt.addEventListener('input', function(e) {
       if (!isEasterEggActive && !isAutoRotateMode) {
         let normalizedAngle = convertAngleInput(e.target.value);
@@ -884,17 +978,52 @@ function draw() {
         colorPickerCanvas.remove(); // 移除舊的 canvas
         colorPickerCanvas = null;
       }
+
+      // 立即設定wireframe顏色（隨機色相），確保updateIconsForMode能使用正確的顏色
+      selectedHue = random(0, 360);
+      colorMode(HSB, 360, 100, 100);
+      wireframeColor = color(selectedHue, 80, 100);
+      colorMode(RGB, 255);
+      wireframeStrokeColor = getContrastColor(wireframeColor);
+
+      // 更新背景顏色（使用 CSS 變數）
+      updateBackgroundColor(wireframeColor);
+
+      // 更新輸入框文字顏色
+      updateInputTextColor();
     }
 
     // 如果離開 Wireframe 模式，停止 color wheel 旋轉
     if (previousMode === "Wireframe" && targetMode !== "Wireframe") {
       isColorWheelRotating = false;
       updateColorWheelIcon();
+
+      // 恢復 transition，確保切換模式時有 fade 效果
+      let body = select('body');
+      let canvasContainer = select('#canvas-container');
+      if (body) {
+        body.elt.style.transition = '';
+      }
+      if (canvasContainer) {
+        canvasContainer.elt.style.transition = '';
+      }
     }
 
     mode = targetMode; // 立即切換模式
 
-    updateUI(); // 立即更新UI，包括body class
+    // 如果切換到非 Wireframe 模式，確保恢復 transition（即使 wheel 正在旋轉）
+    if (targetMode !== "Wireframe") {
+      let body = select('body');
+      let canvasContainer = select('#canvas-container');
+      if (body) {
+        body.elt.style.transition = '';
+      }
+      if (canvasContainer) {
+        canvasContainer.elt.style.transition = '';
+      }
+    }
+
+    updateUI(); // 立即更新UI，包括body class（此時wireframeStrokeColor已經設定好了）
   }
 
   // --- Color Wheel 旋轉動畫 ---
@@ -961,22 +1090,13 @@ function draw() {
           colorPickerCanvas.elt.style.display = 'block';
           colorPickerCanvas.elt.style.margin = 'auto';
 
-          // 設置初始 indicator 位置（隨機色相）
-          selectedHue = random(0, 360); // 隨機選擇 0-360 度
+          // 設置初始 indicator 位置（使用已經設定好的 selectedHue）
+          // selectedHue 已經在模式切換時設定好了，不需要重新隨機
           colorPickerIndicatorX = 0.5;
           colorPickerIndicatorY = 0.25;
 
-          // 設置初始顏色（隨機色相）
-          colorMode(HSB, 360, 100, 100);
-          wireframeColor = color(selectedHue, 80, 100);
-          colorMode(RGB, 255);
-          wireframeStrokeColor = getContrastColor(wireframeColor);
-
-          // 更新背景顏色（使用 CSS 變數）
-          updateBackgroundColor(wireframeColor);
-
-          // 更新輸入框文字顏色
-          updateInputTextColor();
+          // wireframeColor 和 wireframeStrokeColor 已經在模式切換時設定好了
+          // 不需要重新設定，避免閃爍
 
           // 綁定鼠標事件
           colorPickerCanvas.elt.addEventListener('mousedown', handleColorPickerMouseDown);
@@ -1030,6 +1150,8 @@ function draw() {
   // --- Placeholder SVG 繪製 ---
   // 非彩蛋模式時，當沒有文字或正在 fade out 時繪製（透明度由 placeholderAlpha 控制）
   if (!isEasterEggActive && (letters.length === 0 || placeholderAlpha > 1)) {
+    // 延遲載入 placeholder 圖片（只在第一次需要時載入）
+    loadPlaceholderImages();
     drawPlaceholder(this);
   }
 
@@ -1129,6 +1251,8 @@ function handleInput(event) {
     let previousEasterEggState = isEasterEggActive;
     let normalizedInput = validInput.toUpperCase().replace(/[\s\n]/g, "");
     isEasterEggActive = (normalizedInput === easterEggString || normalizedInput === "SCCD");
+
+    // 顯示圖片已在 preload() 中載入，無需額外處理
   
     // --- UI 啟用/禁用邏輯 ---
     if (letters.length > 0 && !isEasterEggActive) {
@@ -1688,8 +1812,9 @@ function convertAngleInput(value) {
         return 0;
     }
 
-    // 執行模 360 運算並正規化到 -180 到 180 之間
-    return normalizeAngle(angle);
+    // 對 360 取餘數，保留負值
+    angle = angle % 360;
+    return angle;
 }
 
 // --- 新增：計算最短旋轉路徑 ---
@@ -1713,8 +1838,19 @@ function animateSaveButton(button, iconElement) {
     if (!button || !iconElement) return;
 
     const isInverseMode = mode === "Inverse";
-    const suffix = isInverseMode ? "_Inverse" : "";
-    const rotateDuration = 1500; // Generate icon 旋轉時長：1.5秒
+    const isWireframeMode = mode === "Wireframe";
+
+    // 決定 icon 後綴（黑色或白色版本）
+    let suffix = "";
+    if (isWireframeMode) {
+        // 根據 wireframeStrokeColor 判斷是使用黑色還是白色 icon
+        const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
+        suffix = isWhiteIcon ? "_Inverse" : "";
+    } else {
+        suffix = isInverseMode ? "_Inverse" : "";
+    }
+
+    const rotateDuration = 800; // Generate icon 旋轉時長：1.5秒
     const fadeInOutDuration = 200; // 淡入淡出時間：200ms
     const scaleUpDuration = 100; // Generate icon 放大時間：100ms（快速出現）
 
@@ -1722,39 +1858,58 @@ function animateSaveButton(button, iconElement) {
     const originalIconSrc = iconElement.attribute('src');
     const generateIconSrc = `Panel Icon/Generate${suffix}.svg`;
 
+    // 獲取原生DOM元素，使用原生方法確保完全控制
+    const imgEl = iconElement.elt;
+
+    // 0. 先完全清除任何可能存在的 transform 樣式（防止繼承旋轉等效果）
+    imgEl.style.removeProperty('transform');
+    imgEl.style.removeProperty('transition');
+    imgEl.style.removeProperty('opacity');
+
+    // 重新設定初始狀態
+    imgEl.style.transform = 'scale(1) rotate(0deg)';
+    imgEl.style.transition = 'none';
+    imgEl.style.opacity = '1';
+
+    // 強制重繪，確保清除生效
+    void imgEl.offsetHeight;
+
     // 1. 縮小原 icon 並淡出
-    iconElement.style('transition', `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`);
-    iconElement.style('transform', 'scale(0)');
-    iconElement.style('opacity', '0');
+    imgEl.style.transition = `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`;
+    // 使用requestAnimationFrame確保瀏覽器已經處理好初始狀態
+    requestAnimationFrame(() => {
+        imgEl.style.transform = 'scale(0) rotate(0deg)';
+        imgEl.style.opacity = '0';
+    });
 
     // 2. fadeInOutDuration 後切換到 Generate icon，並快速放大同時旋轉
     setTimeout(() => {
         iconElement.attribute('src', generateIconSrc);
         // 設定 transition：scale 和 opacity 快速出現（100ms），rotation 使用 linear（1500ms）
-        iconElement.style('transition', `transform ${scaleUpDuration}ms ease, opacity ${scaleUpDuration}ms ease`);
-        iconElement.style('transform', 'scale(1) rotate(0deg)');
-        iconElement.style('opacity', '1');
+        imgEl.style.transition = `transform ${scaleUpDuration}ms ease, opacity ${scaleUpDuration}ms ease`;
+        imgEl.style.transform = 'scale(1) rotate(0deg)';
+        imgEl.style.opacity = '1';
 
         // 放大完成後立即開始旋轉
         setTimeout(() => {
-            iconElement.style('transition', `transform ${rotateDuration}ms linear`);
-            iconElement.style('transform', 'scale(1) rotate(360deg)');
+            imgEl.style.transition = `transform ${rotateDuration}ms linear`;
+            imgEl.style.transform = 'scale(1) rotate(360deg)';
         }, scaleUpDuration);
     }, fadeInOutDuration);
 
     // 3. 旋轉完成後立即縮小並消失（無停留）
     setTimeout(() => {
-        iconElement.style('transition', `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`);
-        iconElement.style('transform', 'scale(0) rotate(360deg)');
-        iconElement.style('opacity', '0');
+        imgEl.style.transition = `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`;
+        imgEl.style.transform = 'scale(0) rotate(360deg)';
+        imgEl.style.opacity = '0';
     }, fadeInOutDuration + scaleUpDuration + rotateDuration);
 
     // 4. Generate icon 縮小完成後，重置旋轉為 0 度並切換回原 icon
     setTimeout(() => {
         // 先移除所有 transition，避免旋轉殘留
-        iconElement.style('transition', 'none');
-        iconElement.style('transform', 'scale(0)');
-        iconElement.style('opacity', '0');
+        imgEl.style.transition = 'none';
+        imgEl.style.transform = 'scale(0) rotate(0deg)';
+        imgEl.style.opacity = '0';
 
         setTimeout(() => {
             // 切換回原 icon
@@ -1762,15 +1917,16 @@ function animateSaveButton(button, iconElement) {
 
             // 短暫延遲後再設定 transition 並放大
             setTimeout(() => {
-                iconElement.style('transition', `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`);
-                iconElement.style('transform', 'scale(1)');
-                iconElement.style('opacity', '1');
+                imgEl.style.transition = `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`;
+                imgEl.style.transform = 'scale(1) rotate(0deg)';
+                imgEl.style.opacity = '1';
 
-                // 移除 transition 樣式，避免影響後續
+                // 移除 transition 樣式，避免影響後續，確保完全清除旋轉
                 setTimeout(() => {
-                    iconElement.style('transition', '');
-                    iconElement.style('transform', '');
-                    iconElement.style('opacity', '');
+                    // 使用原生方法完全清除所有樣式
+                    imgEl.style.removeProperty('transition');
+                    imgEl.style.removeProperty('transform');
+                    imgEl.style.removeProperty('opacity');
                 }, fadeInOutDuration);
             }, 10);
         }, 10);
@@ -1968,9 +2124,18 @@ function updateUI() {
         let rVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetRRotationOffset) : rRotationOffset);
         let gVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetGRotationOffset) : gRotationOffset);
         let bVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetBRotationOffset) : bRotationOffset);
-        rAngleLabel.value((rVal > 0 ? "+" : "") + rVal);
-        gAngleLabel.value((gVal > 0 ? "+" : "") + gVal);
-        bAngleLabel.value((bVal > 0 ? "+" : "") + bVal);
+
+        // 只在角度 label 沒有焦點時才更新它的值（避免干擾用戶編輯）
+        const activeElement = document.activeElement;
+        if (activeElement !== rAngleLabel.elt) {
+          rAngleLabel.value((rVal > 0 ? "+" : "") + rVal);
+        }
+        if (activeElement !== gAngleLabel.elt) {
+          gAngleLabel.value((gVal > 0 ? "+" : "") + gVal);
+        }
+        if (activeElement !== bAngleLabel.elt) {
+          bAngleLabel.value((bVal > 0 ? "+" : "") + bVal);
+        }
 
         // 更新 Save 按鈕
         saveButton.style('display', 'flex');
@@ -2134,9 +2299,18 @@ function updateUI() {
         let rVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetRRotationOffset) : rRotationOffset);
         let gVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetGRotationOffset) : gRotationOffset);
         let bVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetBRotationOffset) : bRotationOffset);
-        mobileRAngleLabel.value((rVal > 0 ? "+" : "") + rVal);
-        mobileGAngleLabel.value((gVal > 0 ? "+" : "") + gVal);
-        mobileBAngleLabel.value((bVal > 0 ? "+" : "") + bVal);
+
+        // 只在角度 label 沒有焦點時才更新它的值（避免干擾用戶編輯）
+        const activeElement = document.activeElement;
+        if (activeElement !== mobileRAngleLabel.elt) {
+          mobileRAngleLabel.value((rVal > 0 ? "+" : "") + rVal);
+        }
+        if (activeElement !== mobileGAngleLabel.elt) {
+          mobileGAngleLabel.value((gVal > 0 ? "+" : "") + gVal);
+        }
+        if (activeElement !== mobileBAngleLabel.elt) {
+          mobileBAngleLabel.value((bVal > 0 ? "+" : "") + bVal);
+        }
     }
 
     // 手機版：動態調整 logo 和操作區域的占比
@@ -2231,6 +2405,8 @@ function saveTransparentPNG() {
     performDownload();
     // 下載完成後重置狀態
     isDownloading = false;
+    // 立即更新icon，確保恢復正確的狀態
+    updateIconsForMode();
   }, animationDuration || 2310);
 }
 
@@ -2242,6 +2418,9 @@ function performDownload() {
   let fileName = generateFileName();
 
   if (isEasterEggActive) {
+    // 延遲載入彩蛋下載圖片（只在需要下載時載入）
+    loadEasterEggDownloadImages();
+
     // 彩蛋模式：直接保存圖片（已經是 1080x1080）
     let imgToSave;
     if (mode === 'Wireframe') {
@@ -2341,6 +2520,16 @@ function generateFileName() {
 
 // --- 鍵盤事件處理 ---
 function keyPressed() {
+  // 檢查當前焦點是否在主輸入框上（桌面版或手機版）
+  const activeElement = document.activeElement;
+  const isInputBoxFocused = (activeElement === inputBox.elt) ||
+                           (inputBoxMobile && activeElement === inputBoxMobile.elt);
+
+  // 只有在主輸入框有焦點時才處理 Enter 和 Backspace
+  if (!isInputBoxFocused) {
+    return; // 如果焦點不在主輸入框，不處理按鍵事件
+  }
+
   // 當按下 ENTER 鍵時
   if (keyCode === ENTER) {
     // 如果有字母且不在彩蛋模式，就觸發自動旋轉
