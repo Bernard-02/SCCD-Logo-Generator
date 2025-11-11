@@ -16,6 +16,10 @@ function preload() {
   sccdWhiteImg_2 = loadImage('Easter Egg/sccd_white_2.png');
   sccdBlackWireframeImg_2 = loadImage('Easter Egg/SCCD_Black Wireframe_2.png');
   sccdWhiteWireframeImg_2 = loadImage('Easter Egg/SCCD_White Wireframe_2.png');
+
+  // 預載入新彩蛋圖片（COOLGUY, KAOCHIEHISHERE）
+  rexImg = loadImage('Easter Egg/Rex.png');
+  kcImg = loadImage('Easter Egg/KC.png');
 }
 
 // --- 延遲載入彩蛋下載圖片（只在需要下載時載入）---
@@ -93,7 +97,7 @@ function setup() {
 
   // p5.js 繪圖設定
   textFont(font);
-  textSize(350);
+  textSize(367.5); // 350 * 1.05 = 367.5
   textAlign(CENTER, CENTER);
   imageMode(CENTER); // <-- 新增：將圖片的繪製模式設定為中心對齊
 
@@ -140,21 +144,21 @@ function setup() {
   saveImgMobile = select("#save-img-mobile");
 
   // 選取手機版按鈕
-  let mobileStandardButton = select(".mobile-standard");
-  let mobileInverseButton = select(".mobile-inverse");
-  let mobileRotateButton = select(".mobile-rotate");
-  let mobileCustomButton = select(".mobile-custom");
-  let mobileRandomButton = select(".mobile-random-button");
-  let mobileResetButton = select(".mobile-reset-button");
+  mobileStandardButton = select(".mobile-standard");
+  mobileInverseButton = select(".mobile-inverse");
+  mobileRotateButton = select(".mobile-rotate");
+  mobileCustomButton = select(".mobile-custom");
+  mobileRandomButton = select(".mobile-random-button");
+  mobileResetButton = select(".mobile-reset-button");
   let mobileColormodeIndicator = select(".mobile-colormode-indicator");
 
   // 選取手機版滑桿
-  let mobileRSlider = select(".mobile-r-slider");
-  let mobileGSlider = select(".mobile-g-slider");
-  let mobileBSlider = select(".mobile-b-slider");
-  let mobileRAngleLabel = select(".mobile-r-angle-label");
-  let mobileGAngleLabel = select(".mobile-g-angle-label");
-  let mobileBAngleLabel = select(".mobile-b-angle-label");
+  mobileRSlider = select(".mobile-r-slider");
+  mobileGSlider = select(".mobile-g-slider");
+  mobileBSlider = select(".mobile-b-slider");
+  mobileRAngleLabel = select(".mobile-r-angle-label");
+  mobileGAngleLabel = select(".mobile-g-angle-label");
+  mobileBAngleLabel = select(".mobile-b-angle-label");
 
   // 選取手機版圖片
   mobileRandomImg = select(".mobile-random-img");
@@ -167,6 +171,7 @@ function setup() {
 
   // --- 初始化色彩選擇器 ---
   colorPickerContainer = select("#colorpicker-container");
+  colorPickerBox = select("#colorpicker-box");
   colorWheelPlayButton = select("#colorwheel-play-button");
   colorWheelPlayIcon = select("#colorwheel-play-icon");
   // Color picker initialization moved inline to draw() function
@@ -770,6 +775,9 @@ function setup() {
 
   // --- 啟動打字機動畫 ---
   startTypewriterAnimation();
+
+  // --- 創建新彩蛋圖片的 DOM 容器（覆蓋在整個 window 上）---
+  createSpecialEasterEggContainer();
 }
 
 // --- 打字機動畫函數 ---
@@ -805,6 +813,31 @@ function startTypewriterAnimation() {
 function draw() {
   // 保持canvas透明，讓CSS控制頁面背景
   clear();
+
+  // --- 更新新彩蛋動畫 ---
+  updateSpecialEasterEggAnimation();
+
+  // --- 更新新彩蛋顯示（DOM 元素）---
+  updateSpecialEasterEggDisplay();
+
+  // --- 描邊顏色 Lerp 動畫 ---
+  if (mode === "Wireframe" && strokeColorLerpProgress < 1) {
+    // 計算 lerp 進度
+    let elapsedTime = millis() - strokeColorLerpStartTime;
+    strokeColorLerpProgress = constrain(elapsedTime / strokeColorLerpDuration, 0, 1);
+
+    // 使用 easing function（ease-out）
+    let easedProgress = 1 - pow(1 - strokeColorLerpProgress, 3);
+
+    // Lerp 顏色
+    if (currentStrokeColor && targetStrokeColor) {
+      wireframeStrokeColor = lerpColor(currentStrokeColor, targetStrokeColor, easedProgress);
+
+      // 更新輸入框文字顏色和 icons（跟隨顏色變化）
+      updateInputTextColor();
+      updateIconsForMode();
+    }
+  }
 
   // --- Slider Hover 效果 ---
   // if (!isMobileMode) {
@@ -984,7 +1017,16 @@ function draw() {
       colorMode(HSB, 360, 100, 100);
       wireframeColor = color(selectedHue, 80, 100);
       colorMode(RGB, 255);
-      wireframeStrokeColor = getContrastColor(wireframeColor);
+
+      // 啟動描邊顏色過渡動畫（而不是直接設置）
+      let newStrokeColor = getContrastColor(wireframeColor);
+      startStrokeColorTransition(newStrokeColor);
+
+      // 先設置 body class 為 wireframe-mode，避免背景閃爍
+      let body = select('body');
+      if (body) {
+        body.class('wireframe-mode');
+      }
 
       // 更新背景顏色（使用 CSS 變數）
       updateBackgroundColor(wireframeColor);
@@ -1058,8 +1100,9 @@ function draw() {
     wireframeColor = color(selectedHue, 80, 100);
     colorMode(RGB, 255);
 
-    // 根據亮度決定描邊顏色（黑色或白色）
-    wireframeStrokeColor = getContrastColor(wireframeColor);
+    // 根據亮度決定描邊顏色（黑色或白色）- 啟動平滑過渡
+    let newStrokeColor = getContrastColor(wireframeColor);
+    startStrokeColorTransition(newStrokeColor);
 
     // 更新背景顏色（即時更新）
     updateBackgroundColor(wireframeColor, true);
@@ -1073,8 +1116,8 @@ function draw() {
 
   // --- 色環繪製 (Wireframe 模式) ---
   if (mode === "Wireframe") {
-    if (!colorPickerCanvas) {
-      // 初始化色環
+    if (!colorPickerCanvas && colorPickerReady) {
+      // 初始化色環（容器已經完全展開，直接讀取實際尺寸）
       let container = select('#colorpicker-container');
       if (container) {
         // 使用 clientWidth 和 clientHeight，取較小值確保是正方形
@@ -1185,9 +1228,13 @@ function draw() {
       // Standard/Inverse 模式
       imgToShow = (mode === 'Inverse') ? sccdWhiteImg_2 : sccdBlackImg_2;
     }
-    image(imgToShow, width / 2, height / 2, 360, 360); // 放大 1.2 倍 (300 * 1.2 = 360)
+    image(imgToShow, width / 2, height / 2, 378, 378); // 放大 1.26 倍 (300 * 1.2 * 1.05 = 378)
     pop();
   }
+
+  // --- 新彩蛋圖片繪製（COOLGUY, KAOCHIEHISHERE）---
+  // 注意：新彩蛋圖片不在這裡繪製，改用 DOM 元素覆蓋在整個 window 上
+  // 參考 updateSpecialEasterEggDisplay() 函數
 }
 
 // --- 獲取當前活動的輸入框 ---
@@ -1251,6 +1298,30 @@ function handleInput(event) {
     let previousEasterEggState = isEasterEggActive;
     let normalizedInput = validInput.toUpperCase().replace(/[\s\n]/g, "");
     isEasterEggActive = (normalizedInput === easterEggString || normalizedInput === "SCCD");
+
+    // 新彩蛋邏輯（COOLGUY, KAOCHIEHISHERE）
+    // 只有在不是動畫中時才檢測
+    // 並且需要檢查是否真的有內容變化（避免按無效鍵觸發）
+    if (!specialEasterEggAnimating) {
+      // 儲存上一次的 normalizedInput 來比較
+      if (typeof handleInput.previousNormalizedInput === 'undefined') {
+        handleInput.previousNormalizedInput = '';
+      }
+
+      // 只有在內容真的改變時才檢查彩蛋
+      if (normalizedInput !== handleInput.previousNormalizedInput) {
+        if (normalizedInput === "COOLGUY") {
+          specialEasterEggType = "COOLGUY";
+          triggerSpecialEasterEgg();
+        } else if (normalizedInput === "KAOCHIEHISHERE") {
+          specialEasterEggType = "KAOCHIEHISHERE";
+          triggerSpecialEasterEgg();
+        }
+
+        // 更新記錄
+        handleInput.previousNormalizedInput = normalizedInput;
+      }
+    }
 
     // 顯示圖片已在 preload() 中載入，無需額外處理
   
@@ -1350,8 +1421,8 @@ function drawPlaceholder(pg) {
   pg.translate(width / 2, height / 2);
   pg.imageMode(CENTER);
 
-  // 繪製尺寸（放大 1.32 倍：350 * 1.2 * 1.1 = 462）
-  let svgSize = 462;
+  // 繪製尺寸（放大 1.386 倍：350 * 1.2 * 1.1 * 1.05 = 485.1）
+  let svgSize = 485.1;
 
   // 根據 isWhiteVersion 選擇正確的 SVG 檔案
   let rImg = isWhiteVersion ? placeholderR_white : placeholderR;
@@ -1502,9 +1573,6 @@ function drawLogo(pg, alphaMultiplier = 255) {
     if (bSlider) bSlider.value(currentBSliderValue);
 
     // 同步手機版 slider
-    let mobileRSlider = select('.mobile-r-slider');
-    let mobileGSlider = select('.mobile-g-slider');
-    let mobileBSlider = select('.mobile-b-slider');
     if (mobileRSlider) mobileRSlider.value(currentRSliderValue);
     if (mobileGSlider) mobileGSlider.value(currentGSliderValue);
     if (mobileBSlider) mobileBSlider.value(currentBSliderValue);
@@ -1541,9 +1609,9 @@ function drawLogo(pg, alphaMultiplier = 255) {
 
       // 獲取當前 textSize（從 pg 的設定中）
       // 注意：p5.Graphics 沒有直接的 getter，所以我們需要用其他方式
-      // 在這裡直接使用全域的 textSize，因為 setup 時設定為 350
-      // 但在保存時會臨時修改為 700
-      let currentTextSize = pg._renderer._textSize || 350;
+      // 在這裡直接使用全域的 textSize，因為 setup 時設定為 367.5
+      // 但在保存時會臨時修改為 735
+      let currentTextSize = pg._renderer._textSize || 367.5;
 
       // 獲取字母的邊界，以計算垂直偏移，使其中心對齊
       let bounds = font.textBounds(letter, 0, 0, currentTextSize);
@@ -1817,6 +1885,140 @@ function convertAngleInput(value) {
     return angle;
 }
 
+// --- 新彩蛋動畫函數（COOLGUY, KAOCHIEHISHERE）---
+function triggerSpecialEasterEgg() {
+  // 設定動畫狀態
+  specialEasterEggAnimating = true;
+  specialEasterEggStartTime = millis();
+  specialEasterEggAlpha = 0;
+  specialEasterEggRotation = 0;
+  specialEasterEggScale = 0;
+
+  // 禁用輸入框（防止用戶在動畫播放時繼續輸入）
+  if (inputBox) inputBox.attribute('disabled', '');
+  if (inputBoxMobile) inputBoxMobile.attribute('disabled', '');
+
+  // 5.5 秒後（1.5s旋轉 + 2s停留 + 2s fade out）自動恢復
+  setTimeout(() => {
+    specialEasterEggAnimating = false;
+    specialEasterEggType = null;
+    specialEasterEggAlpha = 0;
+    specialEasterEggScale = 0;
+
+    // 恢復輸入框
+    if (inputBox) inputBox.removeAttribute('disabled');
+    if (inputBoxMobile) inputBoxMobile.removeAttribute('disabled');
+
+    // 恢復輸入框的 focus 狀態
+    setTimeout(() => {
+      if (isMobileMode && inputBoxMobile) {
+        inputBoxMobile.elt.focus();
+      } else if (inputBox) {
+        inputBox.elt.focus();
+      }
+    }, 50); // 短暫延遲確保 disabled 已移除
+  }, 5500);
+}
+
+// 禁用所有 UI 元素
+function disableAllUI() {
+  // 禁用輸入框
+  if (inputBox) inputBox.attribute('disabled', '');
+  if (inputBoxMobile) inputBoxMobile.attribute('disabled', '');
+
+  // 禁用所有按鈕
+  if (rotateButton) rotateButton.attribute('disabled', '');
+  if (customButton) customButton.attribute('disabled', '');
+  if (colormodeButton) colormodeButton.attribute('disabled', '');
+  if (randomButton) randomButton.attribute('disabled', '');
+  if (resetButton) resetButton.attribute('disabled', '');
+  if (saveButton) saveButton.attribute('disabled', '');
+  if (saveButtonMobile) saveButtonMobile.attribute('disabled', '');
+  if (colorWheelPlayButton) colorWheelPlayButton.elt.setAttribute('disabled', '');
+
+  // 禁用滑桿
+  if (rSlider) rSlider.attribute('disabled', '');
+  if (gSlider) gSlider.attribute('disabled', '');
+  if (bSlider) bSlider.attribute('disabled', '');
+  if (mobileRSlider) mobileRSlider.attribute('disabled', '');
+  if (mobileGSlider) mobileGSlider.attribute('disabled', '');
+  if (mobileBSlider) mobileBSlider.attribute('disabled', '');
+
+  // 禁用手機版按鈕
+  if (mobileRotateButton) mobileRotateButton.attribute('disabled', '');
+  if (mobileCustomButton) mobileCustomButton.attribute('disabled', '');
+  if (mobileRandomButton) mobileRandomButton.attribute('disabled', '');
+  if (mobileResetButton) mobileResetButton.attribute('disabled', '');
+}
+
+// 恢復所有 UI 元素
+function enableAllUI() {
+  // 恢復輸入框
+  if (inputBox) inputBox.removeAttribute('disabled');
+  if (inputBoxMobile) inputBoxMobile.removeAttribute('disabled');
+
+  // 恢復按鈕（根據當前狀態）
+  if (letters.length > 0 && !isEasterEggActive) {
+    if (rotateButton) rotateButton.removeAttribute('disabled');
+    if (customButton) customButton.removeAttribute('disabled');
+    if (randomButton) randomButton.removeAttribute('disabled');
+    if (resetButton) resetButton.removeAttribute('disabled');
+    if (mobileRotateButton) mobileRotateButton.removeAttribute('disabled');
+    if (mobileCustomButton) mobileCustomButton.removeAttribute('disabled');
+    if (mobileRandomButton) mobileRandomButton.removeAttribute('disabled');
+    if (mobileResetButton) mobileResetButton.removeAttribute('disabled');
+  }
+
+  if (colormodeButton) colormodeButton.removeAttribute('disabled');
+  if (saveButton) saveButton.removeAttribute('disabled');
+  if (saveButtonMobile) saveButtonMobile.removeAttribute('disabled');
+  if (colorWheelPlayButton) colorWheelPlayButton.elt.removeAttribute('disabled');
+
+  // 恢復滑桿
+  if (!isAutoRotateMode && !isEasterEggActive && letters.length > 0) {
+    if (rSlider) rSlider.removeAttribute('disabled');
+    if (gSlider) gSlider.removeAttribute('disabled');
+    if (bSlider) bSlider.removeAttribute('disabled');
+    if (mobileRSlider) mobileRSlider.removeAttribute('disabled');
+    if (mobileGSlider) mobileGSlider.removeAttribute('disabled');
+    if (mobileBSlider) mobileBSlider.removeAttribute('disabled');
+  }
+}
+
+// 更新新彩蛋動畫狀態（在 draw() 中調用）
+function updateSpecialEasterEggAnimation() {
+  if (!specialEasterEggAnimating) return;
+
+  let elapsed = millis() - specialEasterEggStartTime;
+
+  // 階段 1: 0-1500ms，旋轉 3 圈（1080度）同時放大和 fade in
+  if (elapsed < 1500) {
+    let progress = elapsed / 1500;
+    // 使用 easeOutCubic 緩動函數（開始快，結束慢）
+    let eased = 1 - pow(1 - progress, 3);
+    specialEasterEggRotation = eased * 1080; // 3圈 = 360 * 3 = 1080度
+    specialEasterEggAlpha = 255; // 立即顯示
+    specialEasterEggScale = eased; // 從 0 放大到 1（使用相同的 easeOut 曲線）
+  }
+  // 階段 2: 1500-3500ms，ease 到 0° 並停留
+  else if (elapsed < 3500) {
+    let progress = (elapsed - 1500) / 2000;
+    // 使用 easeOutCubic 緩動函數
+    let eased = 1 - pow(1 - progress, 3);
+    // 從 1080 度 ease 到 1080 度（等同於 0 度）
+    specialEasterEggRotation = lerp(1080, 1080, eased); // 保持在 1080 度（等同於 0 度）
+    specialEasterEggAlpha = 255;
+    specialEasterEggScale = 1; // 保持完整大小
+  }
+  // 階段 3: 3500-5500ms，fade out
+  else if (elapsed < 5500) {
+    let progress = (elapsed - 3500) / 2000;
+    specialEasterEggRotation = 1080; // 保持在 0 度
+    specialEasterEggAlpha = lerp(255, 0, progress);
+    specialEasterEggScale = 1; // 保持完整大小
+  }
+}
+
 // --- 新增：計算最短旋轉路徑 ---
 function getShortestRotation(currentAngle, targetAngle) {
     // 計算差值
@@ -1850,7 +2052,7 @@ function animateSaveButton(button, iconElement) {
         suffix = isInverseMode ? "_Inverse" : "";
     }
 
-    const rotateDuration = 800; // Generate icon 旋轉時長：1.5秒
+    const rotateDuration = 1200; // Generate icon 旋轉時長：1.2秒
     const fadeInOutDuration = 200; // 淡入淡出時間：200ms
     const scaleUpDuration = 100; // Generate icon 放大時間：100ms（快速出現）
 
@@ -1932,8 +2134,8 @@ function animateSaveButton(button, iconElement) {
         }, 10);
     }, fadeInOutDuration + scaleUpDuration + rotateDuration + fadeInOutDuration);
 
-    // 總時長：淡出(200) + 快速放大(100) + 旋轉(1500) + 淡出(200) + 重置(10) + 淡入(200) = 2210ms
-    return fadeInOutDuration * 3 + scaleUpDuration + rotateDuration + 10;
+    // 總時長：淡出(200) + 放大(100) + 旋轉(1200) + 淡出(200) + 延遲(10+10) + 淡入(200) + 清除(200) = 2120ms
+    return fadeInOutDuration * 4 + scaleUpDuration + rotateDuration + 20;
 }
 
 // --- 完全參照 ref.js:278-346 重寫 updateUI ---
@@ -1955,9 +2157,87 @@ function updateUI() {
     if (isWireframeMode) {
         body.class('wireframe-mode');
         // Wireframe 模式下，背景顏色使用 CSS 變數 --wireframe-bg
+
+        // 淡入 color picker box（容器展開動畫 + 淡入）
+        if (colorPickerBox) {
+            // 步驟 1：設置 display: flex，初始狀態為 max-width: 0, padding: 0, opacity: 0
+            colorPickerBox.style('display', 'flex');
+            colorPickerBox.style('max-width', '0');
+            colorPickerBox.style('padding', '0');
+            colorPickerBox.style('opacity', '0');
+
+            // 步驟 2：強制 reflow，然後設置 max-width、padding 和 opacity（觸發容器展開動畫 + 淡入）
+            void colorPickerBox.elt.offsetHeight; // 強制瀏覽器重繪
+            colorPickerBox.style('max-width', '500px'); // 設定足夠大的值
+            colorPickerBox.style('padding', ''); // 恢復 CSS 中定義的 padding
+            colorPickerBox.style('opacity', '1'); // 容器淡入（包括 border 和背景）
+
+            // 步驟 3：等待容器完全展開（300ms），再立即創建 canvas 並顯示內容
+            setTimeout(() => {
+                // 立即創建 canvas（不等 draw() 執行）
+                if (!colorPickerCanvas) {
+                    let container = select('#colorpicker-container');
+                    if (container) {
+                        let containerWidth = container.elt.clientWidth;
+                        let containerHeight = container.elt.clientHeight;
+                        let containerSize = Math.min(containerWidth, containerHeight);
+
+                        if (containerSize > 0) {
+                            colorPickerCanvas = createGraphics(containerSize, containerSize);
+                            colorPickerCanvas.parent('colorpicker-container');
+                            colorPickerCanvas.elt.style.display = 'block';
+                            colorPickerCanvas.elt.style.margin = 'auto';
+
+                            colorPickerIndicatorX = 0.5;
+                            colorPickerIndicatorY = 0.25;
+
+                            // 綁定鼠標事件
+                            colorPickerCanvas.elt.addEventListener('mousedown', handleColorPickerMouseDown);
+                            colorPickerCanvas.elt.addEventListener('mousemove', handleColorPickerMouseMove);
+                            colorPickerCanvas.elt.addEventListener('mouseup', handleColorPickerMouseUp);
+                            colorPickerCanvas.elt.addEventListener('mouseleave', handleColorPickerMouseUp);
+                            document.addEventListener('mouseup', handleColorPickerMouseUp);
+
+                            // 立即繪製色環
+                            drawColorWheel();
+                        }
+                    }
+                }
+
+                // 允許創建 canvas 的標記（防止 draw() 重複創建）
+                colorPickerReady = true;
+
+                // 顯示內容（canvas 已經創建好了，可以立即顯示）
+                if (colorPickerContainer) {
+                    colorPickerContainer.style('opacity', '1');
+                }
+                if (colorWheelPlayButton) {
+                    colorWheelPlayButton.style('opacity', '1');
+                }
+            }, 300); // 等待容器展開完成後立即顯示
+        }
     } else {
         body.class(isInverseMode ? 'inverse-mode' : 'standard-mode');
         // Standard/Inverse 模式下，CSS 會自動根據 class 切換背景色
+
+        // 瞬間隱藏 color picker box（不需要淡出動畫）
+        if (colorPickerBox) {
+            colorPickerBox.style('display', 'none');
+            colorPickerBox.style('max-width', '0');
+            colorPickerBox.style('padding', '0');
+            colorPickerBox.removeClass('show'); // 移除 show class
+
+            // 重置標記
+            colorPickerReady = false;
+
+            // 同時隱藏內容
+            if (colorPickerContainer) {
+                colorPickerContainer.style('opacity', '0');
+            }
+            if (colorWheelPlayButton) {
+                colorWheelPlayButton.style('opacity', '0');
+            }
+        }
     }
 
     // 更新所有圖標根據當前模式
@@ -2053,17 +2333,17 @@ function updateUI() {
         const customControlsContainer = select('#custom-angle-controls');
 
         if (customControlsEnabled) {
-            // Custom 展開時：顯示 Custom 按鈕、slider 和 icon 按鈕
+            // Custom 展開時：顯示 Custom 按鈕、slider 和 icon 按鈕（使用平滑動畫）
             customButton.style('display', 'flex');
-            customControlsContainer.style('display', 'flex');
+            customControlsContainer.addClass('show'); // 添加 show class 觸發動畫
             randomButton.style('display', 'flex');
             resetButton.style('display', 'flex');
         } else {
             // Custom 未展開時：顯示 Custom 按鈕，隱藏 slider 和 icon 按鈕
             customButton.style('display', 'flex');
-            customControlsContainer.style('display', 'none');
-            randomButton.style('display', 'none');
-            resetButton.style('display', 'none');
+            customControlsContainer.removeClass('show'); // 移除 show class 觸發收起動畫
+            randomButton.style('display', 'flex'); // 保持顯示但會被設為 disabled
+            resetButton.style('display', 'flex'); // 保持顯示但會被設為 disabled
         }
 
         // 更新 Random/Reset 圖示
@@ -2149,15 +2429,7 @@ function updateUI() {
         saveButtonMobile.style('cursor', hasText ? 'pointer' : 'not-allowed');
     }
     
-    // 手機版：更新UI
-    let mobileRotateButton = select('.mobile-rotate');
-    let mobileCustomButton = select('.mobile-custom');
-    let mobileStandardButton = select('.mobile-standard');
-    let mobileInverseButton = select('.mobile-inverse');
-    let mobileRandomButton = select('.mobile-random-button');
-    let mobileResetButton = select('.mobile-reset-button');
-    let mobileRandomImg = select('.mobile-random-img');
-    let mobileResetImg = select('.mobile-reset-img');
+    // 手機版：更新UI（使用全域變數，不需要重新 select）
     let mobileCustomAngleControls = select('.mobile-custom-angle-controls');
 
     // 更新手機版 control-box 的 disabled 狀態
@@ -2239,13 +2511,7 @@ function updateUI() {
     }
 
     // 更新手機版滑桿
-    let mobileRSlider = select('.mobile-r-slider');
-    let mobileGSlider = select('.mobile-g-slider');
-    let mobileBSlider = select('.mobile-b-slider');
-    let mobileRAngleLabel = select('.mobile-r-angle-label');
-    let mobileGAngleLabel = select('.mobile-g-angle-label');
-    let mobileBAngleLabel = select('.mobile-b-angle-label');
-
+    // 手機版滑桿和標籤（使用全域變數）
     if (mobileRSlider && mobileGSlider && mobileBSlider && mobileRAngleLabel && mobileGAngleLabel && mobileBAngleLabel) {
         const mobileSliders = [mobileRSlider, mobileGSlider, mobileBSlider];
         const mobileLabels = [mobileRAngleLabel, mobileGAngleLabel, mobileBAngleLabel];
@@ -2443,7 +2709,7 @@ function performDownload() {
 
     // 設定繪圖參數（保持原本的參數）
     pg.textFont(font);
-    pg.textSize(350); // 保持原本的大小
+    pg.textSize(367.5); // 350 * 1.05 = 367.5
     pg.textAlign(CENTER, CENTER);
     pg.imageMode(CENTER);
 
@@ -2744,8 +3010,9 @@ function updateColorFromMouse(e) {
   wireframeColor = color(selectedHue, 80, 100);
   colorMode(RGB, 255);
 
-  // 根據亮度決定描邊顏色（黑色或白色）
-  wireframeStrokeColor = getContrastColor(wireframeColor);
+  // 根據亮度決定描邊顏色（黑色或白色）- 啟動平滑過渡
+  let newStrokeColor = getContrastColor(wireframeColor);
+  startStrokeColorTransition(newStrokeColor);
 
   // 更新背景顏色（拖動時禁用 transition，實現即時更新）
   updateBackgroundColor(wireframeColor, true);
@@ -2778,6 +3045,41 @@ function getContrastColor(bgColor) {
   } else {
     return color(255, 255, 255); // 白色
   }
+}
+
+// 啟動描邊顏色的平滑過渡動畫
+function startStrokeColorTransition(newTargetColor) {
+  // 記錄當前顏色作為 lerp 的起點
+  if (wireframeStrokeColor) {
+    currentStrokeColor = color(
+      red(wireframeStrokeColor),
+      green(wireframeStrokeColor),
+      blue(wireframeStrokeColor)
+    );
+  } else {
+    // 如果還沒有當前顏色，使用目標顏色（第一次進入 Wireframe 模式）
+    currentStrokeColor = newTargetColor;
+    wireframeStrokeColor = newTargetColor;
+    strokeColorLerpProgress = 1;
+    return;
+  }
+
+  // 設置目標顏色
+  targetStrokeColor = newTargetColor;
+
+  // 檢查是否需要過渡（如果目標顏色與當前顏色相同，則不需要）
+  let currentR = red(currentStrokeColor);
+  let targetR = red(targetStrokeColor);
+  if (abs(currentR - targetR) < 1) {
+    // 顏色已經一樣，不需要過渡
+    wireframeStrokeColor = targetStrokeColor;
+    strokeColorLerpProgress = 1;
+    return;
+  }
+
+  // 開始 lerp 動畫
+  strokeColorLerpProgress = 0;
+  strokeColorLerpStartTime = millis();
 }
 
 // 更新輸入框文字顏色（Wireframe 模式下使用對比色）
@@ -2874,4 +3176,102 @@ function updateBackgroundColor(bgColor, disableTransition = false) {
 // 這個函數現在是空的，因為 CSS 會根據 body class 自動切換背景色
 function restoreDefaultBackground() {
   // CSS transition 會自動處理背景色切換，不需要 JS 操作
+}
+
+// --- 創建新彩蛋圖片的 DOM 容器 ---
+let specialEasterEggContainer = null;
+let specialEasterEggOverlay = null; // 半透明背景圖層
+let specialEasterEggImgElement = null;
+
+function createSpecialEasterEggContainer() {
+  // 創建一個覆蓋整個視窗的容器
+  specialEasterEggContainer = document.createElement('div');
+  specialEasterEggContainer.id = 'special-easter-egg-container';
+  specialEasterEggContainer.style.position = 'fixed';
+  specialEasterEggContainer.style.top = '0';
+  specialEasterEggContainer.style.left = '0';
+  specialEasterEggContainer.style.width = '100vw';
+  specialEasterEggContainer.style.height = '100vh';
+  specialEasterEggContainer.style.display = 'none'; // 預設隱藏
+  specialEasterEggContainer.style.justifyContent = 'center';
+  specialEasterEggContainer.style.alignItems = 'center';
+  specialEasterEggContainer.style.zIndex = '9999'; // 確保在最上層
+  specialEasterEggContainer.style.pointerEvents = 'none'; // 預設不阻擋事件，顯示時會改為 auto
+
+  // 創建半透明背景圖層（用於阻擋互動和提供視覺焦點）
+  specialEasterEggOverlay = document.createElement('div');
+  specialEasterEggOverlay.style.position = 'absolute';
+  specialEasterEggOverlay.style.top = '0';
+  specialEasterEggOverlay.style.left = '0';
+  specialEasterEggOverlay.style.width = '100%';
+  specialEasterEggOverlay.style.height = '100%';
+  specialEasterEggOverlay.style.opacity = '0';
+  specialEasterEggOverlay.style.transition = 'none'; // 由 JS 控制動畫
+  specialEasterEggOverlay.style.pointerEvents = 'auto'; // 阻擋所有點擊事件
+  specialEasterEggContainer.appendChild(specialEasterEggOverlay);
+
+  // 創建圖片元素
+  specialEasterEggImgElement = document.createElement('img');
+  specialEasterEggImgElement.style.width = '30vw'; // 固定寬度 30vw（調小尺寸）
+  specialEasterEggImgElement.style.height = 'auto'; // 高度自動，保持圖片比例
+  specialEasterEggImgElement.style.maxWidth = '400px'; // 最大寬度 400px，避免在大螢幕上過大
+  specialEasterEggImgElement.style.objectFit = 'contain'; // 保持比例，不壓縮
+  specialEasterEggImgElement.style.opacity = '0';
+  specialEasterEggImgElement.style.transform = 'rotate(0deg) scale(0)'; // 初始縮放為 0
+  specialEasterEggImgElement.style.transition = 'none'; // 由 JS 控制動畫，不使用 CSS transition
+  specialEasterEggImgElement.style.position = 'relative'; // 確保圖片在背景層之上
+  specialEasterEggImgElement.style.zIndex = '1';
+  specialEasterEggContainer.appendChild(specialEasterEggImgElement);
+
+  document.body.appendChild(specialEasterEggContainer);
+}
+
+// --- 更新新彩蛋圖片的顯示狀態 ---
+function updateSpecialEasterEggDisplay() {
+  if (!specialEasterEggContainer || !specialEasterEggImgElement || !specialEasterEggOverlay) return;
+
+  if (specialEasterEggAnimating && specialEasterEggAlpha > 0) {
+    // 顯示容器
+    specialEasterEggContainer.style.display = 'flex';
+    specialEasterEggContainer.style.pointerEvents = 'auto'; // 啟用事件阻擋
+
+    // 根據當前模式設定背景圖層顏色
+    let overlayColor;
+    if (mode === "Inverse") {
+      // Inverse 模式：黑色半透明
+      overlayColor = 'rgba(0, 0, 0, 0.7)';
+    } else if (mode === "Wireframe") {
+      // Wireframe 模式：根據邊框顏色決定 overlay 顏色（與邊框相反）
+      // 黑色邊框（深色背景）→ 白色 overlay
+      // 白色邊框（淺色背景）→ 黑色 overlay
+      const isWhiteBorder = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
+      overlayColor = isWhiteBorder ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)';
+    } else {
+      // Standard 模式：白色半透明
+      overlayColor = 'rgba(255, 255, 255, 0.7)';
+    }
+    specialEasterEggOverlay.style.backgroundColor = overlayColor;
+
+    // 背景圖層的透明度跟隨圖片透明度
+    const overlayOpacity = (specialEasterEggAlpha / 255).toFixed(3);
+    specialEasterEggOverlay.style.opacity = overlayOpacity;
+
+    // 設定圖片來源
+    if (specialEasterEggImgElement.src === '' || specialEasterEggImgElement.dataset.type !== specialEasterEggType) {
+      const imgSrc = (specialEasterEggType === "COOLGUY") ? 'Easter Egg/Rex.png' : 'Easter Egg/KC.png';
+      specialEasterEggImgElement.src = imgSrc;
+      specialEasterEggImgElement.dataset.type = specialEasterEggType;
+    }
+
+    // 更新透明度、旋轉角度和縮放比例
+    specialEasterEggImgElement.style.opacity = (specialEasterEggAlpha / 255).toFixed(3);
+    specialEasterEggImgElement.style.transform = `rotate(${specialEasterEggRotation}deg) scale(${specialEasterEggScale})`;
+  } else {
+    // 隱藏容器
+    specialEasterEggContainer.style.display = 'none';
+    specialEasterEggContainer.style.pointerEvents = 'none'; // 停用事件阻擋
+    specialEasterEggImgElement.src = '';
+    specialEasterEggImgElement.dataset.type = '';
+    specialEasterEggOverlay.style.opacity = '0';
+  }
 }

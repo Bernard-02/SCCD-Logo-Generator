@@ -41,10 +41,10 @@ function getCanvasSize() {
       height: Math.floor(calcHeight)
     };
   } else {
-    // 桌面版：固定尺寸
+    // 桌面版：固定尺寸 432x540，與 canvas-container 一致
     return {
-      width: 528,
-      height: 400
+      width: 432,
+      height: 540
     };
   }
 }

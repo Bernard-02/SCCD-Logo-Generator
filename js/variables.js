@@ -29,7 +29,7 @@ const placeholderBaseSpeeds = [0.125, -0.125, 0.25]; // Placeholder SVG 的旋�
 const extraLargeFontSize = '180px';  // 1-3 字
 const largeFontSize = '120px';       // 4-15 字
 const mediumFontSize = '90px';       // 16-30 字
-const smallFontSize = '60px';        // 31-40 字
+const smallFontSize = '68px';        // 31-40 字 (從 60px 改為 68px)
 
 // --- 彩蛋相關 ---
 const easterEggString = "SHIHCHIENCOMMUNICATIONSDESIGN";
@@ -38,6 +38,16 @@ let sccdBlackImg, sccdWhiteImg; // 用於下載
 let sccdBlackWireframeImg, sccdWhiteWireframeImg; // 用於下載
 let sccdBlackImg_2, sccdWhiteImg_2; // 用於顯示
 let sccdBlackWireframeImg_2, sccdWhiteWireframeImg_2; // 用於顯示
+
+// --- 新彩蛋相關（COOLGUY, KAOCHIEHISHERE）---
+let rexImg, kcImg; // 新彩蛋圖片
+let isSpecialEasterEggActive = false; // 是否正在播放新彩蛋動畫
+let specialEasterEggType = null; // 'COOLGUY' 或 'KAOCHIEHISHERE'
+let specialEasterEggAnimating = false; // 新彩蛋動畫是否正在播放中
+let specialEasterEggStartTime = 0; // 動畫開始時間
+let specialEasterEggAlpha = 0; // 彩蛋圖片的透明度
+let specialEasterEggRotation = 0; // 彩蛋圖片的旋轉角度
+let specialEasterEggScale = 0; // 彩蛋圖片的縮放比例（0-1）
 
 // --- 淡入淡出動畫 ---
 let isFading = false;
@@ -78,13 +88,24 @@ let rAngleLabel, gAngleLabel, bAngleLabel;
 let randomImg, resetImg, saveImg, saveImgMobile, rotateIcon;
 let customIcon, colormodeIcon;
 let mobileRandomImg, mobileResetImg, mobileRotateIcon, mobileCustomIcon;
+let mobileRotateButton, mobileCustomButton, mobileStandardButton, mobileInverseButton;
+let mobileRandomButton, mobileResetButton;
+let mobileRSlider, mobileGSlider, mobileBSlider;
+let mobileRAngleLabel, mobileGAngleLabel, mobileBAngleLabel;
 
 // --- 色彩選擇器相關變數 ---
 let colorPickerCanvas;
 let colorPickerContainer;
+let colorPickerBox; // Color picker 的外層容器（用於控制顯示/隱藏）
+let colorPickerReady = false; // Color picker 容器是否已經展開完成，可以創建 canvas
 let selectedHue = 0; // 選擇的色相 (0-360)
 let wireframeColor; // Wireframe 模式下的填充顏色
-let wireframeStrokeColor; // Wireframe 模式下的描邊顏色
+let wireframeStrokeColor; // Wireframe 模式下的描邊顏色（當前顯示的顏色，會 lerp 到 targetStrokeColor）
+let targetStrokeColor; // Wireframe 描邊顏色的目標值（黑色或白色）
+let strokeColorLerpProgress = 1; // 顏色 lerp 的進度 (0-1)，1 表示已完成
+let strokeColorLerpDuration = 300; // 顏色過渡時間（毫秒）
+let strokeColorLerpStartTime = 0; // 開始 lerp 的時間
+let currentStrokeColor; // 記錄當前的描邊顏色（lerp 的起點）
 let colorPickerIndicatorX = 0; // 指示器 X 位置 (0-1)
 let colorPickerIndicatorY = 0.5; // 指示器 Y 位置 (0-1)
 let colorPickerDragging = false;

@@ -48,7 +48,7 @@
 
   /* Custom 區域的內部 padding（比 control-box-padding 小） */
   --custom-area-padding-vertical: calc(10px * var(--scale)); /* 上下 padding */
-  --custom-area-padding-horizontal: calc(16px * var(--scale)); /* 左右 padding */
+  --custom-area-padding-horizontal: calc(22px * var(--scale)); /* 左右 padding */
 
   /* Rotation control box 的固定高度（以 Custom 展開時為準） */
   --rotation-box-min-height: calc(140px * var(--scale));
@@ -108,9 +108,9 @@ body.wireframe-mode {
   flex-direction: row; /* 內部為左右結構 */
   align-items: center; /* 垂直置中對齊 */
   justify-content: center; /* 水平置中 */
-  gap: 1rem;
+  gap: calc(var(--panel-gap) * 4); /* var(--panel-gap) 的 2 倍，即 60px */
   width: 100%;
-  max-width: 1200px;
+  max-width: 1250px; /* 從 1200px 增加到 1250px，容納新的 3:2 比例 */
 }
 
 /* 下方控制區 */
@@ -122,13 +122,18 @@ body.wireframe-mode {
   justify-content: center; /* 水平置中 */
   gap: var(--panel-gap);
   width: 100%;
-  max-width: 1200px; /* 與上方對齊 */
+  max-width: 1250px; /* 從 1200px 增加到 1250px，與上方對齊 */
+}
+
+/* 為 control-panel 的直接子元素添加平滑位置過渡 */
+.control-panel > * {
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 /* --- Canvas & 輸入框 --- */
 #canvas-container {
-  /* 桌面版固定尺寸 */
-  width: 540px;
+  /* 桌面版固定尺寸 - 432x540 */
+  width: 432px;
   height: 540px;
   min-height: 540px;
   max-height: 540px;
@@ -150,7 +155,7 @@ body.wireframe-mode #canvas-container {
 }
 
 .input-container {
-  width: 540px;
+  width: 540px; /* 1:1 比例 */
   height: 540px; /* 與 logo 一樣高，讓 flexbox 對齊 */
   flex-shrink: 0; /* 防止縮小 */
   display: flex;
@@ -285,14 +290,20 @@ body.wireframe-mode .control-box.disabled {
   align-self: stretch; /* 延伸以填滿交叉軸（高度） */
   min-height: var(--rotation-box-min-height); /* 確保最小高度與 rotation-box 一致 */
   aspect-ratio: 1 / 1; /* 正方形 */
-  display: none; /* 預設隱藏，只在 Wireframe 模式下顯示 */
+  display: none; /* 由 JavaScript 控制顯示/隱藏 */
   position: relative;
   padding: calc(16px * var(--scale)); /* 稍小的 padding，讓色彩區域更大 */
+  opacity: 0; /* 預設透明（包括 border 和背景） */
+  overflow: hidden; /* 隱藏溢出內容，配合寬度動畫 */
+  transition: max-width 0.3s ease, padding 0.3s ease, opacity 0.3s ease; /* 寬度、padding 和 opacity 過渡效果 */
+  max-width: 0; /* 預設寬度為 0 */
 }
 
-/* Wireframe 模式下顯示色彩選擇器 */
-body.wireframe-mode #colorpicker-box {
-  display: flex;
+/* 色彩選擇器容器和 play 按鈕預設隱藏，等容器展開後再顯示 */
+#colorpicker-box #colorpicker-container,
+#colorpicker-box #colorwheel-play-button {
+  opacity: 0;
+  transition: opacity 0.5s ease; /* Color wheel 出現時間改為 0.1s */
 }
 
 /* 色彩選擇器容器 */
@@ -320,7 +331,7 @@ body.wireframe-mode #colorpicker-box {
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  gap: var(--control-box-padding);
+  gap: 0; /* 縮排時沒有 gap */
   /* 預設透明邊框 */
   border: 2px solid transparent;
   border-radius: var(--border-radius);
@@ -331,8 +342,9 @@ body.wireframe-mode #colorpicker-box {
 
 /* 當 Custom 模式啟用時，顯示邊框和 padding */
 .custom-area-wrapper.custom-mode {
-  /* padding: 上下 左右 */
-  padding: var(--custom-area-padding-vertical) var(--custom-area-padding-horizontal);
+  /* padding: 上 右 下 左 */
+  padding: var(--custom-area-padding-vertical) calc(var(--custom-area-padding-horizontal) + 2px) var(--custom-area-padding-vertical) var(--custom-area-padding-horizontal);
+  gap: 22px; /* 展開時才有 gap */
 }
 
 /* 根據模式切換邊框顏色 */
@@ -356,6 +368,12 @@ body.wireframe-mode .custom-area-wrapper.custom-mode {
 /* custom-area-wrapper 內的 Custom 按鈕也是正方形 */
 .custom-area-wrapper > .custom-button {
   aspect-ratio: 1 / 1;
+}
+
+/* 當 custom-area-wrapper 展開時（有 custom-mode class），移除 Custom 按鈕的 padding 和 aspect-ratio */
+.custom-area-wrapper.custom-mode > .custom-button {
+  padding: 0;
+  aspect-ratio: auto; /* 移除 1:1 比例限制 */
 }
 
 
@@ -447,9 +465,19 @@ body.inverse-mode .button-indicator {
 .control-group {
   display: flex;
   align-items: center;
-  gap: calc(18px * var(--scale));
+  gap: 10px;
   margin-top: 0; /* 移除上邊距，因為現在是左右佈局 */
-  overflow: visible; /* 確保內容不會被裁切 */
+  overflow: hidden; /* 隱藏溢出內容，配合動畫 */
+  max-width: 0; /* 預設寬度為 0（隱藏狀態）*/
+  opacity: 0; /* 預設透明 */
+  transition: max-width 0.3s ease, opacity 0.3s ease; /* 添加平滑過渡 */
+}
+
+/* 當 control-group 顯示時 */
+.control-group.show {
+  max-width: 500px; /* 設定足夠大的值讓內容完全顯示 */
+  opacity: 1; /* 完全不透明 */
+  overflow: visible; /* 顯示時允許溢出（例如 tooltip）*/
 }
 
 .sliders-wrapper {
@@ -463,7 +491,7 @@ body.inverse-mode .button-indicator {
 .icon-buttons-wrapper {
   display: flex;
   flex-direction: column;
-  gap: calc(12px * var(--scale));
+  gap: 10px;
   overflow: visible; /* 確保 icon 不會被裁切 */
 }
 
@@ -474,7 +502,7 @@ body.inverse-mode .button-indicator {
   cursor: pointer;
   padding: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   transition: opacity 0.3s ease;
 }
@@ -503,7 +531,7 @@ body.inverse-mode .button-indicator {
 #random-button img,
 #reset-button img {
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: contain;
 }
 
