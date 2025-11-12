@@ -283,6 +283,7 @@ function cycleModeButton() {
       targetMode = "Standard";
   }
 
+
   // 如果切換到 Wireframe，自動開啟 Color Picker 面板
   if (targetMode === "Wireframe" && mobileElements.colorpickerPanel) {
     mobileElements.colorpickerPanel.addClass('active');
@@ -566,9 +567,32 @@ function updateMobileIcons() {
   // Play/Pause 圖標（Bento 面板）
   updateMobileBentoPlayIcon();
 
-  // 更新邊框顏色（Wireframe 模式）
+  // 更新邊框顏色
   if (isWireframe && wireframeStrokeColor) {
+    // Wireframe 模式：設定動態顏色
     updateMobileBorderColors();
+  } else {
+    // Standard/Inverse 模式：清除 inline style，讓 CSS 規則生效
+    const bottomBtns = selectAll('.mobile-bottom-btn');
+    bottomBtns.forEach(btn => {
+      btn.style('border-color', '');
+      btn.style('color', '');
+    });
+
+    const bentoContainer = select('.mobile-bento-container');
+    if (bentoContainer) {
+      bentoContainer.style('border-color', '');
+    }
+
+    const bentoLeft = select('.mobile-bento-left');
+    if (bentoLeft) {
+      bentoLeft.style('border-color', '');
+    }
+
+    const bentoButtons = selectAll('.mobile-bento-button');
+    bentoButtons.forEach(btn => {
+      btn.style('border-color', '');
+    });
   }
 }
 

@@ -836,6 +836,19 @@ function setup() {
 
   // --- 創建新彩蛋圖片的 DOM 容器（覆蓋在整個 window 上）---
   createSpecialEasterEggContainer();
+
+  // --- 初始化 body class（確保背景色正確顯示）---
+  let body = select('body');
+  if (body) {
+    // 根據初始模式設置 body class
+    if (mode === "Wireframe") {
+      body.addClass('wireframe-mode');
+    } else if (mode === "Inverse") {
+      body.addClass('inverse-mode');
+    } else {
+      body.addClass('standard-mode');
+    }
+  }
 }
 
 // --- 打字機動畫函數 ---
@@ -1102,7 +1115,9 @@ function draw() {
       // 先設置 body class 為 wireframe-mode，避免背景閃爍
       let body = select('body');
       if (body) {
-        body.class('wireframe-mode');
+        body.removeClass('standard-mode');
+        body.removeClass('inverse-mode');
+        body.addClass('wireframe-mode');
       }
 
       // 更新背景顏色（使用 CSS 變數）
@@ -1999,7 +2014,7 @@ function triggerSpecialEasterEgg() {
   if (inputBox) inputBox.attribute('disabled', '');
   if (inputBoxMobile) inputBoxMobile.attribute('disabled', '');
 
-  // 5.5 秒後（1.5s旋轉 + 2s停留 + 2s fade out）自動恢復
+  // 6 秒後（2s旋轉 + 2s停留 + 2s fade out）自動恢復
   setTimeout(() => {
     specialEasterEggAnimating = false;
     specialEasterEggType = null;
@@ -2018,7 +2033,7 @@ function triggerSpecialEasterEgg() {
         inputBox.elt.focus();
       }
     }, 50); // 短暫延遲確保 disabled 已移除
-  }, 5500);
+  }, 6000);
 }
 
 // 禁用所有 UI 元素
@@ -2092,18 +2107,18 @@ function updateSpecialEasterEggAnimation() {
 
   let elapsed = millis() - specialEasterEggStartTime;
 
-  // 階段 1: 0-1500ms，旋轉 3 圈（1080度）同時放大和 fade in
-  if (elapsed < 1500) {
-    let progress = elapsed / 1500;
+  // 階段 1: 0-2000ms，旋轉 3 圈（1080度）同時放大和 fade in
+  if (elapsed < 2000) {
+    let progress = elapsed / 2000;
     // 使用 easeOutCubic 緩動函數（開始快，結束慢）
     let eased = 1 - pow(1 - progress, 3);
     specialEasterEggRotation = eased * 1080; // 3圈 = 360 * 3 = 1080度
     specialEasterEggAlpha = 255; // 立即顯示
     specialEasterEggScale = eased; // 從 0 放大到 1（使用相同的 easeOut 曲線）
   }
-  // 階段 2: 1500-3500ms，ease 到 0° 並停留
-  else if (elapsed < 3500) {
-    let progress = (elapsed - 1500) / 2000;
+  // 階段 2: 2000-4000ms，ease 到 0° 並停留
+  else if (elapsed < 4000) {
+    let progress = (elapsed - 2000) / 2000;
     // 使用 easeOutCubic 緩動函數
     let eased = 1 - pow(1 - progress, 3);
     // 從 1080 度 ease 到 1080 度（等同於 0 度）
@@ -2111,9 +2126,9 @@ function updateSpecialEasterEggAnimation() {
     specialEasterEggAlpha = 255;
     specialEasterEggScale = 1; // 保持完整大小
   }
-  // 階段 3: 3500-5500ms，fade out
-  else if (elapsed < 5500) {
-    let progress = (elapsed - 3500) / 2000;
+  // 階段 3: 4000-6000ms，fade out
+  else if (elapsed < 6000) {
+    let progress = (elapsed - 4000) / 2000;
     specialEasterEggRotation = 1080; // 保持在 0 度
     specialEasterEggAlpha = lerp(255, 0, progress);
     specialEasterEggScale = 1; // 保持完整大小
@@ -2252,11 +2267,13 @@ function updateUI() {
     // 更新 disabledColor 根據當前模式
     disabledColor = getDisabledColor();
 
-    // 更新 Body Class
-    const isWireframeMode = (mode === "Wireframe");
+    // 更新 Body Class（使用 targetMode 而不是 mode，確保立即更新）
+    const isWireframeMode = (targetMode === "Wireframe");
 
     if (isWireframeMode) {
-        body.class('wireframe-mode');
+        body.removeClass('standard-mode');
+        body.removeClass('inverse-mode');
+        body.addClass('wireframe-mode');
         // Wireframe 模式下，背景顏色使用 CSS 變數 --wireframe-bg
 
         // 淡入 color picker box（容器展開動畫 + 淡入）
@@ -2318,7 +2335,14 @@ function updateUI() {
             }, 300); // 等待容器展開完成後立即顯示
         }
     } else {
-        body.class(isInverseMode ? 'inverse-mode' : 'standard-mode');
+        body.removeClass('wireframe-mode');
+        if (isInverseTarget) {
+            body.removeClass('standard-mode');
+            body.addClass('inverse-mode');
+        } else {
+            body.removeClass('inverse-mode');
+            body.addClass('standard-mode');
+        }
         // Standard/Inverse 模式下，CSS 會自動根據 class 切換背景色
 
         // 瞬間隱藏 color picker box（不需要淡出動畫）
@@ -3391,9 +3415,9 @@ function createSpecialEasterEggContainer() {
 
   // 創建圖片元素
   specialEasterEggImgElement = document.createElement('img');
-  specialEasterEggImgElement.style.width = '30vw'; // 固定寬度 30vw（調小尺寸）
+  specialEasterEggImgElement.style.width = '27.1vw'; // 固定寬度 27.1vw（再調小 5%）
   specialEasterEggImgElement.style.height = 'auto'; // 高度自動，保持圖片比例
-  specialEasterEggImgElement.style.maxWidth = '400px'; // 最大寬度 400px，避免在大螢幕上過大
+  specialEasterEggImgElement.style.maxWidth = '361px'; // 最大寬度 361px（再調小 5%）
   specialEasterEggImgElement.style.objectFit = 'contain'; // 保持比例，不壓縮
   specialEasterEggImgElement.style.opacity = '0';
   specialEasterEggImgElement.style.transform = 'rotate(0deg) scale(0)'; // 初始縮放為 0

@@ -128,8 +128,8 @@ function updateRotateIcon() {
 // 更新所有圖標根據當前模式
 function updateIconsForMode() {
   const hasText = letters.length > 0;
-  const isInverseMode = mode === "Inverse";
-  const isWireframeMode = mode === "Wireframe";
+  const isInverseMode = targetMode === "Inverse";
+  const isWireframeMode = targetMode === "Wireframe";
 
   // 決定 icon 後綴（黑色或白色版本）
   // 所有 icon 統一使用當前模式的顏色，透過 CSS opacity 控制 disabled 狀態
@@ -200,8 +200,9 @@ function updateIconsForMode() {
   // 更新手機版 Mode 按鈕圖標
   updateMobileModeIcon();
 
-  // 更新手機版按鈕和面板的邊框顏色（Wireframe 模式需要動態設定）
+  // 更新手機版按鈕和面板的邊框顏色
   if (isWireframeMode && wireframeStrokeColor) {
+    // Wireframe 模式：動態設定邊框顏色
     const borderColor = `rgb(${red(wireframeStrokeColor)}, ${green(wireframeStrokeColor)}, ${blue(wireframeStrokeColor)})`;
 
     // 更新底部按鈕邊框顏色
@@ -227,6 +228,29 @@ function updateIconsForMode() {
     const mobileBentoButtons = selectAll('.mobile-bento-button');
     mobileBentoButtons.forEach(btn => {
       btn.style('border-color', borderColor);
+    });
+  } else {
+    // Standard/Inverse 模式：清除 inline style，讓 CSS 規則生效
+    const mobileBottomBtns = selectAll('.mobile-bottom-btn');
+    mobileBottomBtns.forEach(btn => {
+      btn.style('border-color', '');
+      btn.style('color', '');
+    });
+
+    const mobilePanels = selectAll('.mobile-panel');
+    mobilePanels.forEach(panel => {
+      panel.style('border-color', '');
+      panel.style('color', '');
+    });
+
+    const mobileBentoContainer = select('.mobile-bento-container');
+    if (mobileBentoContainer) {
+      mobileBentoContainer.style('border-color', '');
+    }
+
+    const mobileBentoButtons = selectAll('.mobile-bento-button');
+    mobileBentoButtons.forEach(btn => {
+      btn.style('border-color', '');
     });
   }
 }

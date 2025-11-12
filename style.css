@@ -980,10 +980,9 @@ body.wireframe-mode .angle-input:not(.enabled) {
     /* 重置所有 hover 效果，保持原始狀態 */
     opacity: inherit !important;
     transform: none !important;
-    background-color: inherit !important;
+    /* background-color: inherit !important; 移除此行，避免干擾 body 背景色 */
     color: inherit !important;
-    border-color: inherit !important;
-  }
+    }
 
   body {
     overflow: hidden; /* 手機版固定，不允許滾動 */
@@ -1767,6 +1766,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
   body.wireframe-mode .mobile-bottom-btn {
     border-color: var(--wireframe-border);
     color: var(--wireframe-border);
+    background-color: rgba(255, 255, 255, 0.28); /* 半透明 28% 白色 */
   }
 
   /* 移除面板的邊框樣式（各元件有自己的邊框）*/
