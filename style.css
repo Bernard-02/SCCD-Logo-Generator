@@ -131,19 +131,7 @@ body.wireframe-mode {
 }
 
 /* --- Canvas & 輸入框 --- */
-#canvas-container {
-  /* 桌面版固定尺寸 - 432x540 */
-  width: 432px;
-  height: 540px;
-  min-height: 540px;
-  max-height: 540px;
-  flex-shrink: 0; /* 防止縮小 */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  /* 背景與 body 同步變化 */
-  transition: background-color 1s ease;
-}
+/* 共用的背景顏色規則 */
 body.standard-mode #canvas-container {
   background-color: var(--standard-bg);
 }
@@ -152,6 +140,22 @@ body.inverse-mode #canvas-container {
 }
 body.wireframe-mode #canvas-container {
   background-color: var(--wireframe-bg); /* 使用 CSS 變數，由 JS 動態更新 */
+}
+
+/* 桌面版 canvas-container 規則 */
+@media (min-width: 769px) {
+  #canvas-container {
+    /* 桌面版固定尺寸 - 432x540 */
+    width: 432px;
+    height: 540px;
+    min-height: 540px;
+    max-height: 540px;
+    flex-shrink: 0; /* 防止縮小 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 1s ease;
+  }
 }
 
 .input-container {
@@ -961,16 +965,26 @@ body.wireframe-mode .angle-input:not(.enabled) {
 }
 
 /* --- 桌面版隱藏手機版元素 --- */
-.mobile-controls-wrapper {
-  display: none;
-}
-
-.mobile-input-save-row {
-  display: none;
+.mobile-controls-wrapper,
+.mobile-input-save-row,
+.mobile-panels-wrapper,
+.mobile-input-area,
+.mobile-bottom-bar {
+  display: none !important;
 }
 
 /* --- 響應式設計 (RWD) --- */
 @media (max-width: 768px) {
+  /* 取消所有手機版的 hover 效果（但保留 :active 效果以提供觸摸反饋）*/
+  *:hover:not(:active) {
+    /* 重置所有 hover 效果，保持原始狀態 */
+    opacity: inherit !important;
+    transform: none !important;
+    background-color: inherit !important;
+    color: inherit !important;
+    border-color: inherit !important;
+  }
+
   body {
     overflow: hidden; /* 手機版固定，不允許滾動 */
     position: fixed; /* 確保完全固定 */
@@ -978,45 +992,55 @@ body.wireframe-mode .angle-input:not(.enabled) {
     height: 100vh;
   }
 
-  /* === 重新設計主容器為兩大區塊 === */
+  /* === 手機版主容器：固定佈局，使用統一 padding === */
   .main-container {
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: stretch;
+    position: relative;
     width: 100vw;
     height: 100vh;
-    padding: 4rem 1rem 2rem 1rem; /* 上下左右padding */
-    gap: 1.5rem; /* 縮小間距（從 3rem 改為 2rem），為 control panel 騰出空間 */
+    padding: 4rem 1.5rem 3rem; /* 上 4rem，左右 1.5rem，下 3rem */
+    overflow: hidden;
     box-sizing: border-box;
+    /* 定義 CSS 變數：按鈕的實際尺寸 */
+    /* 計算方式：(可用寬度 - 3個gap) / 4列 */
+    /* 可用寬度 = 100vw - 3rem (左右padding)，gap = 1rem */
+    --mobile-btn-gap: 1rem;
+    --mobile-btn-size: calc((100vw - 3rem - 3 * var(--mobile-btn-gap)) / 4);
   }
 
-  /* === 第一大區塊：Logo === */
+  /* === 手機版 Logo 區域：正方形，靠上對齊 === */
   .display-area {
+    position: fixed;
+    top: 4rem; /* 遵循 main container 的 top padding */
+    left: 1.5rem; /* 遵循 main container 的 left padding */
+    right: 1.5rem; /* 遵循 main container 的 right padding */
+    /* 使用可用寬度作為高度，形成正方形 */
+    width: calc(100vw - 3rem); /* 明確設定寬度：扣除左右 padding (1.5rem * 2) */
+    height: calc(100vw - 3rem); /* 高度等於寬度，形成正方形 */
+    display: flex;
     flex-direction: column;
-    justify-content: center; /* Logo 在區域內垂直置中 */
+    justify-content: center; /* 垂直置中 */
     align-items: center;
-    flex: 7; /* 初始狀態佔 7 份 */
-    width: 100%;
-    gap: 0;
-    max-width: none;
-    padding-bottom: 0;
-    transition: flex 0.3s ease; /* 平滑過渡 flex 比例 */
-  }
-
-  /* Custom展開時，縮小 logo 區域，給 Control panel 更多空間 */
-  .display-area.expanded {
-    flex: 4; /* 展開時變成 4 份（比例 4:6） */
+    padding: 0; /* 不需要內部 padding */
+    box-sizing: border-box;
+    z-index: 1;
   }
 
   #canvas-container {
-    /* 手機版響應式尺寸 */
+    /* 手機版 Canvas Container：正方形，填滿 display-area */
     width: 100%;
     height: 100%;
-    max-width: 90vw; /* 限制最大寬度不超出螢幕 */
-    max-height: none; /* 移除最大高度限制，讓它自適應 */
-    min-height: 160px;
-    flex-shrink: 1; /* 允許縮小以適應螢幕 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
     transition: background-color 1s ease;
+    box-sizing: border-box;
+  }
+
+  /* p5.js canvas 完全填滿 container，保持正方形 */
+  #canvas-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
   }
 
   /* === 隱藏桌面版的輸入框 === */
@@ -1365,13 +1389,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
     opacity: var(--wireframe-opacity);
   }
 
-  #hidden-measurer-mobile {
-    visibility: hidden;
-    position: absolute;
-    top: -9999px;
-    left: -9999px;
-  }
-
   .mobile-save-container {
     display: flex;
     align-items: center;
@@ -1444,7 +1461,339 @@ body.wireframe-mode .angle-input:not(.enabled) {
     isolation: isolate;
   }
 
-  /* 手機版不需要額外的樣式，因為不顯示 control-panel */
+  /* === 新版手機介面：彈出面板區域 === */
+  .mobile-panels-wrapper {
+    display: block !important; /* 手機版時強制顯示 */
+    position: fixed;
+    /* 位於 display-area 下方和按鈕列上方 */
+    bottom: calc(3rem + var(--mobile-btn-size)); /* 3rem padding + 按鈕高度 */
+    left: 1.5rem; /* 遵循 main container 的 left padding */
+    right: 1.5rem; /* 遵循 main container 的 right padding */
+    /* 高度：自動根據內容決定 */
+    height: auto;
+    max-height: 200px; /* 設定最大高度限制 */
+    padding: 1rem 0; /* 上下 1rem padding，左右沒有 padding */
+    box-sizing: border-box;
+    z-index: 150; /* 提高 z-index，確保在按鈕列之上 */
+    pointer-events: none; /* 預設不阻擋互動 */
+  }
+
+  /* 各個面板：直接顯示，不需要額外包裹 */
+  .mobile-panel {
+    width: 100%;
+    height: 100%;
+    display: none; /* 預設隱藏 */
+    opacity: 0;
+    transform: translateY(-20px); /* 輕微向上偏移 */
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    pointer-events: auto; /* 面板本身可互動 */
+  }
+
+  .mobile-panel.active {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+    transform: translateY(0); /* 滑入 */
+  }
+
+  /* Input 面板：只有輸入框，圓角矩形 */
+  .mobile-input-panel #input-box-mobile {
+    width: 100%;
+    max-width: 500px;
+    /* 高度填滿整個面板（扣除 wrapper 的上下 1rem padding 後的空間） */
+    height: 100%;
+    font-size: 1.6rem;
+    padding: 1rem;
+    border: 2px solid;
+    border-radius: 18px;
+    background-color: transparent;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    color: inherit;
+    box-sizing: border-box;
+  }
+
+  /* 根據模式設定輸入框邊框顏色 */
+  body.standard-mode .mobile-input-panel #input-box-mobile {
+    border-color: black;
+    color: black;
+  }
+
+  body.inverse-mode .mobile-input-panel #input-box-mobile {
+    border-color: white;
+    color: white;
+  }
+
+  body.wireframe-mode .mobile-input-panel #input-box-mobile {
+    border-color: var(--wireframe-border);
+    color: var(--wireframe-border);
+  }
+
+  /* Color Picker 面板 */
+  .mobile-colorpicker-panel {
+    /* 移除 padding-top，由父容器的 justify-content: center 控制位置 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  #mobile-colorpicker-container {
+    flex: 1;
+    aspect-ratio: 1 / 1;
+    max-width: 200px;
+    position: relative;
+  }
+
+  /* Rotate Bento 面板 - 填滿整個面板高度（扣除 wrapper 的上下 1rem padding） */
+  .mobile-bento-container {
+    display: flex;
+    gap: 1rem;
+    background-color: transparent;
+    height: 100%; /* 填滿面板高度 */
+  }
+
+  .mobile-bento-left {
+    flex: 7; /* 7:3 比例的 7 */
+    display: flex;
+    gap: 1rem;
+    border: 2px solid; /* 左側區域有自己的框 */
+    border-radius: 18px;
+    padding: 1rem;
+  }
+
+  .mobile-bento-left .sliders-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    justify-content: center;
+  }
+
+  .mobile-bento-left .slider-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .mobile-bento-left .custom-slider {
+    flex: 1;
+  }
+
+  .mobile-bento-left .icon-buttons-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .mobile-bento-left .icon-buttons-wrapper .image-button {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+  }
+
+  .mobile-bento-left .icon-buttons-wrapper .image-button img {
+    width: 100%;
+    height: 100%;
+  }
+
+  .mobile-bento-right {
+    flex: 3; /* 7:3 比例的 3 */
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .mobile-bento-button {
+    flex: 1; /* 上下按鈕平均分配空間 */
+    border: 2px solid; /* 每個按鈕有自己的框 */
+    border-radius: 12px;
+    background: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-bento-button img {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* === 手機版輸入框區域：位於 display-area 和 btn bar 之間 === */
+  .mobile-input-area {
+    display: flex !important; /* 強制顯示 */
+    position: fixed;
+    /* 位於 logo 區域下方 */
+    top: calc(4rem + 100vw - 3rem); /* 4rem top padding + logo 正方形高度 */
+    left: 1.5rem;
+    right: 1.5rem;
+    /* 高度：從 logo 下方到按鈕上方的剩餘空間 */
+    bottom: calc(3rem + var(--mobile-btn-size));
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0;
+    box-sizing: border-box;
+    z-index: 50;
+    /* 從左至右的入場動畫 */
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  #mobile-input-box {
+    width: 100%;
+    height: auto;
+    /* 固定顯示 3 行，以 2rem 字體大小為基準 */
+    min-height: calc(2rem * 1.2 * 3); /* 3 行的固定高度 */
+    font-size: 2rem; /* 預設 2rem（placeholder 和小字體模式） */
+    font-family: inherit;
+    font-weight: 500;
+    text-align: center;
+    background: none;
+    border: none;
+    outline: none;
+    color: inherit;
+    resize: none;
+    overflow: hidden; /* 不顯示滾動條 */
+    line-height: 1.2;
+    box-sizing: border-box;
+  }
+
+  /* 當有輸入且不超過 6 個字時，使用較大字體 */
+  #mobile-input-box:not(:placeholder-shown):not(.small-text) {
+    font-size: 3.5rem;
+    /* 只在從大字體過渡到小字體時應用動畫 */
+    transition: font-size 0.2s ease;
+  }
+
+  /* 當輸入超過 6 個字時，縮小字體到 2rem */
+  #mobile-input-box.small-text {
+    font-size: 2rem;
+    /* 保持過渡效果，讓縮小過程平滑 */
+    transition: font-size 0.2s ease;
+  }
+
+  /* Standard 模式下的 placeholder */
+  body.standard-mode #mobile-input-box::placeholder {
+    color: black;
+    opacity: 0.25;
+  }
+
+  /* Inverse 模式下的 placeholder */
+  body.inverse-mode #mobile-input-box::placeholder {
+    color: white;
+    opacity: 0.5;
+  }
+
+  /* Wireframe 模式下的 placeholder */
+  body.wireframe-mode #mobile-input-box::placeholder {
+    color: var(--wireframe-border);
+    opacity: var(--wireframe-opacity);
+  }
+
+  /* === 新版手機介面：底部按鈕列，高度對齊按鈕大小 === */
+  .mobile-bottom-bar {
+    display: flex !important; /* 手機版時強制顯示 */
+    position: fixed;
+    bottom: 3rem; /* 對齊 main container 的 bottom padding (3rem) */
+    left: 1.5rem; /* 遵循 main container 的 left padding */
+    right: 1.5rem; /* 遵循 main container 的 right padding */
+    /* 高度：等於按鈕的高度 */
+    height: var(--mobile-btn-size);
+    justify-content: space-between; /* 改為 space-between 讓按鈕均分空間 */
+    align-items: center;
+    gap: var(--mobile-btn-gap); /* 使用統一的 gap */
+    padding: 0; /* 不需要內部 padding */
+    box-sizing: border-box;
+    background-color: transparent;
+    z-index: 200;
+  }
+
+  .mobile-bottom-btn {
+    /* 按鈕尺寸使用 CSS 變數，1:1 正方形 */
+    width: var(--mobile-btn-size);
+    height: var(--mobile-btn-size);
+    flex-shrink: 0; /* 不縮小 */
+    flex-grow: 0; /* 不放大 */
+    border: 2px solid;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: opacity 0.2s ease, border-color 0s ease;
+    box-sizing: border-box;
+  }
+
+  .mobile-bottom-btn img {
+    width: 45%; /* icon 大小為按鈕的 45% */
+    height: 45%;
+    object-fit: contain;
+  }
+
+  /* 前三個按鈕：圓角方形，增加圓角 */
+  .mobile-mode-btn,
+  .mobile-custom-btn,
+  .mobile-rotate-btn {
+    border-radius: 24px; /* 增加圓角從 18px 到 24px */
+  }
+
+  /* Save 按鈕：圓形 */
+  .mobile-save-btn {
+    border-radius: 50%;
+  }
+
+  .mobile-bottom-btn:active {
+    opacity: 0.6;
+  }
+
+  /* 根據模式設定底部按鈕邊框顏色 */
+  body.standard-mode .mobile-bottom-btn {
+    border-color: black;
+    color: black;
+  }
+
+  body.inverse-mode .mobile-bottom-btn {
+    border-color: white;
+    color: white;
+  }
+
+  body.wireframe-mode .mobile-bottom-btn {
+    border-color: var(--wireframe-border);
+    color: var(--wireframe-border);
+  }
+
+  /* 移除面板的邊框樣式（各元件有自己的邊框）*/
+
+  /* Bento 按鈕邊框顏色 */
+  body.standard-mode .mobile-bento-container,
+  body.standard-mode .mobile-bento-button {
+    border-color: black;
+  }
+
+  body.inverse-mode .mobile-bento-container,
+  body.inverse-mode .mobile-bento-button {
+    border-color: white;
+  }
+
+  body.wireframe-mode .mobile-bento-container,
+  body.wireframe-mode .mobile-bento-button {
+    border-color: var(--wireframe-border);
+  }
+
+  /* 隱藏舊版手機介面 */
+  .mobile-controls-wrapper,
+  .mobile-colormode-box,
+  .mobile-rotation-box,
+  .mobile-input-save-row {
+    display: none !important;
+  }
 }
 
 /* --- Color Wheel Play/Pause 按鈕樣式 --- */

@@ -93,71 +93,26 @@
 
         </section>
 
-        <!-- 手機版：操作區域 Section -->
-        <section class="mobile-controls-wrapper">
-            <!-- 第一行：Standard/Inverse -->
-            <div class="control-box mobile-colormode-box">
-                <div class="control-group-stack mobile-colormode-controls">
-                    <div class="button-indicator mobile-colormode-indicator"></div>
-                    <button class="custom-button custom-button-standard mobile-standard">
-                        <img id="mobile-standard-icon" src="Panel Icon/Standard.svg" alt="Standard">
-                    </button>
-                    <button class="custom-button custom-button-inverse mobile-inverse">
-                        <img id="mobile-inverse-icon" src="Panel Icon/Inverse.svg" alt="Inverse">
-                    </button>
-                </div>
-            </div>
 
-            <!-- 第二行：Auto/Custom -->
-            <div class="control-box mobile-rotation-box">
-                <div class="control-group-stack">
-                    <button class="custom-button custom-button-rotate mobile-rotate">
-                        <img id="mobile-rotate-icon" src="Panel Icon/Rotate.svg" alt="Auto Rotate">
-                    </button>
-                    <button class="custom-button custom-button-custom mobile-custom">
-                        <img id="mobile-custom-icon" src="Panel Icon/Custom.svg" alt="Custom">
-                    </button>
-                </div>
+        <!-- 手機版：輸入框區域 -->
+        <section class="mobile-input-area">
+            <textarea id="mobile-input-box" placeholder="TYPE AND ENTER" maxlength="40"></textarea>
+        </section>
 
-                <!-- 自訂角度控制 (由 JS 控制顯隱) -->
-                <div class="control-group mobile-custom-angle-controls">
-                    <div class="sliders-wrapper">
-                        <div class="slider-container">
-                            <input type="range" class="custom-slider mobile-r-slider" min="-360" max="360" value="0">
-                            <input type="text" class="mobile-r-angle-label angle-input" value="0" autocomplete="off">
-                        </div>
-                        <div class="slider-container">
-                            <input type="range" class="custom-slider mobile-g-slider" min="-360" max="360" value="0">
-                            <input type="text" class="mobile-g-angle-label angle-input" value="0" autocomplete="off">
-                        </div>
-                        <div class="slider-container">
-                            <input type="range" class="custom-slider mobile-b-slider" min="-360" max="360" value="0">
-                            <input type="text" class="mobile-b-angle-label angle-input" value="0" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="icon-buttons-wrapper">
-                        <button class="image-button mobile-random-button">
-                            <img class="mobile-random-img" src="Panel Icon/Random.svg" alt="Random Icon">
-                        </button>
-                        <button class="image-button mobile-reset-button">
-                            <img class="mobile-reset-img" src="Panel Icon/Reset.svg" alt="Reset Icon">
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 第三行：輸入框 + Save按鈕 -->
-            <div class="mobile-input-save-row">
-                <div class="mobile-input-container">
-                    <textarea id="input-box-mobile" placeholder="TYPE AND ENTER" maxlength="40"></textarea>
-                    <div id="hidden-measurer-mobile"></div>
-                </div>
-                <div class="mobile-save-container">
-                    <button id="save-button-mobile" class="image-button">
-                        <img id="save-img-mobile" src="Panel Icon/Download.svg" alt="Save Icon">
-                    </button>
-                </div>
-            </div>
+        <!-- 手機版：底部 4 按鈕列 -->
+        <section class="mobile-bottom-bar">
+            <button class="mobile-bottom-btn mobile-mode-btn">
+                <img id="mobile-mode-icon" src="Panel Icon/Standard.svg" alt="Mode">
+            </button>
+            <button class="mobile-bottom-btn mobile-custom-btn">
+                <img id="mobile-custom-btn-icon" src="Panel Icon/Custom.svg" alt="Custom">
+            </button>
+            <button class="mobile-bottom-btn mobile-rotate-btn">
+                <img src="Panel Icon/Rotate.svg" alt="Rotate">
+            </button>
+            <button class="mobile-bottom-btn mobile-save-btn">
+                <img id="save-img-mobile" src="Panel Icon/Download.svg" alt="Save">
+            </button>
         </section>
 
     </main>
@@ -173,6 +128,7 @@
     <!-- 模塊化 JavaScript 文件 (按照依賴順序載入) -->
     <script src="js/variables.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/mobile.js"></script>
 
     <!-- 主程式 (已移除重複定義的變數和函數) -->
     <!-- 色彩選擇器邏輯已整合至 sketch.js -->

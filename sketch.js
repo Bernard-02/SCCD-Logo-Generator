@@ -17,7 +17,7 @@ function preload() {
   sccdBlackWireframeImg_2 = loadImage('Easter Egg/SCCD_Black Wireframe_2.png');
   sccdWhiteWireframeImg_2 = loadImage('Easter Egg/SCCD_White Wireframe_2.png');
 
-  // 預載入新彩蛋圖片（COOLGUY, KAOCHIEHISHERE）
+  // 預載入新彩蛋圖片（COOLGUY, CHILLGUY）
   rexImg = loadImage('Easter Egg/Rex.png');
   kcImg = loadImage('Easter Egg/KC.png');
 }
@@ -140,6 +140,8 @@ function setup() {
 
   // --- 選取手機版元素 ---
   inputBoxMobile = select("#input-box-mobile");
+  // 新的手機版底部輸入框（位於 logo 和按鈕列之間）
+  let mobileInputBoxBottom = select("#mobile-input-box");
   saveButtonMobile = select("#save-button-mobile");
   saveImgMobile = select("#save-img-mobile");
 
@@ -165,6 +167,8 @@ function setup() {
   mobileResetImg = select(".mobile-reset-img");
   mobileRotateIcon = select("#mobile-rotate-icon");
   mobileCustomIcon = select("#mobile-custom-icon");
+
+  // --- 手機版 UI 元素已移至 js/mobile.js 管理 ---
 
   // --- 選取下載提示框 ---
   downloadNotification = select("#download-notification");
@@ -228,6 +232,57 @@ function setup() {
         }
       }, 0);
     });
+  }
+
+  // --- 綁定新的手機版底部輸入框事件 ---
+  if (mobileInputBoxBottom) {
+    mobileInputBoxBottom.input(handleInput);
+    // 阻擋空白鍵輸入
+    mobileInputBoxBottom.elt.addEventListener('keydown', function(e) {
+      if (e.key === ' ' || e.keyCode === 32) {
+        e.preventDefault();
+      }
+    });
+
+    // 手機版：鍵盤彈出檢測
+    if (isMobileMode) {
+      let initialHeight = window.innerHeight;
+
+      // 監聽 focus 事件（鍵盤即將彈出）
+      mobileInputBoxBottom.elt.addEventListener('focus', function() {
+        // 給一點延遲讓鍵盤完全彈出
+        setTimeout(() => {
+          let currentHeight = window.innerHeight;
+          let keyboardHeight = initialHeight - currentHeight;
+
+          // 如果高度差異大於 150px，認為是鍵盤彈出
+          if (keyboardHeight > 150) {
+            console.log('鍵盤高度約為:', keyboardHeight + 'px');
+            // 可以在這裡調整佈局
+            adjustLayoutForKeyboard(keyboardHeight);
+          }
+        }, 300);
+      });
+
+      // 監聽 blur 事件（鍵盤收起）
+      mobileInputBoxBottom.elt.addEventListener('blur', function() {
+        setTimeout(() => {
+          resetLayoutAfterKeyboard();
+        }, 100);
+      });
+
+      // 監聽視窗大小變化（更精確的鍵盤檢測）
+      window.visualViewport?.addEventListener('resize', () => {
+        let currentHeight = window.visualViewport.height;
+        let keyboardHeight = initialHeight - currentHeight;
+
+        if (keyboardHeight > 150) {
+          adjustLayoutForKeyboard(keyboardHeight);
+        } else {
+          resetLayoutAfterKeyboard();
+        }
+      });
+    }
   }
   
   // 參考 ref.js:123
@@ -735,6 +790,9 @@ function setup() {
     });
   }
 
+  // --- 初始化手機版 UI（使用 mobile.js）---
+  initMobileUI();
+
   // 初始化響應式檢測
   checkMobileMode();
 
@@ -915,6 +973,9 @@ function draw() {
   // 應用透明度到 DOM 元素
   if (inputBox) inputBox.style('opacity', inputBoxOpacity.toString());
   if (inputBoxMobile) inputBoxMobile.style('opacity', inputBoxOpacity.toString());
+  // 新的手機版底部輸入框也套用透明度
+  let mobileInputBoxBottom = select("#mobile-input-box");
+  if (mobileInputBoxBottom) mobileInputBoxBottom.style('opacity', inputBoxOpacity.toString());
   // 桌面版：輸入框容器跟隨輸入框透明度
   let inputContainer = select('.input-container');
   if (inputContainer) inputContainer.style('opacity', inputBoxOpacity.toString());
@@ -926,6 +987,22 @@ function draw() {
   // 手機版：操作區域跟隨控制面板透明度
   let mobileControlsWrapper = select('.mobile-controls-wrapper');
   if (mobileControlsWrapper) mobileControlsWrapper.style('opacity', controlPanelOpacity.toString());
+
+  // 手機版輸入框區域：從左至右滑入動畫（與輸入框同時開始）
+  let mobileInputArea = select('.mobile-input-area');
+  if (mobileInputArea && isMobileMode) {
+    if (timeSinceLoad < fadeInDuration) {
+      let progress = timeSinceLoad / fadeInDuration;
+      // 使用 easeOutCubic 緩動函數讓動畫更自然
+      let easeProgress = 1 - Math.pow(1 - progress, 3);
+      let translateX = -100 + (easeProgress * 100); // 從 -100% 到 0%
+      mobileInputArea.style('transform', `translateX(${translateX}%)`);
+      mobileInputArea.style('opacity', progress.toString());
+    } else {
+      mobileInputArea.style('transform', 'translateX(0)');
+      mobileInputArea.style('opacity', '1');
+    }
+  }
 
   // --- 打字機動畫更新 ---
   if (typewriterActive) {
@@ -1232,7 +1309,7 @@ function draw() {
     pop();
   }
 
-  // --- 新彩蛋圖片繪製（COOLGUY, KAOCHIEHISHERE）---
+  // --- 新彩蛋圖片繪製（COOLGUY, CHILLGUY）---
   // 注意：新彩蛋圖片不在這裡繪製，改用 DOM 元素覆蓋在整個 window 上
   // 參考 updateSpecialEasterEggDisplay() 函數
 }
@@ -1242,12 +1319,18 @@ function getCurrentInputBox() {
     return isMobileMode ? inputBoxMobile : inputBox;
 }
 
-// --- 同步兩個輸入框的內容 ---
+// --- 同步所有輸入框的內容 ---
 function syncInputBoxes(sourceValue) {
-    if (inputBox && inputBoxMobile) {
-        // 桌面版和手機版都是 textarea
+    if (inputBox) {
         inputBox.value(sourceValue);
+    }
+    if (inputBoxMobile) {
         inputBoxMobile.value(sourceValue);
+    }
+    // 同步新的手機版底部輸入框
+    let mobileInputBoxBottom = select("#mobile-input-box");
+    if (mobileInputBoxBottom) {
+        mobileInputBoxBottom.value(sourceValue);
     }
 }
 
@@ -1294,12 +1377,24 @@ function handleInput(event) {
     // 同步更新兩個輸入框
     syncInputBoxes(validInput);
 
+    // 根據字數調整手機版輸入框的字體大小
+    let mobileInputBoxBottom = select("#mobile-input-box");
+    if (mobileInputBoxBottom) {
+        // 計算純字母數量（不含空格和換行）
+        let pureLetterCount = validInput.replace(/[\s\n]/g, "").length;
+        if (pureLetterCount > 6) {
+            mobileInputBoxBottom.addClass('small-text');
+        } else {
+            mobileInputBoxBottom.removeClass('small-text');
+        }
+    }
+
     // 彩蛋邏輯
     let previousEasterEggState = isEasterEggActive;
     let normalizedInput = validInput.toUpperCase().replace(/[\s\n]/g, "");
     isEasterEggActive = (normalizedInput === easterEggString || normalizedInput === "SCCD");
 
-    // 新彩蛋邏輯（COOLGUY, KAOCHIEHISHERE）
+    // 新彩蛋邏輯（COOLGUY, CHILLGUY）
     // 只有在不是動畫中時才檢測
     // 並且需要檢查是否真的有內容變化（避免按無效鍵觸發）
     if (!specialEasterEggAnimating) {
@@ -1313,8 +1408,8 @@ function handleInput(event) {
         if (normalizedInput === "COOLGUY") {
           specialEasterEggType = "COOLGUY";
           triggerSpecialEasterEgg();
-        } else if (normalizedInput === "KAOCHIEHISHERE") {
-          specialEasterEggType = "KAOCHIEHISHERE";
+        } else if (normalizedInput === "CHILLGUY") {
+          specialEasterEggType = "CHILLGUY";
           triggerSpecialEasterEgg();
         }
 
@@ -1389,6 +1484,12 @@ function handleInput(event) {
 
 // --- 繪製 Placeholder SVG Wireframe ---
 function drawPlaceholder(pg) {
+  // 檢查圖片是否已載入（防止手機版首次載入時圖片未完成載入）
+  if (!placeholderR || !placeholderG || !placeholderB ||
+      !placeholderR_white || !placeholderG_white || !placeholderB_white) {
+    return; // 圖片尚未載入完成，跳過繪製
+  }
+
   // 更新旋轉角度（使用 placeholderBaseSpeeds: [0.125, -0.125, 0.25] 對應 R, G, B，速度減緩75%）
   placeholderRotations[0] += placeholderBaseSpeeds[0]; // R: 0.125
   placeholderRotations[1] += placeholderBaseSpeeds[1]; // G: -0.125
@@ -1885,7 +1986,7 @@ function convertAngleInput(value) {
     return angle;
 }
 
-// --- 新彩蛋動畫函數（COOLGUY, KAOCHIEHISHERE）---
+// --- 新彩蛋動畫函數（COOLGUY, CHILLGUY）---
 function triggerSpecialEasterEgg() {
   // 設定動畫狀態
   specialEasterEggAnimating = true;
@@ -2276,81 +2377,104 @@ function updateUI() {
 
     } else {
         // --- 正常模式 UI ---
-        // 顯示整個 rotation-box
-        select('#rotation-box').style('display', 'flex');
-
-        // 更新 rotation-box 和 save-box 的 disabled 狀態
+        // 桌面版：顯示整個 rotation-box
         let rotationBox = select('#rotation-box');
-        let saveBox = select('#save-box');
-        if (hasText) {
-            rotationBox.removeClass('disabled');
-            saveBox.removeClass('disabled');
-        } else {
-            rotationBox.addClass('disabled');
-            saveBox.addClass('disabled');
+        if (rotationBox) {
+            rotationBox.style('display', 'flex');
+
+            // 更新 rotation-box 的 disabled 狀態
+            if (hasText) {
+                rotationBox.removeClass('disabled');
+            } else {
+                rotationBox.addClass('disabled');
+            }
         }
 
-        rotateButton.style('display', 'flex');
-        customButton.style('display', 'flex');
+        // 更新 save-box 的 disabled 狀態
+        let saveBox = select('#save-box');
+        if (saveBox) {
+            if (hasText) {
+                saveBox.removeClass('disabled');
+            } else {
+                saveBox.addClass('disabled');
+            }
+        }
 
-        // 更新 Auto/Custom 按鈕（使用 class 控制邊框）
-        rotateButton.elt.disabled = !hasText;
-        rotateButton.style("color", !hasText ? disabledColor : isAutoRotateMode ? activeColor : disabledColor);
-        rotateButton.style("cursor", !hasText ? 'not-allowed' : "pointer");
+        // 桌面版按鈕（添加存在性檢查）
+        if (rotateButton) rotateButton.style('display', 'flex');
+        if (customButton) customButton.style('display', 'flex');
+
+        // 更新 Auto/Custom 按鈕（添加存在性檢查）
+        if (rotateButton) {
+            rotateButton.elt.disabled = !hasText;
+            rotateButton.style("color", !hasText ? disabledColor : isAutoRotateMode ? activeColor : disabledColor);
+            rotateButton.style("cursor", !hasText ? 'not-allowed' : "pointer");
+
+            // 使用 class 控制 active 狀態
+            if (hasText && isAutoRotateMode) {
+                rotateButton.addClass('active');
+            } else {
+                rotateButton.removeClass('active');
+            }
+        }
 
         // 更新 Rotate 按鈕 icon（使用統一函數）
         updateRotateIcon();
 
-        // 使用 class 控制 active 狀態
-        if (hasText && isAutoRotateMode) {
-            rotateButton.addClass('active');
-        } else {
-            rotateButton.removeClass('active');
-        }
+        if (customButton) {
+            customButton.elt.disabled = !hasText;
+            customButton.style("color", !hasText ? disabledColor : !isAutoRotateMode ? activeColor : disabledColor);
+            customButton.style("cursor", !hasText ? 'not-allowed' : "pointer");
 
-        customButton.elt.disabled = !hasText;
-        customButton.style("color", !hasText ? disabledColor : !isAutoRotateMode ? activeColor : disabledColor);
-        customButton.style("cursor", !hasText ? 'not-allowed' : "pointer");
-        // 使用 class 控制 active 狀態
-        if (hasText && !isAutoRotateMode) {
-            customButton.addClass('active');
-            // 為 custom-area-wrapper 添加 custom-mode class，顯示邊框和 padding
-            let customAreaWrapper = select('#custom-area-wrapper');
-            if (customAreaWrapper) customAreaWrapper.addClass('custom-mode');
-        } else {
-            customButton.removeClass('active');
-            // 移除 custom-mode class
-            let customAreaWrapper = select('#custom-area-wrapper');
-            if (customAreaWrapper) customAreaWrapper.removeClass('custom-mode');
+            // 使用 class 控制 active 狀態
+            if (hasText && !isAutoRotateMode) {
+                customButton.addClass('active');
+                // 為 custom-area-wrapper 添加 custom-mode class，顯示邊框和 padding
+                let customAreaWrapper = select('#custom-area-wrapper');
+                if (customAreaWrapper) customAreaWrapper.addClass('custom-mode');
+            } else {
+                customButton.removeClass('active');
+                // 移除 custom-mode class
+                let customAreaWrapper = select('#custom-area-wrapper');
+                if (customAreaWrapper) customAreaWrapper.removeClass('custom-mode');
+            }
         }
 
         // 更新 Colormode 按鈕（循環切換，總是可用）
-        colormodeButton.style('display', 'flex');
-        colormodeButton.style('cursor', 'pointer');
+        if (colormodeButton) {
+            colormodeButton.style('display', 'flex');
+            colormodeButton.style('cursor', 'pointer');
+        }
 
         // 更新 Custom 控制面板
         const customControlsEnabled = hasText && !isAutoRotateMode;
         const customControlsContainer = select('#custom-angle-controls');
 
-        if (customControlsEnabled) {
-            // Custom 展開時：顯示 Custom 按鈕、slider 和 icon 按鈕（使用平滑動畫）
-            customButton.style('display', 'flex');
-            customControlsContainer.addClass('show'); // 添加 show class 觸發動畫
-            randomButton.style('display', 'flex');
-            resetButton.style('display', 'flex');
-        } else {
-            // Custom 未展開時：顯示 Custom 按鈕，隱藏 slider 和 icon 按鈕
-            customButton.style('display', 'flex');
-            customControlsContainer.removeClass('show'); // 移除 show class 觸發收起動畫
-            randomButton.style('display', 'flex'); // 保持顯示但會被設為 disabled
-            resetButton.style('display', 'flex'); // 保持顯示但會被設為 disabled
+        if (customControlsContainer) {
+            if (customControlsEnabled) {
+                // Custom 展開時：顯示 slider 和 icon 按鈕（使用平滑動畫）
+                if (customButton) customButton.style('display', 'flex');
+                customControlsContainer.addClass('show'); // 添加 show class 觸發動畫
+                if (randomButton) randomButton.style('display', 'flex');
+                if (resetButton) resetButton.style('display', 'flex');
+            } else {
+                // Custom 未展開時：顯示按鈕但 disabled
+                if (customButton) customButton.style('display', 'flex');
+                customControlsContainer.removeClass('show'); // 移除 show class 觸發收起動畫
+                if (randomButton) randomButton.style('display', 'flex');
+                if (resetButton) resetButton.style('display', 'flex');
+            }
         }
 
-        // 更新 Random/Reset 圖示
-        randomButton.elt.disabled = !customControlsEnabled;
-        resetButton.elt.disabled = !customControlsEnabled;
-        randomButton.style('cursor', customControlsEnabled ? 'pointer' : 'not-allowed');
-        resetButton.style('cursor', customControlsEnabled ? 'pointer' : 'not-allowed');
+        // 更新 Random/Reset 圖示（添加存在性檢查）
+        if (randomButton) {
+            randomButton.elt.disabled = !customControlsEnabled;
+            randomButton.style('cursor', customControlsEnabled ? 'pointer' : 'not-allowed');
+        }
+        if (resetButton) {
+            resetButton.elt.disabled = !customControlsEnabled;
+            resetButton.style('cursor', customControlsEnabled ? 'pointer' : 'not-allowed');
+        }
         
         // 更新滑桿（根據字母數量決定可用的 slider）
         const sliders = [rSlider, gSlider, bSlider];
@@ -2405,22 +2529,24 @@ function updateUI() {
         let gVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetGRotationOffset) : gRotationOffset);
         let bVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetBRotationOffset) : bRotationOffset);
 
-        // 只在角度 label 沒有焦點時才更新它的值（避免干擾用戶編輯）
+        // 只在角度 label 沒有焦點時才更新它的值（避免干擾用戶編輯，添加存在性檢查）
         const activeElement = document.activeElement;
-        if (activeElement !== rAngleLabel.elt) {
+        if (rAngleLabel && activeElement !== rAngleLabel.elt) {
           rAngleLabel.value((rVal > 0 ? "+" : "") + rVal);
         }
-        if (activeElement !== gAngleLabel.elt) {
+        if (gAngleLabel && activeElement !== gAngleLabel.elt) {
           gAngleLabel.value((gVal > 0 ? "+" : "") + gVal);
         }
-        if (activeElement !== bAngleLabel.elt) {
+        if (bAngleLabel && activeElement !== bAngleLabel.elt) {
           bAngleLabel.value((bVal > 0 ? "+" : "") + bVal);
         }
 
-        // 更新 Save 按鈕
-        saveButton.style('display', 'flex');
-        saveButton.elt.disabled = !hasText;
-        saveButton.style('cursor', hasText ? 'pointer' : 'not-allowed');
+        // 更新 Save 按鈕（添加存在性檢查）
+        if (saveButton) {
+            saveButton.style('display', 'flex');
+            saveButton.elt.disabled = !hasText;
+            saveButton.style('cursor', hasText ? 'pointer' : 'not-allowed');
+        }
     }
     
     // 更新手機版 Save 按鈕
@@ -2579,21 +2705,8 @@ function updateUI() {
         }
     }
 
-    // 手機版：動態調整 logo 和操作區域的占比
-    if (isMobileMode) {
-        const displayArea = select('.display-area');
-        const mobileControlsWrapper = select('.mobile-controls-wrapper');
-
-        if (customControlsEnabled) {
-            // Custom展開：logo占4，操作區域占6
-            displayArea.addClass('expanded');
-            mobileControlsWrapper.addClass('expanded');
-        } else {
-            // 沒有輸入文字或Custom沒展開：logo占7，操作區域占3
-            displayArea.removeClass('expanded');
-            mobileControlsWrapper.removeClass('expanded');
-        }
-    }
+    // 更新手機版 UI（使用 mobile.js）
+    updateMobileUI();
 }
 
 function updateSliders() {
@@ -2632,9 +2745,63 @@ function getRotationFor(layer, index) {
 
 
 // --- 視窗大小調整處理 ---
+// --- 手機版鍵盤調整函數 ---
+function adjustLayoutForKeyboard(keyboardHeight) {
+  if (!isMobileMode) return;
+
+  console.log('調整佈局以適應鍵盤，鍵盤高度:', keyboardHeight + 'px');
+
+  // 獲取相關元素
+  let mobileInputArea = select('.mobile-input-area');
+  let displayArea = select('.display-area');
+  let mobileBottomBar = select('.mobile-bottom-bar');
+
+  if (mobileInputArea && displayArea && mobileBottomBar) {
+    // 選項1：將輸入框移到鍵盤上方
+    // 計算新的位置（鍵盤上方）
+    let newBottom = keyboardHeight + 10; // 10px 是額外的間距
+    mobileInputArea.style('bottom', newBottom + 'px');
+    mobileInputArea.style('top', 'auto'); // 移除 top 定位
+
+    // 選項2：隱藏底部按鈕列（如果需要）
+    // mobileBottomBar.style('display', 'none');
+
+    // 選項3：縮小 logo 區域（如果需要更多空間）
+    // displayArea.style('transform', 'scale(0.8)');
+  }
+}
+
+function resetLayoutAfterKeyboard() {
+  if (!isMobileMode) return;
+
+  console.log('重置佈局');
+
+  // 獲取相關元素
+  let mobileInputArea = select('.mobile-input-area');
+  let displayArea = select('.display-area');
+  let mobileBottomBar = select('.mobile-bottom-bar');
+
+  if (mobileInputArea) {
+    // 恢復原始位置
+    mobileInputArea.style('bottom', 'calc(3rem + var(--mobile-btn-size))');
+    mobileInputArea.style('top', 'calc(4rem + 100vw - 3rem)');
+  }
+
+  if (mobileBottomBar) {
+    // mobileBottomBar.style('display', 'flex');
+  }
+
+  if (displayArea) {
+    // displayArea.style('transform', 'scale(1)');
+  }
+}
+
 function windowResized() {
     // 延遲處理響應式變化，確保CSS媒體查詢先生效
     setTimeout(() => {
+        // 儲存舊的模式狀態
+        let wasMobileMode = isMobileMode;
+
         // 更新響應式模式檢測
         checkMobileMode();
 
@@ -2645,6 +2812,18 @@ function windowResized() {
         // 調整字體大小和輸入框高度（僅桌面版）
         if (!isMobileMode) {
             adjustInputFontSize(); // 這個函數內部會調用 adjustTextareaHeight()
+        }
+
+        // 如果模式切換了（桌面 <-> 手機），需要重新初始化 UI 狀態
+        if (wasMobileMode !== isMobileMode) {
+            // 強制重新繪製 placeholder（如果需要）
+            if (letters.length === 0) {
+                targetPlaceholderAlpha = 255;
+                placeholderAlpha = 0; // 從 0 開始 fade in
+            }
+
+            // 更新所有 icon
+            updateIconsForMode();
         }
 
         // 更新UI以反映可能的模式變化

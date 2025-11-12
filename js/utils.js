@@ -17,28 +17,28 @@ function checkMobileMode() {
 // 計算Canvas尺寸
 function getCanvasSize() {
   if (isMobileMode) {
-    // 手機版：使用響應式尺寸
-    let containerWidth = Math.min(window.innerWidth * 0.9, 400);
-    let containerHeight = Math.min(window.innerHeight * 0.4, 420);
+    // 手機版：根據 canvas-container 的寬度決定大小，保持 1:1 正方形比例
+    const container = document.getElementById('canvas-container');
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      const containerWidth = rect.width;
+      const containerHeight = rect.height;
 
-    // 保持比例 4:3
-    let aspectRatio = 4 / 3;
+      // 使用較小的尺寸來確保正方形
+      const size = Math.min(containerWidth, containerHeight);
 
-    let calcHeight = containerWidth / aspectRatio;
-    if (calcHeight > containerHeight) {
-      containerWidth = containerHeight * aspectRatio;
-      calcHeight = containerHeight;
+      return {
+        width: Math.floor(size),
+        height: Math.floor(size)
+      };
     }
 
-    // 確保最小高度為350px
-    if (calcHeight < 350) {
-      calcHeight = 350;
-      containerWidth = calcHeight * aspectRatio;
-    }
+    // 如果無法取得 container，使用預設計算（正方形）
+    let availableWidth = window.innerWidth - 48; // 扣除左右 padding (1.5rem * 2 = 3rem = 48px)
 
     return {
-      width: Math.floor(containerWidth),
-      height: Math.floor(calcHeight)
+      width: Math.floor(availableWidth),
+      height: Math.floor(availableWidth) // 正方形：寬度等於高度
     };
   } else {
     // 桌面版：固定尺寸 432x540，與 canvas-container 一致
@@ -196,6 +196,39 @@ function updateIconsForMode() {
 
   // 更新 Color Wheel Play/Pause 圖標
   updateColorWheelIcon();
+
+  // 更新手機版 Mode 按鈕圖標
+  updateMobileModeIcon();
+
+  // 更新手機版按鈕和面板的邊框顏色（Wireframe 模式需要動態設定）
+  if (isWireframeMode && wireframeStrokeColor) {
+    const borderColor = `rgb(${red(wireframeStrokeColor)}, ${green(wireframeStrokeColor)}, ${blue(wireframeStrokeColor)})`;
+
+    // 更新底部按鈕邊框顏色
+    const mobileBottomBtns = selectAll('.mobile-bottom-btn');
+    mobileBottomBtns.forEach(btn => {
+      btn.style('border-color', borderColor);
+      btn.style('color', borderColor);
+    });
+
+    // 更新面板邊框顏色
+    const mobilePanels = selectAll('.mobile-panel');
+    mobilePanels.forEach(panel => {
+      panel.style('border-color', borderColor);
+      panel.style('color', borderColor);
+    });
+
+    // 更新 Bento 容器和按鈕邊框顏色
+    const mobileBentoContainer = select('.mobile-bento-container');
+    if (mobileBentoContainer) {
+      mobileBentoContainer.style('border-color', borderColor);
+    }
+
+    const mobileBentoButtons = selectAll('.mobile-bento-button');
+    mobileBentoButtons.forEach(btn => {
+      btn.style('border-color', borderColor);
+    });
+  }
 }
 
 // 更新 Color Wheel Play/Pause 圖標
@@ -221,4 +254,46 @@ function updateColorWheelIcon() {
   } else {
     colorWheelPlayButton.addClass('is-play');
   }
+}
+
+// 更新手機版 Mode 按鈕圖標
+function updateMobileModeIcon() {
+  let mobileModeIcon = select("#mobile-mode-icon");
+  if (!mobileModeIcon) return;
+
+  const isWireframeMode = mode === "Wireframe";
+
+  // 決定 icon 後綴（黑色或白色版本）
+  let suffix = "";
+
+  if (isWireframeMode) {
+    // Wireframe 模式下，根據描邊顏色選擇黑色或白色版本
+    const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
+    suffix = isWhiteIcon ? "_Inverse" : "";
+  } else {
+    // Standard 模式：使用黑色 icon（無後綴）
+    // Inverse 模式：使用白色 icon（_Inverse 後綴）
+    suffix = (mode === "Inverse") ? "_Inverse" : "";
+  }
+
+  // 根據當前模式選擇對應的 icon
+  let iconSrc;
+  if (isWireframeMode) {
+    // Wireframe 模式下，根據背景色選擇黑色或白色版本
+    const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
+    iconSrc = isWhiteIcon ? `Panel Icon/Inverse_Wireframe.svg` : `Panel Icon/Standard_Wireframe.svg`;
+  } else {
+    switch(mode) {
+      case "Standard":
+        iconSrc = `Panel Icon/Standard.svg`;
+        break;
+      case "Inverse":
+        iconSrc = `Panel Icon/Inverse_White.svg`;
+        break;
+      default:
+        iconSrc = `Panel Icon/Standard.svg`;
+    }
+  }
+
+  mobileModeIcon.attribute('src', iconSrc);
 }
