@@ -107,11 +107,15 @@ function bindMobileEvents() {
 
     // 防止鍵盤彈出時自動滾動
     mobileElements.inputBox.elt.addEventListener('focus', function(e) {
-      // 防止瀏覽器自動滾動到輸入框
-      e.preventDefault();
-      // 保持當前滾動位置
-      window.scrollTo(0, 0);
-    }, { passive: false });
+      // 使用 scrollIntoView 防止自動滾動行為
+      setTimeout(() => {
+        mobileElements.inputBox.elt.scrollIntoView({
+          behavior: 'instant',
+          block: 'nearest',
+          inline: 'nearest'
+        });
+      }, 0);
+    }, { passive: true });
   }
 
   // 底部按鈕事件
@@ -702,4 +706,37 @@ function updateMobileModeIcon() {
   }
 
   mobileElements.modeIcon.attribute('src', iconSrc);
+}
+
+// ====================================
+// Visual Viewport API：處理鍵盤覆蓋行為
+// ====================================
+// 使用 Visual Viewport API 來偵測虛擬鍵盤的出現並調整佈局
+if (window.visualViewport) {
+  let initialHeight = window.visualViewport.height;
+
+  window.visualViewport.addEventListener('resize', () => {
+    if (!isMobileMode) return;
+
+    const currentHeight = window.visualViewport.height;
+    const keyboardHeight = initialHeight - currentHeight;
+
+    // 鍵盤彈出時（viewport 高度減少）
+    if (keyboardHeight > 0) {
+      // 不做任何調整，讓內容保持原位，鍵盤覆蓋在上方
+      // 確保 body 固定不動
+      document.body.style.height = `${initialHeight}px`;
+    } else {
+      // 鍵盤收起時，恢復原本高度
+      document.body.style.height = '100vh';
+      document.body.style.height = '100dvh';
+    }
+  });
+
+  // 偵測 scroll 事件，防止頁面被鍵盤推上去
+  window.visualViewport.addEventListener('scroll', () => {
+    if (!isMobileMode) return;
+    // 強制回到原位
+    window.scrollTo(0, 0);
+  });
 }

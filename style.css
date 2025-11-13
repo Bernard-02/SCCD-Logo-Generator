@@ -1646,6 +1646,9 @@ body.wireframe-mode .angle-input:not(.enabled) {
     /* 從左至右的入場動畫 */
     transform: translateX(-100%);
     opacity: 0;
+    /* 防止鍵盤彈出時位置改變 */
+    will-change: transform;
+    -webkit-overflow-scrolling: touch;
   }
 
   #mobile-input-box {
@@ -1665,6 +1668,8 @@ body.wireframe-mode .angle-input:not(.enabled) {
     overflow: hidden; /* 不顯示滾動條 */
     line-height: 1.2;
     box-sizing: border-box;
+    /* 防止鍵盤彈出時自動滾動 */
+    scroll-margin: 0;
   }
 
   /* 當有輸入且不超過 6 個字時，使用較大字體 */
