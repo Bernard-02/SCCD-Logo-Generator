@@ -813,6 +813,11 @@ function setup() {
   // 初始 UI 狀態設定
   updateUI();
 
+  // 強制更新手機版 Rotate icon（確保初始狀態正確）
+  if (isMobileMode) {
+    updateRotateIcon();
+  }
+
   // 讓輸入框自動獲得焦點，使游標一直顯示並閃爍
   setTimeout(() => {
     if (isMobileMode && inputBoxMobile) {

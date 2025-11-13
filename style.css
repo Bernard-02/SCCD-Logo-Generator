@@ -1776,6 +1776,23 @@ body.wireframe-mode .angle-input:not(.enabled) {
     opacity: 0.6;
   }
 
+  /* Disabled 狀態下的按鈕 */
+  .mobile-bottom-btn:disabled {
+    cursor: not-allowed;
+  }
+
+  body.standard-mode .mobile-bottom-btn:disabled {
+    opacity: 0.25;
+  }
+
+  body.inverse-mode .mobile-bottom-btn:disabled {
+    opacity: 0.5;
+  }
+
+  body.wireframe-mode .mobile-bottom-btn:disabled {
+    opacity: var(--wireframe-opacity);
+  }
+
   /* 根據模式設定底部按鈕邊框顏色 */
   body.standard-mode .mobile-bottom-btn {
     border-color: black;

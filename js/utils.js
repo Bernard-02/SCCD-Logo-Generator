@@ -57,11 +57,12 @@ function updateRotateIcon() {
   }
 
   const hasText = letters.length > 0;
-  const isInverseMode = mode === "Inverse";
-  const isWireframeMode = mode === "Wireframe";
+  // 使用 targetMode 而不是 mode，以確保在模式切換時圖標正確更新
+  const currentMode = (typeof targetMode !== 'undefined') ? targetMode : mode;
+  const isInverseMode = currentMode === "Inverse";
+  const isWireframeMode = currentMode === "Wireframe";
 
   // 決定 icon 後綴（黑色或白色版本）
-  // 統一使用當前模式的顏色，透過 CSS opacity 控制 disabled 狀態
   let suffix = "";
 
   if (isWireframeMode) {
@@ -72,38 +73,43 @@ function updateRotateIcon() {
     suffix = isInverseMode ? "_Inverse" : "";
   }
 
-  let iconSrc = '';
-  let isPlayIcon = false;
-
-  // 統一使用當前模式的 icon，CSS 會根據 disabled 狀態調整 opacity
-  // 確保 isAutoRotateMode 有定義
+  // 確保變數有定義
   const autoRotateMode = (typeof isAutoRotateMode !== 'undefined') ? isAutoRotateMode : false;
   const isRotating = (typeof autoRotate !== 'undefined') ? autoRotate : false;
 
+  // 桌面版：使用 Auto/Custom 模式邏輯
+  let desktopIconSrc = '';
+  let desktopIsPlayIcon = false;
+
   if (!hasText) {
     // 沒有文字時：顯示 Rotate icon（disabled 狀態）
-    iconSrc = `Panel Icon/Rotate${suffix}.svg`;
+    desktopIconSrc = `Panel Icon/Rotate${suffix}.svg`;
   } else if (autoRotateMode) {
     // 有文字且在 Auto Rotate 模式
     if (isRotating) {
       // 正在自動旋轉：顯示 Pause icon
-      iconSrc = `Panel Icon/Pause${suffix}.svg`;
+      desktopIconSrc = `Panel Icon/Pause${suffix}.svg`;
     } else {
       // Auto 模式但暫停：顯示 Play icon
-      iconSrc = `Panel Icon/Play${suffix}.svg`;
-      isPlayIcon = true;
+      desktopIconSrc = `Panel Icon/Play${suffix}.svg`;
+      desktopIsPlayIcon = true;
     }
   } else {
     // 有文字且在 Custom 模式：顯示 Rotate icon（disabled 狀態）
-    iconSrc = `Panel Icon/Rotate${suffix}.svg`;
+    desktopIconSrc = `Panel Icon/Rotate${suffix}.svg`;
   }
 
+  // 手機版：使用與桌面版相同的 Auto/Custom 模式邏輯
+  let mobileIconSrc = desktopIconSrc;
+  let mobileIsPlayIcon = desktopIsPlayIcon;
+
+  // 更新桌面版 icon
   if (rotateIcon) {
-    rotateIcon.attribute('src', iconSrc);
+    rotateIcon.attribute('src', desktopIconSrc);
     // 添加或移除 play-icon class
     let rotateButton = select('.custom-button-rotate');
     if (rotateButton) {
-      if (isPlayIcon) {
+      if (desktopIsPlayIcon) {
         rotateButton.addClass('play-icon');
       } else {
         rotateButton.removeClass('play-icon');
@@ -111,12 +117,13 @@ function updateRotateIcon() {
     }
   }
 
+  // 更新手機版 icon
   if (mobileRotateIcon) {
-    mobileRotateIcon.attribute('src', iconSrc);
+    mobileRotateIcon.attribute('src', mobileIconSrc);
     // 添加或移除 play-icon class（手機版）
-    let mobileRotateButton = select('.mobile-rotate');
+    let mobileRotateButton = select('.mobile-rotate-btn');
     if (mobileRotateButton) {
-      if (isPlayIcon) {
+      if (mobileIsPlayIcon) {
         mobileRotateButton.addClass('play-icon');
       } else {
         mobileRotateButton.removeClass('play-icon');

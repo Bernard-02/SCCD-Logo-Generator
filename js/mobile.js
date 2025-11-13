@@ -8,6 +8,7 @@ let mobileElements = {
   // 底部按鈕列
   inputBtn: null,
   modeBtn: null,
+  customBtn: null,
   rotateBtn: null,
   saveBtn: null,
 
@@ -55,6 +56,7 @@ function initMobileUI() {
   // 選取所有元素
   mobileElements.inputBtn = select('.mobile-input-btn');
   mobileElements.modeBtn = select('.mobile-mode-btn');
+  mobileElements.customBtn = select('.mobile-custom-btn');
   mobileElements.rotateBtn = select('.mobile-rotate-btn');
   mobileElements.saveBtn = select('.mobile-save-btn');
 
@@ -127,8 +129,12 @@ function bindMobileEvents() {
     mobileElements.modeBtn.mousePressed(cycleModeButton);
   }
 
+  if (mobileElements.customBtn) {
+    mobileElements.customBtn.mousePressed(switchToCustomMode);
+  }
+
   if (mobileElements.rotateBtn) {
-    mobileElements.rotateBtn.mousePressed(toggleRotatePanel);
+    mobileElements.rotateBtn.mousePressed(toggleAutoRotate);
   }
 
   if (mobileElements.saveBtn) {
@@ -151,7 +157,7 @@ function bindMobileEvents() {
   // Slider 事件
   if (mobileElements.rSlider) {
     mobileElements.rSlider.input(() => {
-      if (!isEasterEggActive && !isAutoRotateMode) {
+      if (!isEasterEggActive && !autoRotate) {
         handleMobileSliderChange('r', mobileElements.rSlider.value());
       }
     });
@@ -159,7 +165,7 @@ function bindMobileEvents() {
 
   if (mobileElements.gSlider) {
     mobileElements.gSlider.input(() => {
-      if (!isEasterEggActive && !isAutoRotateMode) {
+      if (!isEasterEggActive && !autoRotate) {
         handleMobileSliderChange('g', mobileElements.gSlider.value());
       }
     });
@@ -167,7 +173,7 @@ function bindMobileEvents() {
 
   if (mobileElements.bSlider) {
     mobileElements.bSlider.input(() => {
-      if (!isEasterEggActive && !isAutoRotateMode) {
+      if (!isEasterEggActive && !autoRotate) {
         handleMobileSliderChange('b', mobileElements.bSlider.value());
       }
     });
@@ -209,7 +215,7 @@ function bindMobileAngleLabelEvents() {
   if (mobileElements.rAngleLabel) {
     mobileElements.rAngleLabel.elt.addEventListener('keydown', filterAngleInput);
     mobileElements.rAngleLabel.elt.addEventListener('input', function(e) {
-      if (!isEasterEggActive && !isAutoRotateMode) {
+      if (!isEasterEggActive && !autoRotate) {
         let angle = convertAngleInput(e.target.value);
         mobileElements.rSlider.value(angle);
         if (rSlider) rSlider.value(angle);
@@ -221,7 +227,7 @@ function bindMobileAngleLabelEvents() {
   if (mobileElements.gAngleLabel) {
     mobileElements.gAngleLabel.elt.addEventListener('keydown', filterAngleInput);
     mobileElements.gAngleLabel.elt.addEventListener('input', function(e) {
-      if (!isEasterEggActive && !isAutoRotateMode) {
+      if (!isEasterEggActive && !autoRotate) {
         let angle = convertAngleInput(e.target.value);
         mobileElements.gSlider.value(angle);
         if (gSlider) gSlider.value(angle);
@@ -233,7 +239,7 @@ function bindMobileAngleLabelEvents() {
   if (mobileElements.bAngleLabel) {
     mobileElements.bAngleLabel.elt.addEventListener('keydown', filterAngleInput);
     mobileElements.bAngleLabel.elt.addEventListener('input', function(e) {
-      if (!isEasterEggActive && !isAutoRotateMode) {
+      if (!isEasterEggActive && !autoRotate) {
         let angle = convertAngleInput(e.target.value);
         mobileElements.bSlider.value(angle);
         if (bSlider) bSlider.value(angle);
@@ -343,11 +349,11 @@ function switchToCustomMode() {
   updateUI();
 }
 
-// 切換自動旋轉
+// 切換自動旋轉（與桌面版相同的邏輯）
 function toggleAutoRotate() {
   if (letters.length === 0 || isEasterEggActive) return;
 
-  // 從 Custom 切換到 Auto
+  // 從 Custom 模式切換到 Auto 模式
   if (!isAutoRotateMode) {
     isAutoRotateMode = true;
     autoRotate = true;
@@ -400,7 +406,7 @@ function handleMobileSliderChange(channel, value) {
 
 // Random 按鈕
 function handleRandomButton() {
-  if (letters.length === 0 || isAutoRotateMode || isEasterEggActive) return;
+  if (letters.length === 0 || autoRotate || isEasterEggActive) return;
 
   const letterCount = letters.length;
 
@@ -430,7 +436,7 @@ function handleRandomButton() {
 
 // Reset 按鈕
 function handleResetButton() {
-  if (letters.length === 0 || isAutoRotateMode || isEasterEggActive) return;
+  if (letters.length === 0 || autoRotate || isEasterEggActive) return;
 
   // 計算回到 0°
   let rDiff = getShortestRotation(rRotationOffset, 0);
@@ -485,7 +491,7 @@ function updateMobileSliders() {
   const letterCount = letters.length;
 
   // R slider（至少 1 個字母）
-  if (hasText && letterCount >= 1 && !isAutoRotateMode && !isEasterEggActive) {
+  if (hasText && letterCount >= 1 && !autoRotate && !isEasterEggActive) {
     mobileElements.rSlider.removeAttribute('disabled');
     mobileElements.rSlider.addClass('enabled');
     if (mobileElements.rAngleLabel) {
@@ -502,7 +508,7 @@ function updateMobileSliders() {
   }
 
   // G slider（至少 2 個字母）
-  if (hasText && letterCount >= 2 && !isAutoRotateMode && !isEasterEggActive) {
+  if (hasText && letterCount >= 2 && !autoRotate && !isEasterEggActive) {
     mobileElements.gSlider.removeAttribute('disabled');
     mobileElements.gSlider.addClass('enabled');
     if (mobileElements.gAngleLabel) {
@@ -519,7 +525,7 @@ function updateMobileSliders() {
   }
 
   // B slider（至少 3 個字母）
-  if (hasText && letterCount >= 3 && !isAutoRotateMode && !isEasterEggActive) {
+  if (hasText && letterCount >= 3 && !autoRotate && !isEasterEggActive) {
     mobileElements.bSlider.removeAttribute('disabled');
     mobileElements.bSlider.addClass('enabled');
     if (mobileElements.bAngleLabel) {
@@ -540,9 +546,39 @@ function updateMobileSliders() {
 function updateMobileButtons() {
   const hasText = letters.length > 0;
 
-  // Custom/Play 按鈕的 active 狀態
+  // 更新底部按鈕的 disabled 狀態
+  // Mode 按鈕始終啟用
+
+  // Custom 按鈕：沒有文字時禁用，或已經在 Custom 模式時禁用
+  if (mobileElements.customBtn) {
+    if (!hasText || !isAutoRotateMode) {
+      mobileElements.customBtn.elt.disabled = true;
+    } else {
+      mobileElements.customBtn.elt.disabled = false;
+    }
+  }
+
+  // Rotate 按鈕：沒有文字時禁用
+  if (mobileElements.rotateBtn) {
+    if (!hasText) {
+      mobileElements.rotateBtn.elt.disabled = true;
+    } else {
+      mobileElements.rotateBtn.elt.disabled = false;
+    }
+  }
+
+  // Save 按鈕：沒有文字時禁用（彩蛋除外）
+  if (mobileElements.saveBtn) {
+    if (!hasText && !isEasterEggActive) {
+      mobileElements.saveBtn.elt.disabled = true;
+    } else {
+      mobileElements.saveBtn.elt.disabled = false;
+    }
+  }
+
+  // Custom/Play 按鈕的 active 狀態（Bento 面板內的按鈕）
   if (mobileElements.bentoCustomBtn) {
-    if (!isAutoRotateMode && hasText) {
+    if (!autoRotate && hasText) {
       mobileElements.bentoCustomBtn.addClass('active');
     } else {
       mobileElements.bentoCustomBtn.removeClass('active');
@@ -550,7 +586,7 @@ function updateMobileButtons() {
   }
 
   if (mobileElements.bentoPlayBtn) {
-    if (isAutoRotateMode && hasText) {
+    if (autoRotate && hasText) {
       mobileElements.bentoPlayBtn.addClass('active');
     } else {
       mobileElements.bentoPlayBtn.removeClass('active');
