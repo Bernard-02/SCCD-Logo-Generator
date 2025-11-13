@@ -996,7 +996,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     position: relative;
     width: 100vw;
     height: 100vh;
-    padding: 4rem 1.5rem 3rem; /* 上 4rem，左右 1.5rem，下 3rem */
+    padding: 4rem 1.5rem 1rem; /* 上 4rem，左右 1.5rem，下 1rem */
     overflow: hidden;
     box-sizing: border-box;
     /* 定義 CSS 變數：按鈕的實際尺寸 */
@@ -1465,7 +1465,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     display: block !important; /* 手機版時強制顯示 */
     position: fixed;
     /* 位於 display-area 下方和按鈕列上方 */
-    bottom: calc(3rem + var(--mobile-btn-size)); /* 3rem padding + 按鈕高度 */
+    bottom: calc(1rem + var(--mobile-btn-size)); /* 1rem padding + 按鈕高度 */
     left: 1.5rem; /* 遵循 main container 的 left padding */
     right: 1.5rem; /* 遵循 main container 的 right padding */
     /* 高度：自動根據內容決定 */
@@ -1633,7 +1633,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     left: 1.5rem;
     right: 1.5rem;
     /* 高度：從 logo 下方到按鈕上方的剩餘空間 */
-    bottom: calc(3rem + var(--mobile-btn-size));
+    bottom: calc(1rem + var(--mobile-btn-size));
     align-items: center;
     justify-content: center;
     padding: 1rem 0;
@@ -1677,16 +1677,31 @@ body.wireframe-mode .angle-input:not(.enabled) {
     transition: font-size 0.2s ease;
   }
 
+  /* Standard 模式下的輸入框顏色 */
+  body.standard-mode #mobile-input-box {
+    color: black;
+  }
+
   /* Standard 模式下的 placeholder */
   body.standard-mode #mobile-input-box::placeholder {
     color: black;
     opacity: 0.25;
   }
 
+  /* Inverse 模式下的輸入框顏色 */
+  body.inverse-mode #mobile-input-box {
+    color: white;
+  }
+
   /* Inverse 模式下的 placeholder */
   body.inverse-mode #mobile-input-box::placeholder {
     color: white;
     opacity: 0.5;
+  }
+
+  /* Wireframe 模式下的輸入框顏色 */
+  body.wireframe-mode #mobile-input-box {
+    color: var(--wireframe-border);
   }
 
   /* Wireframe 模式下的 placeholder */
@@ -1699,7 +1714,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
   .mobile-bottom-bar {
     display: flex !important; /* 手機版時強制顯示 */
     position: fixed;
-    bottom: 3rem; /* 對齊 main container 的 bottom padding (3rem) */
+    bottom: 1rem; /* 對齊 main container 的 bottom padding (1rem) */
     left: 1.5rem; /* 遵循 main container 的 left padding */
     right: 1.5rem; /* 遵循 main container 的 right padding */
     /* 高度：等於按鈕的高度 */
