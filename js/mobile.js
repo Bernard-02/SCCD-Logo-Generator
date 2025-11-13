@@ -104,6 +104,14 @@ function bindMobileEvents() {
         e.preventDefault();
       }
     });
+
+    // 防止鍵盤彈出時自動滾動
+    mobileElements.inputBox.elt.addEventListener('focus', function(e) {
+      // 防止瀏覽器自動滾動到輸入框
+      e.preventDefault();
+      // 保持當前滾動位置
+      window.scrollTo(0, 0);
+    }, { passive: false });
   }
 
   // 底部按鈕事件

@@ -981,7 +981,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
     opacity: inherit !important;
     transform: none !important;
     /* background-color: inherit !important; 移除此行，避免干擾 body 背景色 */
-    color: inherit !important;
     }
 
   body {
@@ -989,6 +988,8 @@ body.wireframe-mode .angle-input:not(.enabled) {
     position: fixed; /* 確保完全固定 */
     width: 100vw;
     height: 100vh;
+    /* 使用 dvh (dynamic viewport height) 作為 fallback */
+    height: 100dvh;
   }
 
   /* === 手機版主容器：固定佈局，使用統一 padding === */
@@ -1513,6 +1514,9 @@ body.wireframe-mode .angle-input:not(.enabled) {
     font-family: inherit;
     color: inherit;
     box-sizing: border-box;
+    /* 防止鍵盤彈出時位置跑掉 */
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   /* 根據模式設定輸入框邊框顏色 */
