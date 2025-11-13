@@ -27,24 +27,18 @@ function getCanvasSize() {
       // 使用較小的尺寸來確保正方形
       const size = Math.min(containerWidth, containerHeight);
 
-      // 縮小 5% 確保 logo 不會被裁切（避免手機瀏覽器 UI 干擾）
-      const scaledSize = size * 0.95;
-
       return {
-        width: Math.floor(scaledSize),
-        height: Math.floor(scaledSize)
+        width: Math.floor(size),
+        height: Math.floor(size)
       };
     }
 
     // 如果無法取得 container，使用預設計算（正方形）
     let availableWidth = window.innerWidth - 48; // 扣除左右 padding (1.5rem * 2 = 3rem = 48px)
 
-    // 縮小 5% 確保 logo 不會被裁切
-    let scaledWidth = availableWidth * 0.95;
-
     return {
-      width: Math.floor(scaledWidth),
-      height: Math.floor(scaledWidth) // 正方形：寬度等於高度
+      width: Math.floor(availableWidth),
+      height: Math.floor(availableWidth) // 正方形：寬度等於高度
     };
   } else {
     // 桌面版：固定尺寸 432x540，與 canvas-container 一致

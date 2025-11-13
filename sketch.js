@@ -97,7 +97,12 @@ function setup() {
 
   // p5.js 繪圖設定
   textFont(font);
-  textSize(367.5); // 350 * 1.05 = 367.5
+  // 根據 canvas 尺寸動態調整文字大小
+  // 桌面版基準：432x540 canvas，textSize = 367.5
+  // 手機版：按相同比例縮放，再縮小 4% 作為安全邊距確保不被裁切
+  // 計算方式：(canvas寬度 / 432) × 367.5 × 0.96
+  let baseTextSize = isMobileMode ? (canvasSize.width / 432) * 367.5 * 1.05 : 367.5;
+  textSize(baseTextSize);
   textAlign(CENTER, CENTER);
   imageMode(CENTER); // <-- 新增：將圖片的繪製模式設定為中心對齊
 
@@ -1537,8 +1542,10 @@ function drawPlaceholder(pg) {
   pg.translate(width / 2, height / 2);
   pg.imageMode(CENTER);
 
-  // 繪製尺寸（放大 1.386 倍：350 * 1.2 * 1.1 * 1.05 = 485.1）
-  let svgSize = 485.1;
+  // 繪製尺寸：根據 canvas 大小動態調整
+  // 桌面版基準：432x540 canvas，svgSize = 485.1
+  // 手機版：按相同比例縮放，再縮小 4% 作為安全邊距
+  let svgSize = isMobileMode ? (width / 432) * 485.1 * 1.05 : 485.1;
 
   // 根據 isWhiteVersion 選擇正確的 SVG 檔案
   let rImg = isWhiteVersion ? placeholderR_white : placeholderR;
@@ -2832,6 +2839,10 @@ function windowResized() {
         // 根據新的模式重新計算並調整Canvas尺寸
         let canvasSize = getCanvasSize();
         resizeCanvas(canvasSize.width, canvasSize.height);
+
+        // 根據 canvas 尺寸動態調整 logo 文字大小
+        let baseTextSize = isMobileMode ? (canvasSize.width / 432) * 367.5 * 1.05: 367.5;
+        textSize(baseTextSize);
 
         // 調整字體大小和輸入框高度（僅桌面版）
         if (!isMobileMode) {
