@@ -976,10 +976,10 @@ body.wireframe-mode .angle-input:not(.enabled) {
 /* --- 響應式設計 (RWD) --- */
 @media (max-width: 768px) {
   /* 取消所有手機版的 hover 效果（但保留 :active 效果以提供觸摸反饋）*/
-  *:hover:not(:active) {
+  /* 排除 save button icon，避免干擾動畫 */
+  *:hover:not(:active):not(#save-img-mobile):not(#save-img) {
     /* 重置所有 hover 效果，保持原始狀態 */
     opacity: inherit !important;
-    transform: none !important;
     /* background-color: inherit !important; 移除此行，避免干擾 body 背景色 */
     }
 
@@ -1344,50 +1344,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
     position: relative;
   }
 
-  .mobile-input-container #input-box-mobile {
-    width: 100%;
-    height: 100%; /* 填滿父容器高度 */
-    max-height: none; /* 移除最大高度限制 */
-    font-size: 1.6rem;
-    padding: 0.8rem; /* 與其他control-box一致的padding */
-    border: 2px solid; /* 與其他邊框一致 */
-    border-radius: 18px;
-    background-color: transparent;
-    resize: none;
-    overflow-y: auto; /* 內容超出時可滾動 */
-    white-space: pre-wrap;
-    outline: none;
-    font-family: inherit;
-    color: inherit;
-    box-sizing: border-box;
-    transition: border-color 0s ease; /* 添加過渡效果 */
-  }
-
-  /* 根據模式切換邊框顏色 */
-  body.standard-mode .mobile-input-container #input-box-mobile {
-    border-color: rgba(0, 0, 0, 0.25);
-  }
-  body.inverse-mode .mobile-input-container #input-box-mobile {
-    border-color: rgba(0, 0, 0, 0.25);
-  }
-
-  /* Standard 模式下的手機版 placeholder 顏色：黑色 + 25% 透明度 */
-  body.standard-mode .mobile-input-container #input-box-mobile::placeholder {
-    color: black;
-    opacity: 0.25;
-  }
-
-  /* Inverse 模式下的手機版 placeholder 顏色：白色 + 50% 透明度 */
-  body.inverse-mode .mobile-input-container #input-box-mobile::placeholder {
-    color: white;
-    opacity: 0.5;
-  }
-
-  /* Wireframe 模式下的手機版 placeholder */
-  body.wireframe-mode .mobile-input-container #input-box-mobile::placeholder {
-    color: var(--wireframe-border);
-    opacity: var(--wireframe-opacity);
-  }
 
   .mobile-save-container {
     display: flex;
@@ -1450,16 +1406,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
     cursor: pointer;
   }
 
-  .mobile-save-container #save-img-mobile {
-    width: 30px;
-    height: 30px;
-    display: block;
-    /* 確保不會繼承任何旋轉效果 */
-    transform-origin: center center;
-    will-change: transform, opacity;
-    /* 隔離 transform 上下文，防止繼承父元素的 transform */
-    isolation: isolate;
-  }
 
   /* === 新版手機介面：彈出面板區域 === */
   .mobile-panels-wrapper {
@@ -1499,41 +1445,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
   }
 
   /* Input 面板：只有輸入框，圓角矩形 */
-  .mobile-input-panel #input-box-mobile {
-    width: 100%;
-    max-width: 500px;
-    /* 高度填滿整個面板（扣除 wrapper 的上下 1rem padding 後的空間） */
-    height: 100%;
-    font-size: 1.6rem;
-    padding: 1rem;
-    border: 2px solid;
-    border-radius: 18px;
-    background-color: transparent;
-    resize: none;
-    outline: none;
-    font-family: inherit;
-    color: inherit;
-    box-sizing: border-box;
-    /* 防止鍵盤彈出時位置跑掉 */
-    -webkit-user-select: text;
-    user-select: text;
-  }
-
-  /* 根據模式設定輸入框邊框顏色 */
-  body.standard-mode .mobile-input-panel #input-box-mobile {
-    border-color: black;
-    color: black;
-  }
-
-  body.inverse-mode .mobile-input-panel #input-box-mobile {
-    border-color: white;
-    color: white;
-  }
-
-  body.wireframe-mode .mobile-input-panel #input-box-mobile {
-    border-color: var(--wireframe-border);
-    color: var(--wireframe-border);
-  }
 
   /* Color Picker 面板 */
   .mobile-colorpicker-panel {
@@ -1758,6 +1669,63 @@ body.wireframe-mode .angle-input:not(.enabled) {
     width: 45%; /* icon 大小為按鈕的 45% */
     height: 45%;
     object-fit: contain;
+  }
+
+  /* Save 按鈕圖標：支援動畫 */
+  #save-img-mobile,
+  #save-img {
+    transform-origin: center center;
+    will-change: transform, opacity;
+  }
+
+  /* 下載按鈕動畫：定義 keyframes */
+  @keyframes save-icon-shrink {
+    from {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    to {
+      transform: scale(0) rotate(0deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes save-icon-grow {
+    from {
+      transform: scale(0) rotate(0deg);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  @keyframes save-icon-rotate {
+    from {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    to {
+      transform: scale(1) rotate(360deg);
+      opacity: 1;
+    }
+  }
+
+  @keyframes save-icon-shrink-rotated {
+    from {
+      transform: scale(1) rotate(360deg);
+      opacity: 1;
+    }
+    to {
+      transform: scale(0) rotate(360deg);
+      opacity: 0;
+    }
+  }
+
+  /* 桌面版和手機版共用的動畫 class */
+  .save-icon-animating {
+    animation-fill-mode: forwards;
   }
 
   /* 前三個按鈕：圓角方形，增加圓角 */

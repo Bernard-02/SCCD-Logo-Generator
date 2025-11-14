@@ -2163,9 +2163,11 @@ function resetRotationOffsets() {
     updateSliders(); // 確保全域變數也被更新
 }
 
-// --- 新增：下載按鈕 icon 動畫 ---
+// --- 新增：下載按鈕 icon 動畫（手機版用 CSS，桌面版用 JS）---
 function animateSaveButton(button, iconElement) {
-    if (!button || !iconElement) return;
+    if (!button || !iconElement) {
+        return;
+    }
 
     const isInverseMode = mode === "Inverse";
     const isWireframeMode = mode === "Wireframe";
@@ -2173,14 +2175,13 @@ function animateSaveButton(button, iconElement) {
     // 決定 icon 後綴（黑色或白色版本）
     let suffix = "";
     if (isWireframeMode) {
-        // 根據 wireframeStrokeColor 判斷是使用黑色還是白色 icon
         const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
         suffix = isWhiteIcon ? "_Inverse" : "";
     } else {
         suffix = isInverseMode ? "_Inverse" : "";
     }
 
-    const rotateDuration = 1200; // Generate icon 旋轉時長：1.2秒
+    const rotateDuration = 800; // Generate icon 旋轉時長：800ms
     const fadeInOutDuration = 200; // 淡入淡出時間：200ms
     const scaleUpDuration = 100; // Generate icon 放大時間：100ms（快速出現）
 
@@ -2188,82 +2189,114 @@ function animateSaveButton(button, iconElement) {
     const originalIconSrc = iconElement.attribute('src');
     const generateIconSrc = `Panel Icon/Generate${suffix}.svg`;
 
-    // 獲取原生DOM元素，使用原生方法確保完全控制
+    // 獲取原生DOM元素
     const imgEl = iconElement.elt;
 
-    // 0. 先完全清除任何可能存在的 transform 樣式（防止繼承旋轉等效果）
-    imgEl.style.removeProperty('transform');
-    imgEl.style.removeProperty('transition');
-    imgEl.style.removeProperty('opacity');
+    // 檢查是否為手機版
+    const isMobile = imgEl.id === 'save-img-mobile';
 
-    // 重新設定初始狀態
-    imgEl.style.transform = 'scale(1) rotate(0deg)';
-    imgEl.style.transition = 'none';
-    imgEl.style.opacity = '1';
+    if (isMobile) {
+        // === 手機版：使用 CSS Animation ===
+        // 清除所有可能存在的動畫和 inline 樣式
+        imgEl.removeAttribute('style');
+        imgEl.classList.remove('save-icon-animating');
+        void imgEl.offsetHeight; // 強制重繪
 
-    // 強制重繪，確保清除生效
-    void imgEl.offsetHeight;
+        // 1. 縮小原 icon 並淡出
+        imgEl.classList.add('save-icon-animating');
+        imgEl.style.animation = `save-icon-shrink ${fadeInOutDuration}ms ease forwards`;
 
-    // 1. 縮小原 icon 並淡出
-    imgEl.style.transition = `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`;
-    // 使用requestAnimationFrame確保瀏覽器已經處理好初始狀態
-    requestAnimationFrame(() => {
-        imgEl.style.transform = 'scale(0) rotate(0deg)';
-        imgEl.style.opacity = '0';
-    });
-
-    // 2. fadeInOutDuration 後切換到 Generate icon，並快速放大同時旋轉
-    setTimeout(() => {
-        iconElement.attribute('src', generateIconSrc);
-        // 設定 transition：scale 和 opacity 快速出現（100ms），rotation 使用 linear（1500ms）
-        imgEl.style.transition = `transform ${scaleUpDuration}ms ease, opacity ${scaleUpDuration}ms ease`;
-        imgEl.style.transform = 'scale(1) rotate(0deg)';
-        imgEl.style.opacity = '1';
-
-        // 放大完成後立即開始旋轉
+        // 2. fadeInOutDuration 後切換到 Generate icon，並快速放大
         setTimeout(() => {
-            imgEl.style.transition = `transform ${rotateDuration}ms linear`;
-            imgEl.style.transform = 'scale(1) rotate(360deg)';
-        }, scaleUpDuration);
-    }, fadeInOutDuration);
+            iconElement.attribute('src', generateIconSrc);
+            imgEl.style.animation = `save-icon-grow ${scaleUpDuration}ms ease forwards`;
 
-    // 3. 旋轉完成後立即縮小並消失（無停留）
-    setTimeout(() => {
-        imgEl.style.transition = `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`;
-        imgEl.style.transform = 'scale(0) rotate(360deg)';
-        imgEl.style.opacity = '0';
-    }, fadeInOutDuration + scaleUpDuration + rotateDuration);
-
-    // 4. Generate icon 縮小完成後，重置旋轉為 0 度並切換回原 icon
-    setTimeout(() => {
-        // 先移除所有 transition，避免旋轉殘留
-        imgEl.style.transition = 'none';
-        imgEl.style.transform = 'scale(0) rotate(0deg)';
-        imgEl.style.opacity = '0';
-
-        setTimeout(() => {
-            // 切換回原 icon
-            iconElement.attribute('src', originalIconSrc);
-
-            // 短暫延遲後再設定 transition 並放大
+            // 放大完成後立即開始旋轉
             setTimeout(() => {
-                imgEl.style.transition = `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`;
-                imgEl.style.transform = 'scale(1) rotate(0deg)';
-                imgEl.style.opacity = '1';
+                imgEl.style.animation = `save-icon-rotate ${rotateDuration}ms linear forwards`;
+            }, scaleUpDuration);
+        }, fadeInOutDuration);
 
-                // 移除 transition 樣式，避免影響後續，確保完全清除旋轉
+        // 3. 旋轉完成後立即縮小並消失（無停留）
+        setTimeout(() => {
+            imgEl.style.animation = `save-icon-shrink-rotated ${fadeInOutDuration}ms ease forwards`;
+        }, fadeInOutDuration + scaleUpDuration + rotateDuration);
+
+        // 4. Generate icon 縮小完成後，切換回原 icon 並放大
+        setTimeout(() => {
+            iconElement.attribute('src', originalIconSrc);
+            setTimeout(() => {
+                imgEl.style.animation = `save-icon-grow ${fadeInOutDuration}ms ease forwards`;
                 setTimeout(() => {
-                    // 使用原生方法完全清除所有樣式
-                    imgEl.style.removeProperty('transition');
-                    imgEl.style.removeProperty('transform');
-                    imgEl.style.removeProperty('opacity');
+                    imgEl.style.animation = '';
+                    imgEl.classList.remove('save-icon-animating');
                 }, fadeInOutDuration);
             }, 10);
-        }, 10);
-    }, fadeInOutDuration + scaleUpDuration + rotateDuration + fadeInOutDuration);
+        }, fadeInOutDuration + scaleUpDuration + rotateDuration + fadeInOutDuration);
+    } else {
+        // === 桌面版：使用 JavaScript + CSS Transition ===
+        // 清除任何可能存在的樣式
+        imgEl.style.removeProperty('transform');
+        imgEl.style.removeProperty('transition');
+        imgEl.style.removeProperty('opacity');
+        imgEl.style.transform = 'scale(1) rotate(0deg)';
+        imgEl.style.transition = 'none';
+        imgEl.style.opacity = '1';
+        void imgEl.offsetHeight;
 
-    // 總時長：淡出(200) + 放大(100) + 旋轉(1200) + 淡出(200) + 延遲(10+10) + 淡入(200) + 清除(200) = 2120ms
-    return fadeInOutDuration * 4 + scaleUpDuration + rotateDuration + 20;
+        // 1. 縮小原 icon 並淡出
+        imgEl.style.transition = `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`;
+        requestAnimationFrame(() => {
+            imgEl.style.transform = 'scale(0) rotate(0deg)';
+            imgEl.style.opacity = '0';
+        });
+
+        // 2. fadeInOutDuration 後切換到 Generate icon，並快速放大
+        setTimeout(() => {
+            iconElement.attribute('src', generateIconSrc);
+            imgEl.style.transition = `transform ${scaleUpDuration}ms ease, opacity ${scaleUpDuration}ms ease`;
+            imgEl.style.transform = 'scale(1) rotate(0deg)';
+            imgEl.style.opacity = '1';
+
+            // 放大完成後立即開始旋轉
+            setTimeout(() => {
+                imgEl.style.transition = `transform ${rotateDuration}ms linear`;
+                imgEl.style.transform = 'scale(1) rotate(360deg)';
+            }, scaleUpDuration);
+        }, fadeInOutDuration);
+
+        // 3. 旋轉完成後立即縮小並消失（無停留）
+        setTimeout(() => {
+            imgEl.style.transition = `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`;
+            imgEl.style.transform = 'scale(0) rotate(360deg)';
+            imgEl.style.opacity = '0';
+        }, fadeInOutDuration + scaleUpDuration + rotateDuration);
+
+        // 4. Generate icon 縮小完成後，重置旋轉為 0 度並切換回原 icon
+        setTimeout(() => {
+            imgEl.style.transition = 'none';
+            imgEl.style.transform = 'scale(0) rotate(0deg)';
+            imgEl.style.opacity = '0';
+
+            setTimeout(() => {
+                iconElement.attribute('src', originalIconSrc);
+                setTimeout(() => {
+                    imgEl.style.transition = `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`;
+                    imgEl.style.transform = 'scale(1) rotate(0deg)';
+                    imgEl.style.opacity = '1';
+
+                    setTimeout(() => {
+                        imgEl.style.removeProperty('transition');
+                        imgEl.style.removeProperty('transform');
+                        imgEl.style.removeProperty('opacity');
+                    }, fadeInOutDuration);
+                }, 10);
+            }, 10);
+        }, fadeInOutDuration + scaleUpDuration + rotateDuration + fadeInOutDuration);
+    }
+
+    // 總時長：淡出(200) + 快速放大(100) + 旋轉(800) + 淡出(200) + 重置(10) + 淡入(200) = 1510ms
+    return fadeInOutDuration * 3 + scaleUpDuration + rotateDuration + 10;
 }
 
 // --- 完全參照 ref.js:278-346 重寫 updateUI ---
@@ -2877,12 +2910,24 @@ function saveTransparentPNG() {
   if (isDownloading) return;
   isDownloading = true;
 
-  // 桌面版：播放 Save 按鈕動畫
-  const animationDuration = animateSaveButton(saveButton, saveImg);
+  let animationDuration;
 
-  // 手機版：播放 Save 按鈕動畫
-  if (saveButtonMobile && saveImgMobile) {
-    animateSaveButton(saveButtonMobile, saveImgMobile);
+  if (isMobileMode) {
+    // 手機版：播放 Save 按鈕動畫
+    // 優先使用 mobileElements 中的元素，fallback 到 saveButtonMobile
+    let mobileSaveBtn = (typeof mobileElements !== 'undefined' && mobileElements.saveBtn)
+      ? mobileElements.saveBtn
+      : saveButtonMobile;
+    let mobileSaveImg = (typeof mobileElements !== 'undefined' && mobileElements.saveBtn)
+      ? select('#save-img-mobile')
+      : saveImgMobile;
+
+    if (mobileSaveBtn && mobileSaveImg) {
+      animationDuration = animateSaveButton(mobileSaveBtn, mobileSaveImg);
+    }
+  } else {
+    // 桌面版：播放 Save 按鈕動畫
+    animationDuration = animateSaveButton(saveButton, saveImg);
   }
 
   // 動畫結束後開始下載
@@ -2973,7 +3018,15 @@ function generateFileName() {
   } else {
     // 正常模式：使用輸入框的文字（移除空格和換行，轉為大寫）
     // 獲取當前活動的輸入框
-    let currentInputBox = isMobileMode ? inputBoxMobile : inputBox;
+    let currentInputBox = inputBox;
+    if (isMobileMode) {
+      // 手機版：直接選取實際的輸入框元素
+      let mobileInput = select("#mobile-input-box");
+      if (mobileInput) {
+        currentInputBox = mobileInput;
+      }
+    }
+
     if (currentInputBox) {
       let inputText = currentInputBox.value();
       // 移除所有空格和換行符，轉為大寫

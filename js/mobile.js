@@ -549,9 +549,9 @@ function updateMobileButtons() {
   // 更新底部按鈕的 disabled 狀態
   // Mode 按鈕始終啟用
 
-  // Custom 按鈕：沒有文字時禁用，或已經在 Custom 模式時禁用
+  // Custom 按鈕：手機版只在沒有文字時禁用（與桌面版不同）
   if (mobileElements.customBtn) {
-    if (!hasText || !isAutoRotateMode) {
+    if (!hasText) {
       mobileElements.customBtn.elt.disabled = true;
     } else {
       mobileElements.customBtn.elt.disabled = false;
