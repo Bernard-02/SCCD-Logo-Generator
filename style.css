@@ -1235,11 +1235,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
     position: relative;
   }
 
-  /* 手機版：當 Rotate 按鈕顯示 Play icon 時，向右調整 2px（視覺修正） */
-  .mobile-rotation-box .custom-button-rotate.play-icon img {
-    left: 2px;
-  }
-
   /* 手機版：Rotate 按鈕的 active 狀態，按鈕本身需要邊框 */
   body.standard-mode .mobile-rotation-box .custom-button-rotate.active {
     border-color: black;
@@ -1261,68 +1256,166 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
   /* === 手機版 Custom 展開區域 === */
   .mobile-custom-angle-controls {
-    width: 100%;
+    display: none; /* 桌面版隱藏 */
+  }
+
+  @media (max-width: 768px) {
+    .mobile-custom-angle-controls {
+      display: flex;
+      position: fixed;
+      bottom: calc(1rem + var(--mobile-btn-size) + var(--mobile-btn-gap)); /* btn bar 上方，距離為 gap */
+      left: 1.5rem; /* 與 btn bar 對齊 */
+      right: 1.5rem; /* 與 btn bar 對齊 */
+      flex-direction: row;
+      align-items: stretch;
+      background: transparent;
+      box-sizing: border-box;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+      z-index: 199; /* 低於 btn bar (200) */
+    }
+
+    /* 顯示時展開 */
+    .mobile-custom-angle-controls:not(.hidden) {
+      max-height: 200px; /* 足夠的高度讓內容顯示 */
+      opacity: 1;
+    }
+  }
+
+  /* 內層容器：限制在 section padding 內 */
+  .mobile-custom-angle-controls .controls-inner {
     display: flex;
     flex-direction: row;
     align-items: stretch;
-    background: transparent;
+    width: 100%;
+    padding: 1.2rem;
+    border: 2px solid;
+    border-radius: 24px;
     box-sizing: border-box;
-    gap: 1rem;
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    padding: 0;
-    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+    gap: 0.8rem;
+    overflow: hidden; /* 內容物不能超出 */
   }
 
-  /* 顯示時展開 */
-  .mobile-custom-angle-controls:not(.hidden) {
-    max-height: 200px; /* 足夠的高度讓內容顯示 */
-    opacity: 1;
-    padding: 1rem 0.5rem 0.5rem;
+  /* 根據模式設定邊框顏色 */
+  body.standard-mode .mobile-custom-angle-controls .controls-inner {
+    border-color: black;
+  }
+
+  body.inverse-mode .mobile-custom-angle-controls .controls-inner {
+    border-color: white;
+  }
+
+  body.wireframe-mode .mobile-custom-angle-controls .controls-inner {
+    border-color: var(--wireframe-border);
+    background: rgba(255, 255, 255, 0.28); /* 0.28 白色底 */
+  }
+
+  /* Sliders box - 左側區域 */
+  .mobile-custom-angle-controls .sliders-box {
+    flex: 1 1 auto; /* 可伸縮，但不超過最大寬度 */
+    display: flex;
+    box-sizing: border-box;
+    min-width: 0; /* 允許縮小 */
+    overflow: hidden; /* 防止內容溢出 */
   }
 
   .mobile-custom-angle-controls .sliders-wrapper {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: calc(12px * var(--scale));
+    justify-content: center;
+    gap: 0.7rem; /* slider 之間的間距 */
+    min-width: 0; /* 允許縮小 */
   }
 
   .mobile-custom-angle-controls .slider-container {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    gap: var(--slider-gap);
+    gap: 0.2rem; /* 縮小 slider 和 label 之間的間距 */
     width: 100%;
-    margin: calc(2px * var(--scale)) 0;
+    margin: 0;
+    min-width: 0; /* 允許縮小 */
   }
 
   .mobile-custom-angle-controls .custom-slider {
-    width: 100%;
-    max-width: none;
+    flex: 1 1 auto; /* 可伸縮 */
+    min-width: 0; /* 允許縮小 */
+    max-width: 100%; /* 不超過容器 */
+    height: 3px; /* 手機版 slider 高度 */
   }
 
+  /* 手機版 slider thumb 尺寸 */
+  .mobile-custom-angle-controls .custom-slider::-webkit-slider-thumb {
+    width: 14px;
+    height: 14px;
+  }
+
+  .mobile-custom-angle-controls .custom-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* 手機版 angle label 樣式 */
+  .mobile-custom-angle-controls .angle-input {
+    width: 38px; /* 縮小寬度 */
+    flex-shrink: 0; /* 不縮小 */
+    text-align: center;
+    font-size: 14px;
+    pointer-events: none; /* 不可編輯 */
+    user-select: none; /* 不可選取 */
+  }
+
+  /* 右側按鈕區域 */
   .mobile-custom-angle-controls .icon-buttons-wrapper {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-around;
     align-items: center;
     gap: 0.8rem;
-    width: auto;
-    flex-shrink: 0;
-    overflow: visible; /* 確保 icon 不會被裁切 */
+    flex-shrink: 0; /* 不縮小，保持固定寬度 */
+    flex-grow: 0; /* 不放大 */
+    width: calc(var(--mobile-btn-size) * 0.35); /* 固定寬度 */
   }
 
-  .mobile-custom-angle-controls .icon-buttons-wrapper .image-button {
-    width: 44px;
-    height: 44px;
-    padding: 6px;
+  /* Random 按鈕 - 扁一點 */
+  .mobile-custom-angle-controls .icon-buttons-wrapper #mobile-random-button {
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .mobile-custom-angle-controls .icon-buttons-wrapper .image-button img {
-    width: 32px;
-    height: 32px;
+  .mobile-custom-angle-controls .icon-buttons-wrapper #mobile-random-button img {
+    width: calc(var(--mobile-btn-size) * 0.35);
+    height: calc(var(--mobile-btn-size) * 0.28); /* 稍微扁一點 (0.35 * 0.8) */
+    object-fit: contain;
+  }
+
+  /* Reset 按鈕 - 方一點 */
+  .mobile-custom-angle-controls .icon-buttons-wrapper #mobile-reset-button {
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-custom-angle-controls .icon-buttons-wrapper #mobile-reset-button img {
+    width: calc(var(--mobile-btn-size) * 0.35);
+    height: calc(var(--mobile-btn-size) * 0.35); /* 正方形 */
+    object-fit: contain;
+  }
+
+  .mobile-custom-angle-controls .icon-buttons-wrapper .image-button:active {
+    opacity: 0.6;
   }
 
   /* === 手機版輸入框區域 === */
@@ -1759,6 +1852,12 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
   body.wireframe-mode .mobile-bottom-btn:disabled {
     opacity: var(--wireframe-opacity);
+  }
+
+  /* 手機版 Rotate 按鈕：當顯示 Play icon 時，向右調整 1px */
+  .mobile-rotate-btn.play-icon #mobile-rotate-icon {
+    position: relative;
+    left: 2px;
   }
 
   /* 根據模式設定底部按鈕邊框顏色 */

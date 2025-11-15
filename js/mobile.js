@@ -29,13 +29,26 @@ let mobileElements = {
   bentoCustomIcon: null,
   bentoPlayIcon: null,
 
-  // Sliders
+  // Sliders (桌面版)
   rSlider: null,
   gSlider: null,
   bSlider: null,
   rAngleLabel: null,
   gAngleLabel: null,
   bAngleLabel: null,
+
+  // 手機版 Custom 調整區
+  customAngleControls: null,
+  mobileRSlider: null,
+  mobileGSlider: null,
+  mobileBSlider: null,
+  mobileRAngleLabel: null,
+  mobileGAngleLabel: null,
+  mobileBAngleLabel: null,
+  mobileRandomBtn: null,
+  mobileResetBtn: null,
+  mobileRandomImg: null,
+  mobileResetImg: null,
 
   // Random/Reset 按鈕
   randomBtn: null,
@@ -88,6 +101,19 @@ function initMobileUI() {
   mobileElements.colorWheelPlayBtn = select('#mobile-colorwheel-play-button');
   mobileElements.colorWheelPlayIcon = select('#mobile-colorwheel-play-icon');
 
+  // 手機版 Custom 調整區元素
+  mobileElements.customAngleControls = select('.mobile-custom-angle-controls');
+  mobileElements.mobileRSlider = select('#mobile-r-slider');
+  mobileElements.mobileGSlider = select('#mobile-g-slider');
+  mobileElements.mobileBSlider = select('#mobile-b-slider');
+  mobileElements.mobileRAngleLabel = select('#mobile-r-angle-label');
+  mobileElements.mobileGAngleLabel = select('#mobile-g-angle-label');
+  mobileElements.mobileBAngleLabel = select('#mobile-b-angle-label');
+  mobileElements.mobileRandomBtn = select('#mobile-random-button');
+  mobileElements.mobileResetBtn = select('#mobile-reset-button');
+  mobileElements.mobileRandomImg = select('#mobile-random-img');
+  mobileElements.mobileResetImg = select('#mobile-reset-img');
+
   // 綁定事件
   bindMobileEvents();
 
@@ -130,7 +156,7 @@ function bindMobileEvents() {
   }
 
   if (mobileElements.customBtn) {
-    mobileElements.customBtn.mousePressed(switchToCustomMode);
+    mobileElements.customBtn.mousePressed(toggleMobileCustomPanel);
   }
 
   if (mobileElements.rotateBtn) {
@@ -196,6 +222,40 @@ function bindMobileEvents() {
         updateColorWheelIcon();
       }
     });
+  }
+
+  // 手機版 Custom 調整區的 Slider 事件
+  if (mobileElements.mobileRSlider) {
+    mobileElements.mobileRSlider.input(() => {
+      if (!isEasterEggActive && !autoRotate) {
+        handleMobileSliderChange('r', mobileElements.mobileRSlider.value());
+      }
+    });
+  }
+
+  if (mobileElements.mobileGSlider) {
+    mobileElements.mobileGSlider.input(() => {
+      if (!isEasterEggActive && !autoRotate) {
+        handleMobileSliderChange('g', mobileElements.mobileGSlider.value());
+      }
+    });
+  }
+
+  if (mobileElements.mobileBSlider) {
+    mobileElements.mobileBSlider.input(() => {
+      if (!isEasterEggActive && !autoRotate) {
+        handleMobileSliderChange('b', mobileElements.mobileBSlider.value());
+      }
+    });
+  }
+
+  // 手機版 Random/Reset 按鈕
+  if (mobileElements.mobileRandomBtn) {
+    mobileElements.mobileRandomBtn.mousePressed(handleRandomButton);
+  }
+
+  if (mobileElements.mobileResetBtn) {
+    mobileElements.mobileResetBtn.mousePressed(handleResetButton);
   }
 
   // Angle Label 事件（簡化版，只支援輸入數字）
@@ -310,6 +370,26 @@ function cycleModeButton() {
   updateUI();
 }
 
+// 手機版：Toggle Custom 調整區
+function toggleMobileCustomPanel() {
+  if (letters.length === 0 || isEasterEggActive) return;
+
+  // 檢查調整區當前是否顯示
+  const isHidden = mobileElements.customAngleControls.hasClass('hidden');
+
+  if (isHidden) {
+    // 如果調整區隱藏，需要先切換到 Custom 模式（如果還在 Auto 模式）
+    if (isAutoRotateMode) {
+      switchToCustomMode();
+    }
+    // 顯示調整區
+    mobileElements.customAngleControls.removeClass('hidden');
+  } else {
+    // 如果調整區顯示，隱藏它（但保持在 Custom 模式）
+    mobileElements.customAngleControls.addClass('hidden');
+  }
+}
+
 // 切換到 Custom 模式
 function switchToCustomMode() {
   if (letters.length === 0 || isEasterEggActive) return;
@@ -345,6 +425,8 @@ function switchToCustomMode() {
   isEasingSlider = true;
   shouldResetToZero = true;
 
+  // 不自動顯示調整區，由用戶通過按鈕控制
+
   updateRotateIcon();
   updateUI();
 }
@@ -358,6 +440,11 @@ function toggleAutoRotate() {
     isAutoRotateMode = true;
     autoRotate = true;
     resetRotationOffsets();
+
+    // 手機版：隱藏 Custom 調整區
+    if (isMobileMode && mobileElements.customAngleControls) {
+      mobileElements.customAngleControls.addClass('hidden');
+    }
   } else {
     // 已經在 Auto 模式，只是 toggle
     autoRotate = !autoRotate;
@@ -599,12 +686,20 @@ function updateMobileIcons() {
   const isWireframe = mode === "Wireframe";
   const suffix = getSuffixForMode();
 
-  // Random/Reset 圖標
+  // Random/Reset 圖標（舊的 Bento 面板）
   if (mobileElements.randomIcon) {
     mobileElements.randomIcon.attribute('src', `Panel Icon/Random${suffix}.svg`);
   }
   if (mobileElements.resetIcon) {
     mobileElements.resetIcon.attribute('src', `Panel Icon/Reset${suffix}.svg`);
+  }
+
+  // Random/Reset 圖標（新的 Custom 調整區）
+  if (mobileElements.mobileRandomImg) {
+    mobileElements.mobileRandomImg.attribute('src', `Panel Icon/Random${suffix}.svg`);
+  }
+  if (mobileElements.mobileResetImg) {
+    mobileElements.mobileResetImg.attribute('src', `Panel Icon/Reset${suffix}.svg`);
   }
 
   // Custom 圖標

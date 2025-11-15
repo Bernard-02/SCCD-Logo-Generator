@@ -160,12 +160,12 @@ function setup() {
   let mobileColormodeIndicator = select(".mobile-colormode-indicator");
 
   // 選取手機版滑桿
-  mobileRSlider = select(".mobile-r-slider");
-  mobileGSlider = select(".mobile-g-slider");
-  mobileBSlider = select(".mobile-b-slider");
-  mobileRAngleLabel = select(".mobile-r-angle-label");
-  mobileGAngleLabel = select(".mobile-g-angle-label");
-  mobileBAngleLabel = select(".mobile-b-angle-label");
+  mobileRSlider = select("#mobile-r-slider");
+  mobileGSlider = select("#mobile-g-slider");
+  mobileBSlider = select("#mobile-b-slider");
+  mobileRAngleLabel = select("#mobile-r-angle-label");
+  mobileGAngleLabel = select("#mobile-g-angle-label");
+  mobileBAngleLabel = select("#mobile-b-angle-label");
 
   // 選取手機版圖片
   mobileRandomImg = select(".mobile-random-img");
@@ -2610,6 +2610,57 @@ function updateUI() {
           bAngleLabel.value((bVal > 0 ? "+" : "") + bVal);
         }
 
+        // 更新手機版 Custom 調整區的 slider 和 label
+        if (isMobileMode && mobileElements.customAngleControls) {
+            const mobileSliders = [mobileElements.mobileRSlider, mobileElements.mobileGSlider, mobileElements.mobileBSlider];
+            const mobileLabels = [mobileElements.mobileRAngleLabel, mobileElements.mobileGAngleLabel, mobileElements.mobileBAngleLabel];
+            mobileSliders.forEach((slider, i) => {
+                if (slider && mobileLabels[i]) {
+                    let sliderEnabled = customControlsEnabled && letterCount > i;
+                    slider.elt.disabled = !sliderEnabled;
+
+                    if (sliderEnabled) {
+                        slider.addClass('enabled');
+                        mobileLabels[i].addClass('enabled');
+
+                        // 決定 slider 和 label 的顏色
+                        if (mode === "Wireframe") {
+                            slider.elt.style.removeProperty("--track-color");
+                            slider.elt.style.removeProperty("--thumb-color");
+                            mobileLabels[i].elt.style.removeProperty("color");
+                        } else {
+                            let sliderColor = `rgb(${colors[i].join(',')})`;
+                            slider.elt.style.setProperty("--track-color", sliderColor);
+                            slider.elt.style.setProperty("--thumb-color", sliderColor);
+                            mobileLabels[i].style("color", sliderColor);
+                        }
+                    } else {
+                        slider.removeClass('enabled');
+                        mobileLabels[i].removeClass('enabled');
+
+                        if (mode === "Wireframe") {
+                            slider.elt.style.removeProperty("--track-color");
+                            slider.elt.style.removeProperty("--thumb-color");
+                            mobileLabels[i].elt.style.removeProperty("color");
+                        } else {
+                            mobileLabels[i].style("color", disabledColor);
+                        }
+                    }
+                }
+            });
+
+            // 更新手機版 label 數值
+            if (mobileElements.mobileRAngleLabel) {
+                mobileElements.mobileRAngleLabel.value((rVal > 0 ? "+" : "") + rVal);
+            }
+            if (mobileElements.mobileGAngleLabel) {
+                mobileElements.mobileGAngleLabel.value((gVal > 0 ? "+" : "") + gVal);
+            }
+            if (mobileElements.mobileBAngleLabel) {
+                mobileElements.mobileBAngleLabel.value((bVal > 0 ? "+" : "") + bVal);
+            }
+        }
+
         // 更新 Save 按鈕（添加存在性檢查）
         if (saveButton) {
             saveButton.style('display', 'flex');
@@ -2690,12 +2741,10 @@ function updateUI() {
         }
     }
 
-    if (mobileCustomAngleControls) {
-        if (customControlsEnabled) {
-            mobileCustomAngleControls.removeClass('hidden');
-        } else {
-            mobileCustomAngleControls.addClass('hidden');
-        }
+    // 移除自動顯示/隱藏邏輯，改為只通過按鈕控制
+    // 但當切換到 Auto 模式時，仍需要隱藏調整區
+    if (mobileCustomAngleControls && isAutoRotateMode) {
+        mobileCustomAngleControls.addClass('hidden');
     }
 
     if (mobileRandomButton && mobileResetButton && mobileRandomImg && mobileResetImg) {
@@ -2703,6 +2752,31 @@ function updateUI() {
         mobileResetButton.elt.disabled = !customControlsEnabled;
         mobileRandomButton.style('cursor', customControlsEnabled ? 'pointer' : 'not-allowed');
         mobileResetButton.style('cursor', customControlsEnabled ? 'pointer' : 'not-allowed');
+    }
+
+    // 更新手機版底部按鈕狀態
+    if (isMobileMode && mobileElements.customBtn) {
+        mobileElements.customBtn.elt.disabled = !hasText;
+        if (hasText && !isAutoRotateMode) {
+            mobileElements.customBtn.addClass('active');
+        } else {
+            mobileElements.customBtn.removeClass('active');
+        }
+    }
+
+    if (isMobileMode && mobileElements.rotateBtn) {
+        mobileElements.rotateBtn.elt.disabled = !hasText;
+        if (hasText && isAutoRotateMode) {
+            mobileElements.rotateBtn.addClass('active');
+        } else {
+            mobileElements.rotateBtn.removeClass('active');
+        }
+    }
+
+    // 更新手機版 Custom 調整區的 Random/Reset 按鈕
+    if (isMobileMode && mobileElements.mobileRandomBtn && mobileElements.mobileResetBtn) {
+        mobileElements.mobileRandomBtn.elt.disabled = !customControlsEnabled;
+        mobileElements.mobileResetBtn.elt.disabled = !customControlsEnabled;
     }
 
     // 更新手機版滑桿
