@@ -168,8 +168,8 @@ function setup() {
   mobileBAngleLabel = select("#mobile-b-angle-label");
 
   // 選取手機版圖片
-  mobileRandomImg = select(".mobile-random-img");
-  mobileResetImg = select(".mobile-reset-img");
+  mobileRandomImg = select("#mobile-random-img");
+  mobileResetImg = select("#mobile-reset-img");
   mobileRotateIcon = select("#mobile-rotate-icon");
   mobileCustomIcon = select("#mobile-custom-icon");
 
@@ -901,6 +901,29 @@ function draw() {
   // --- 更新新彩蛋顯示（DOM 元素）---
   updateSpecialEasterEggDisplay();
 
+  // --- Color Wheel 自動旋轉 ---
+  if (mode === "Wireframe" && isColorWheelRotating) {
+    // 每幀增加 hue 值，實現循環播放
+    selectedHue = (selectedHue + 0.5) % 360; // 每幀增加 0.5 度
+
+    // 更新 wireframe 顏色
+    colorMode(HSB, 360, 100, 100);
+    wireframeColor = color(selectedHue, 80, 100);
+    colorMode(RGB, 255);
+
+    // 啟動描邊顏色過渡動畫
+    let newStrokeColor = getContrastColor(wireframeColor);
+    startStrokeColorTransition(newStrokeColor);
+
+    // 更新背景顏色
+    updateBackgroundColor(wireframeColor);
+
+    // 重繪 color wheel
+    if (colorPickerCanvas) {
+      drawColorWheel();
+    }
+  }
+
   // --- 描邊顏色 Lerp 動畫 ---
   if (mode === "Wireframe" && strokeColorLerpProgress < 1) {
     // 計算 lerp 進度
@@ -1185,7 +1208,9 @@ function draw() {
 
     // 計算 indicator 在色環上的位置
     let angleRad = radians(selectedHue - 90); // -90 因為從頂部開始
-    let container = select('#colorpicker-container');
+    // 根據設備選擇正確的 container
+    let containerId = isMobileMode ? 'mobile-colorpicker-container' : 'colorpicker-container';
+    let container = select('#' + containerId);
     if (container) {
       let containerSize = Math.min(container.elt.clientWidth, container.elt.clientHeight);
       let outerRadius = containerSize / 2 - 2;
@@ -1219,17 +1244,30 @@ function draw() {
   // --- 色環繪製 (Wireframe 模式) ---
   if (mode === "Wireframe") {
     if (!colorPickerCanvas && colorPickerReady) {
-      // 初始化色環（容器已經完全展開，直接讀取實際尺寸）
-      let container = select('#colorpicker-container');
+      // 初始化色環（桌面版）或色條（手機版）
+      // 根據設備選擇正確的 container
+      let containerId = isMobileMode ? 'mobile-colorpicker-container' : 'colorpicker-container';
+      let container = select('#' + containerId);
       if (container) {
-        // 使用 clientWidth 和 clientHeight，取較小值確保是正方形
         let containerWidth = container.elt.clientWidth;
         let containerHeight = container.elt.clientHeight;
-        let containerSize = Math.min(containerWidth, containerHeight);
 
-        if (containerSize > 0) {
-          colorPickerCanvas = createGraphics(containerSize, containerSize);
-          colorPickerCanvas.parent('colorpicker-container');
+        let canvasWidth, canvasHeight;
+
+        if (isMobileMode) {
+          // 手機版：使用實際容器尺寸（橫向長條）
+          canvasWidth = containerWidth;
+          canvasHeight = containerHeight;
+        } else {
+          // 桌面版：取較小值確保是正方形
+          let containerSize = Math.min(containerWidth, containerHeight);
+          canvasWidth = containerSize;
+          canvasHeight = containerSize;
+        }
+
+        if (canvasWidth > 0 && canvasHeight > 0) {
+          colorPickerCanvas = createGraphics(canvasWidth, canvasHeight);
+          colorPickerCanvas.parent(containerId);
 
           // 設置 canvas 樣式 - 不要設置 width/height 為 100%，讓它保持原始尺寸
           colorPickerCanvas.elt.style.display = 'block';
@@ -2339,15 +2377,29 @@ function updateUI() {
             setTimeout(() => {
                 // 立即創建 canvas（不等 draw() 執行）
                 if (!colorPickerCanvas) {
-                    let container = select('#colorpicker-container');
+                    // 根據設備選擇正確的 container
+                    let containerId = isMobileMode ? 'mobile-colorpicker-container' : 'colorpicker-container';
+                    let container = select('#' + containerId);
                     if (container) {
                         let containerWidth = container.elt.clientWidth;
                         let containerHeight = container.elt.clientHeight;
-                        let containerSize = Math.min(containerWidth, containerHeight);
 
-                        if (containerSize > 0) {
-                            colorPickerCanvas = createGraphics(containerSize, containerSize);
-                            colorPickerCanvas.parent('colorpicker-container');
+                        let canvasWidth, canvasHeight;
+
+                        if (isMobileMode) {
+                            // 手機版：使用實際容器尺寸（橫向長條）
+                            canvasWidth = containerWidth;
+                            canvasHeight = containerHeight;
+                        } else {
+                            // 桌面版：取較小值確保是正方形
+                            let containerSize = Math.min(containerWidth, containerHeight);
+                            canvasWidth = containerSize;
+                            canvasHeight = containerSize;
+                        }
+
+                        if (canvasWidth > 0 && canvasHeight > 0) {
+                            colorPickerCanvas = createGraphics(canvasWidth, canvasHeight);
+                            colorPickerCanvas.parent(containerId);
                             colorPickerCanvas.elt.style.display = 'block';
                             colorPickerCanvas.elt.style.margin = 'auto';
 
@@ -3177,11 +3229,23 @@ function keyPressed() {
 // 色彩選擇器相關函數
 // ========================================
 
-// 繪製色環（甜甜圈形狀）
+// 繪製色環（桌面版）或色條（手機版）
 function drawColorWheel() {
   if (!colorPickerCanvas) {
     return;
   }
+
+  // 根據設備選擇繪製方式
+  if (isMobileMode) {
+    drawColorBar(); // 手機版：繪製橫向色條
+  } else {
+    drawColorRing(); // 桌面版：繪製色環
+  }
+}
+
+// 桌面版：繪製色環（甜甜圈形狀）
+function drawColorRing() {
+  if (!colorPickerCanvas) return;
 
   let w = colorPickerCanvas.width;
   let h = colorPickerCanvas.height;
@@ -3257,7 +3321,77 @@ function drawColorWheel() {
   drawColorPickerIndicator(centerX, centerY, outerRadius, innerRadius);
 }
 
-// 繪製 indicator（線段，黑色）
+// 手機版：繪製橫向漸變色條
+function drawColorBar() {
+  if (!colorPickerCanvas) return;
+
+  let w = colorPickerCanvas.width;
+  let h = colorPickerCanvas.height;
+
+  // 清空 canvas
+  colorPickerCanvas.clear();
+
+  // 使用 HSB 顏色模式繪製漸變
+  colorPickerCanvas.colorMode(HSB, 360, 100, 100);
+
+  // 繪製漸變條：從左到右，色相從 0 到 360
+  colorPickerCanvas.noStroke();
+  for (let x = 0; x < w; x++) {
+    let hue = map(x, 0, w, 0, 360);
+    colorPickerCanvas.fill(hue, 80, 100); // S=80, B=100
+    colorPickerCanvas.rect(x, 0, 1, h);
+  }
+
+  // 切換回 RGB 模式
+  colorPickerCanvas.colorMode(RGB, 255);
+
+  // 繪製 indicator（垂直線）
+  drawColorBarIndicator(w, h);
+}
+
+// 繪製色條的 indicator（圓圈）
+function drawColorBarIndicator(w, h) {
+  if (!colorPickerCanvas) return;
+
+  // 根據 selectedHue 計算 x 位置
+  let x = map(selectedHue, 0, 360, 0, w);
+  let y = h / 2; // 垂直置中
+
+  // 圓圈尺寸：留出上下間距，不要完全切到邊緣
+  let circleRadius = h * 0.4; // 改為 0.4，留出空間
+
+  // 繪製圓圈：內部為當前顏色，邊框根據模式變化
+  // 1. 繪製填充（當前顏色）
+  colorPickerCanvas.colorMode(HSB, 360, 100, 100);
+  let currentColor = colorPickerCanvas.color(selectedHue, 80, 100);
+  colorPickerCanvas.colorMode(RGB, 255);
+
+  colorPickerCanvas.fill(currentColor);
+  colorPickerCanvas.noStroke();
+  colorPickerCanvas.circle(x, y, circleRadius * 2);
+
+  // 2. 繪製邊框（根據模式切換顏色）
+  colorPickerCanvas.noFill();
+
+  // 根據當前模式設定邊框顏色
+  if (mode === "Standard") {
+    colorPickerCanvas.stroke(0, 0, 0); // 黑色邊框
+  } else if (mode === "Inverse") {
+    colorPickerCanvas.stroke(255, 255, 255); // 白色邊框
+  } else if (mode === "Wireframe") {
+    // Wireframe 模式：使用 wireframeStrokeColor
+    if (wireframeStrokeColor) {
+      colorPickerCanvas.stroke(wireframeStrokeColor);
+    } else {
+      colorPickerCanvas.stroke(255, 255, 255); // fallback
+    }
+  }
+
+  colorPickerCanvas.strokeWeight(2);
+  colorPickerCanvas.circle(x, y, circleRadius * 2);
+}
+
+// 繪製 indicator（線段，黑色）- 桌面版色環用
 function drawColorPickerIndicator(centerX, centerY, outerRadius, innerRadius) {
   if (!colorPickerCanvas) return;
 
@@ -3321,50 +3455,77 @@ function updateColorFromMouse(e) {
 
   let w = colorPickerCanvas.width;
   let h = colorPickerCanvas.height;
-  let centerX = w / 2;
-  let centerY = h / 2;
 
-  // 計算相對於中心的位置
-  let dx = x - centerX;
-  let dy = y - centerY;
+  if (isMobileMode) {
+    // 手機版：色條邏輯（橫向）
+    // 限制 x 在 0 到 w 範圍內
+    x = constrain(x, 0, w);
 
-  // 計算距離中心的距離
-  let distance = Math.sqrt(dx * dx + dy * dy);
+    // 根據 x 位置計算色相（0-360）
+    selectedHue = map(x, 0, w, 0, 360);
 
-  // 計算 color wheel 的內外半徑（與繪製邏輯一致）
-  let outerRadius = w * 0.45;
-  let innerRadius = w * 0.25;
+    // 更新 wireframeColor
+    colorMode(HSB, 360, 100, 100);
+    wireframeColor = color(selectedHue, 80, 100);
+    colorMode(RGB, 255);
 
-  // 檢查是否在 wheel 的環形範圍內
-  if (distance < innerRadius || distance > outerRadius) {
-    // 鼠標不在有效範圍內，停止拖曳
-    colorPickerDragging = false;
-    return;
+    // 根據亮度決定描邊顏色
+    let newStrokeColor = getContrastColor(wireframeColor);
+    startStrokeColorTransition(newStrokeColor);
+
+    // 更新背景顏色
+    updateBackgroundColor(wireframeColor, true);
+
+    // 更新輸入框文字顏色
+    updateInputTextColor();
+
+  } else {
+    // 桌面版：色環邏輯
+    let centerX = w / 2;
+    let centerY = h / 2;
+
+    // 計算相對於中心的位置
+    let dx = x - centerX;
+    let dy = y - centerY;
+
+    // 計算距離中心的距離
+    let distance = Math.sqrt(dx * dx + dy * dy);
+
+    // 計算 color wheel 的內外半徑（與繪製邏輯一致）
+    let outerRadius = w * 0.45;
+    let innerRadius = w * 0.25;
+
+    // 檢查是否在 wheel 的環形範圍內
+    if (distance < innerRadius || distance > outerRadius) {
+      // 鼠標不在有效範圍內，停止拖曳
+      colorPickerDragging = false;
+      return;
+    }
+
+    // 計算角度（弧度）- atan2 返回 -PI 到 PI
+    let angle = Math.atan2(dy, dx);
+
+    // 轉換為度數並調整：
+    // 1. atan2(dy, dx) 在右側 = 0，頂部 = -90度
+    // 2. 我們要頂部 = 0度，所以加 90度
+    // 3. 轉換到 0-360 範圍
+    selectedHue = (degrees(angle) + 90 + 360) % 360;
+
+    // 更新 wireframeColor（使用 HSB 模式：飽和度 80%，亮度 100%）
+    colorMode(HSB, 360, 100, 100);
+    wireframeColor = color(selectedHue, 80, 100);
+    colorMode(RGB, 255);
+
+    // 根據亮度決定描邊顏色（黑色或白色）- 啟動平滑過渡
+    let newStrokeColor = getContrastColor(wireframeColor);
+    startStrokeColorTransition(newStrokeColor);
+
+    // 更新背景顏色（拖動時禁用 transition，實現即時更新）
+    updateBackgroundColor(wireframeColor, true);
+
+    // 更新輸入框文字顏色（即時更新，與背景同步）
+    updateInputTextColor();
   }
-
-  // 計算角度（弧度）- atan2 返回 -PI 到 PI
-  let angle = Math.atan2(dy, dx);
-
-  // 轉換為度數並調整：
-  // 1. atan2(dy, dx) 在右側 = 0，頂部 = -90度
-  // 2. 我們要頂部 = 0度，所以加 90度
-  // 3. 轉換到 0-360 範圍
-  selectedHue = (degrees(angle) + 90 + 360) % 360;
-
-  // 更新 wireframeColor（使用 HSB 模式：飽和度 80%，亮度 100%）
-  colorMode(HSB, 360, 100, 100);
-  wireframeColor = color(selectedHue, 80, 100);
-  colorMode(RGB, 255);
-
-  // 根據亮度決定描邊顏色（黑色或白色）- 啟動平滑過渡
-  let newStrokeColor = getContrastColor(wireframeColor);
-  startStrokeColorTransition(newStrokeColor);
-
-  // 更新背景顏色（拖動時禁用 transition，實現即時更新）
-  updateBackgroundColor(wireframeColor, true);
-
-  // 更新輸入框文字顏色（即時更新，與背景同步）
-  updateInputTextColor();
 }
 
 // 計算顏色的相對亮度（根據 WCAG 標準）

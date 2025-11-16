@@ -264,26 +264,39 @@ function updateIconsForMode() {
 
 // 更新 Color Wheel Play/Pause 圖標
 function updateColorWheelIcon() {
-  if (!colorWheelPlayIcon || !colorWheelPlayButton) return;
-
-  // 根據背景色決定使用黑色或白色 icon
+  // 根據模式決定使用黑色或白色 icon
   let suffix = "";
-  if (wireframeStrokeColor && red(wireframeStrokeColor) > 128) {
-    suffix = "_Inverse";
+  if (mode === "Inverse") {
+    suffix = "_Inverse"; // 白色 icon
+  } else if (mode === "Wireframe") {
+    // Wireframe 模式下，根據描邊顏色選擇
+    if (wireframeStrokeColor && red(wireframeStrokeColor) > 128) {
+      suffix = "_Inverse"; // 白色 icon
+    }
   }
+  // Standard 模式：黑色 icon（無後綴）
 
   // 根據旋轉狀態選擇 Play 或 Pause icon
   let iconSrc = isColorWheelRotating
     ? `Panel Icon/Pause${suffix}.svg`
     : `Panel Icon/Play${suffix}.svg`;
 
-  colorWheelPlayIcon.attribute('src', iconSrc);
+  // 更新桌面版 icon
+  if (colorWheelPlayIcon && colorWheelPlayButton) {
+    colorWheelPlayIcon.attribute('src', iconSrc);
 
-  // 添加或移除 is-play class（Play 狀態向右移 1px）
-  if (isColorWheelRotating) {
-    colorWheelPlayButton.removeClass('is-play');
-  } else {
-    colorWheelPlayButton.addClass('is-play');
+    // 添加或移除 is-play class（Play 狀態向右移 1px）
+    if (isColorWheelRotating) {
+      colorWheelPlayButton.removeClass('is-play');
+    } else {
+      colorWheelPlayButton.addClass('is-play');
+    }
+  }
+
+  // 更新手機版 Color Wheel Play icon
+  const mobileColorWheelPlayIcon = select('#mobile-colorwheel-play-icon');
+  if (mobileColorWheelPlayIcon) {
+    mobileColorWheelPlayIcon.attribute('src', iconSrc);
   }
 }
 

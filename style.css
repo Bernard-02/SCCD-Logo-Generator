@@ -969,7 +969,9 @@ body.wireframe-mode .angle-input:not(.enabled) {
 .mobile-input-save-row,
 .mobile-panels-wrapper,
 .mobile-input-area,
-.mobile-bottom-bar {
+.mobile-bottom-bar,
+.mobile-custom-angle-controls,
+.mobile-colorpicker-bar {
   display: none !important;
 }
 
@@ -992,12 +994,15 @@ body.wireframe-mode .angle-input:not(.enabled) {
     height: 100dvh;
   }
 
-  /* === 手機版主容器：固定佈局，使用統一 padding === */
+  /* === 手機版主容器：Flexbox 垂直佈局，統一 gap === */
   .main-container {
-    position: relative;
+    display: flex !important;
+    flex-direction: column;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* 使用 dynamic viewport height */
     padding: 4rem 1.5rem 1rem; /* 上 4rem，左右 1.5rem，下 1rem */
+    gap: 1rem; /* 統一所有子元素的間距 */
     overflow: hidden;
     box-sizing: border-box;
     /* 定義 CSS 變數：按鈕的實際尺寸 */
@@ -1007,20 +1012,36 @@ body.wireframe-mode .angle-input:not(.enabled) {
     --mobile-btn-size: calc((100vw - 3rem - 3 * var(--mobile-btn-gap)) / 4);
   }
 
-  /* === 手機版 Logo 區域：正方形，靠上對齊 === */
+  /* 手機版：強制顯示手機版元素 */
+  .mobile-input-area {
+    display: flex !important;
+  }
+
+  .mobile-bottom-bar {
+    display: flex !important;
+  }
+
+  .mobile-custom-angle-controls {
+    display: flex !important;
+  }
+
+  .mobile-colorpicker-bar {
+    display: flex !important;
+  }
+
+  /* === 手機版 Logo 區域：固定在頂部 === */
   .display-area {
-    position: fixed;
+    position: absolute;
     top: 4rem; /* 遵循 main container 的 top padding */
-    left: 1.5rem; /* 遵循 main container 的 left padding */
-    right: 1.5rem; /* 遵循 main container 的 right padding */
-    /* 使用可用寬度作為高度，形成正方形 */
-    width: calc(100vw - 3rem); /* 明確設定寬度：扣除左右 padding (1.5rem * 2) */
-    height: calc(100vw - 3rem); /* 高度等於寬度，形成正方形 */
+    left: 1.5rem;
+    right: 1.5rem;
+    width: calc(100vw - 3rem); /* 扣除左右 padding */
+    aspect-ratio: 1 / 1; /* 保持正方形 */
     display: flex;
     flex-direction: column;
     justify-content: center; /* 垂直置中 */
     align-items: center;
-    padding: 0; /* 不需要內部 padding */
+    padding: 0;
     box-sizing: border-box;
     z-index: 1;
   }
@@ -1254,34 +1275,35 @@ body.wireframe-mode .angle-input:not(.enabled) {
     border-color: transparent;
   }
 
-  /* === 手機版 Custom 展開區域 === */
+  /* === 手機版 Custom 展開區域：從 Btn Bar 上方彈出 === */
   .mobile-custom-angle-controls {
-    display: none; /* 桌面版隱藏 */
+    position: absolute;
+    bottom: calc(1rem + var(--mobile-btn-size) + 1rem); /* 預設：Btn Bar 上方 */
+    left: 1.5rem;
+    right: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    background: transparent;
+    box-sizing: border-box;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px); /* 初始向下偏移 */
+    transition: bottom 0.3s ease, max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+    z-index: 100;
   }
 
-  @media (max-width: 768px) {
-    .mobile-custom-angle-controls {
-      display: flex;
-      position: fixed;
-      bottom: calc(1rem + var(--mobile-btn-size) + var(--mobile-btn-gap)); /* btn bar 上方，距離為 gap */
-      left: 1.5rem; /* 與 btn bar 對齊 */
-      right: 1.5rem; /* 與 btn bar 對齊 */
-      flex-direction: row;
-      align-items: stretch;
-      background: transparent;
-      box-sizing: border-box;
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      transition: max-height 0.3s ease, opacity 0.3s ease;
-      z-index: 199; /* 低於 btn bar (200) */
-    }
+  /* 當 Color Picker 顯示時，Custom 需要在更上方 */
+  .mobile-custom-angle-controls.above-colorpicker {
+    bottom: calc(1rem + var(--mobile-btn-size) + 1rem + 61px + 1rem); /* 61px = colorpicker bar 總高度 (25px + 2*1rem padding + 2*2px border) */
+  }
 
-    /* 顯示時展開 */
-    .mobile-custom-angle-controls:not(.hidden) {
-      max-height: 200px; /* 足夠的高度讓內容顯示 */
-      opacity: 1;
-    }
+  /* 顯示時展開並向上滑入 */
+  .mobile-custom-angle-controls:not(.hidden) {
+    max-height: 200px; /* 足夠的高度讓內容顯示 */
+    opacity: 1;
+    transform: translateY(0); /* 滑入到正確位置 */
   }
 
   /* 內層容器：限制在 section padding 內 */
@@ -1418,6 +1440,107 @@ body.wireframe-mode .angle-input:not(.enabled) {
     opacity: 0.6;
   }
 
+  /* === 手機版 Color Picker Bar：從 Btn Bar 上方彈出 === */
+  .mobile-colorpicker-bar {
+    position: absolute;
+    bottom: calc(1rem + var(--mobile-btn-size) + 1rem); /* Btn Bar 上方，保留 gap */
+    left: 1.5rem;
+    right: 1.5rem;
+    display: flex;
+    align-items: stretch;
+    background: transparent;
+    box-sizing: border-box;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px); /* 初始向下偏移 */
+    transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+    z-index: 90; /* 低於 Custom (100)，確保 Custom 在上方 */
+  }
+
+  /* 顯示時展開並向上滑入 */
+  .mobile-colorpicker-bar:not(.hidden) {
+    max-height: 100px; /* 足夠的高度容納 canvas + padding */
+    opacity: 1;
+    transform: translateY(0); /* 滑入到正確位置 */
+  }
+
+  /* 內層容器：bar 形狀 */
+  .mobile-colorpicker-bar .colorpicker-bar-inner {
+    display: flex;
+    flex-direction: row;
+    align-items: center; /* 垂直置中 */
+    width: 100%;
+    gap: 1rem; /* 與其他元素統一的 gap */
+    padding: 1rem; /* 上下左右 1rem padding */
+    border: 2px solid;
+    border-radius: 24px; /* 與 btn bar 相同 */
+    box-sizing: border-box;
+  }
+
+  /* 根據模式設定邊框顏色 */
+  body.standard-mode .mobile-colorpicker-bar .colorpicker-bar-inner {
+    border-color: black;
+  }
+
+  body.inverse-mode .mobile-colorpicker-bar .colorpicker-bar-inner {
+    border-color: white;
+  }
+
+  body.wireframe-mode .mobile-colorpicker-bar .colorpicker-bar-inner {
+    border-color: var(--wireframe-border);
+    background: rgba(255, 255, 255, 0.28); /* 0.28 白色底 */
+  }
+
+  /* Color Picker 容器：bar 形狀，9:1 比例的 9 */
+  #mobile-colorpicker-container {
+    flex: 9; /* bar : play = 9:1 */
+    position: relative;
+    height: 25px; /* 固定高度 */
+    border: 2px solid; /* 加上邊框 */
+    border-radius: 24px; /* 與 btn bar 相同 */
+    overflow: hidden; /* 隱藏超出邊框的部分 */
+    box-sizing: border-box;
+  }
+
+  /* 根據模式設定 container 邊框顏色 */
+  body.standard-mode #mobile-colorpicker-container {
+    border-color: black;
+  }
+
+  body.inverse-mode #mobile-colorpicker-container {
+    border-color: white;
+  }
+
+  body.wireframe-mode #mobile-colorpicker-container {
+    border-color: var(--wireframe-border);
+  }
+
+  /* Play 按鈕：9:1 比例的 1，無外框 */
+  .mobile-colorwheel-play-btn {
+    flex: 1; /* bar : play = 9:1 */
+    height: 30px; /* 加大到 30px */
+    border: none; /* 移除外框 */
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-sizing: border-box;
+    transition: opacity 0.2s ease;
+  }
+
+  .mobile-colorwheel-play-btn img {
+    width: 70%;
+    height: 70%;
+    object-fit: contain;
+  }
+
+  .mobile-colorwheel-play-btn:active {
+    opacity: 0.6;
+  }
+
   /* === 手機版輸入框區域 === */
   .mobile-input-save-row {
     display: flex;
@@ -1539,21 +1662,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
   /* Input 面板：只有輸入框，圓角矩形 */
 
-  /* Color Picker 面板 */
-  .mobile-colorpicker-panel {
-    /* 移除 padding-top，由父容器的 justify-content: center 控制位置 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-  }
-
-  #mobile-colorpicker-container {
-    flex: 1;
-    aspect-ratio: 1 / 1;
-    max-width: 200px;
-    position: relative;
-  }
 
   /* Rotate Bento 面板 - 填滿整個面板高度（扣除 wrapper 的上下 1rem padding） */
   .mobile-bento-container {
@@ -1632,24 +1740,20 @@ body.wireframe-mode .angle-input:not(.enabled) {
     height: 24px;
   }
 
-  /* === 手機版輸入框區域：位於 display-area 和 btn bar 之間 === */
+  /* === 手機版輸入框區域：填充 Logo 和 Btn Bar 之間的空間 === */
   .mobile-input-area {
-    display: flex !important; /* 強制顯示 */
-    position: fixed;
-    /* 位於 logo 區域下方 */
-    top: calc(4rem + 100vw - 3rem); /* 4rem top padding + logo 正方形高度 */
+    position: absolute;
+    top: calc(4rem + 100vw - 3rem); /* Logo 下方：top padding + logo 正方形高度 */
     left: 1.5rem;
     right: 1.5rem;
-    /* 高度：從 logo 下方到按鈕上方的剩餘空間 */
-    bottom: calc(1rem + var(--mobile-btn-size));
+    bottom: calc(1rem + var(--mobile-btn-size)); /* 預設：Btn Bar 上方，會由 JS 動態調整 */
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem 0;
     box-sizing: border-box;
     z-index: 50;
-    /* 從左至右的入場動畫 */
-    transform: translateX(-100%);
-    opacity: 0;
+    padding: 1rem 0; /* 上下留白 */
+    transition: bottom 0.3s ease; /* 平滑過渡 */
     /* 防止鍵盤彈出時位置改變 */
     will-change: transform;
     -webkit-overflow-scrolling: touch;
@@ -1669,11 +1773,16 @@ body.wireframe-mode .angle-input:not(.enabled) {
     outline: none;
     color: inherit;
     resize: none;
-    overflow: hidden; /* 不顯示滾動條 */
+    overflow-y: hidden; /* 不顯示垂直滾動條 */
+    overflow-x: hidden; /* 不顯示水平滾動條 */
     line-height: 1.2;
     box-sizing: border-box;
     /* 防止鍵盤彈出時自動滾動 */
     scroll-margin: 0;
+    /* padding 會在 JavaScript 中動態調整以實現垂直置中 */
+    padding-top: 0;
+    padding-bottom: 0;
+    transition: padding-top 0.2s ease;
   }
 
   /* 當有輸入且不超過 6 個字時，使用較大字體 */
@@ -1723,16 +1832,16 @@ body.wireframe-mode .angle-input:not(.enabled) {
     opacity: var(--wireframe-opacity);
   }
 
-  /* === 新版手機介面：底部按鈕列，高度對齊按鈕大小 === */
+  /* === 新版手機介面：底部按鈕列，固定在底部 === */
   .mobile-bottom-bar {
-    display: flex !important; /* 手機版時強制顯示 */
-    position: fixed;
-    bottom: 1rem; /* 對齊 main container 的 bottom padding (1rem) */
-    left: 1.5rem; /* 遵循 main container 的 left padding */
-    right: 1.5rem; /* 遵循 main container 的 right padding */
+    position: absolute;
+    bottom: 1rem; /* 對齊 main container 的 bottom padding */
+    left: 1.5rem;
+    right: 1.5rem;
+    display: flex;
     /* 高度：等於按鈕的高度 */
     height: var(--mobile-btn-size);
-    justify-content: space-between; /* 改為 space-between 讓按鈕均分空間 */
+    justify-content: space-between; /* 讓按鈕均分空間 */
     align-items: center;
     gap: var(--mobile-btn-gap); /* 使用統一的 gap */
     padding: 0; /* 不需要內部 padding */
