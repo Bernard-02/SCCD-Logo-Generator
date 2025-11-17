@@ -48,6 +48,7 @@ let specialEasterEggStartTime = 0; // 動畫開始時間
 let specialEasterEggAlpha = 0; // 彩蛋圖片的透明度
 let specialEasterEggRotation = 0; // 彩蛋圖片的旋轉角度
 let specialEasterEggScale = 0; // 彩蛋圖片的縮放比例（0-1）
+let specialEasterEggTargetAngle = 0; // 彩蛋圖片最終停止的隨機角度（-60 到 60 度）
 
 // --- 淡入淡出動畫 ---
 let isFading = false;

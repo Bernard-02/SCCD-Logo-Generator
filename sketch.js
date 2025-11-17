@@ -2043,6 +2043,9 @@ function triggerSpecialEasterEgg() {
   specialEasterEggRotation = 0;
   specialEasterEggScale = 0;
 
+  // 生成隨機的目標角度（-60 到 60 度）
+  specialEasterEggTargetAngle = random(-60, 60);
+
   // 禁用輸入框（防止用戶在動畫播放時繼續輸入）
   if (inputBox) inputBox.attribute('disabled', '');
   if (inputBoxMobile) inputBoxMobile.attribute('disabled', '');
@@ -2140,29 +2143,27 @@ function updateSpecialEasterEggAnimation() {
 
   let elapsed = millis() - specialEasterEggStartTime;
 
-  // 階段 1: 0-2000ms，旋轉 3 圈（1080度）同時放大和 fade in
+  // 階段 1: 0-2000ms，旋轉 3 圈加上隨機角度，同時放大和 fade in
   if (elapsed < 2000) {
     let progress = elapsed / 2000;
     // 使用 easeOutCubic 緩動函數（開始快，結束慢）
     let eased = 1 - pow(1 - progress, 3);
-    specialEasterEggRotation = eased * 1080; // 3圈 = 360 * 3 = 1080度
+    // 直接旋轉到目標角度（3圈 + 隨機角度）
+    specialEasterEggRotation = eased * (1080 + specialEasterEggTargetAngle);
     specialEasterEggAlpha = 255; // 立即顯示
     specialEasterEggScale = eased; // 從 0 放大到 1（使用相同的 easeOut 曲線）
   }
-  // 階段 2: 2000-4000ms，ease 到 0° 並停留
+  // 階段 2: 2000-4000ms，保持在隨機角度
   else if (elapsed < 4000) {
-    let progress = (elapsed - 2000) / 2000;
-    // 使用 easeOutCubic 緩動函數
-    let eased = 1 - pow(1 - progress, 3);
-    // 從 1080 度 ease 到 1080 度（等同於 0 度）
-    specialEasterEggRotation = lerp(1080, 1080, eased); // 保持在 1080 度（等同於 0 度）
+    // 保持在目標角度不動
+    specialEasterEggRotation = 1080 + specialEasterEggTargetAngle;
     specialEasterEggAlpha = 255;
     specialEasterEggScale = 1; // 保持完整大小
   }
   // 階段 3: 4000-6000ms，fade out
   else if (elapsed < 6000) {
     let progress = (elapsed - 4000) / 2000;
-    specialEasterEggRotation = 1080; // 保持在 0 度
+    specialEasterEggRotation = 1080 + specialEasterEggTargetAngle; // 保持在目標角度
     specialEasterEggAlpha = lerp(255, 0, progress);
     specialEasterEggScale = 1; // 保持完整大小
   }
@@ -3718,9 +3719,15 @@ function createSpecialEasterEggContainer() {
 
   // 創建圖片元素
   specialEasterEggImgElement = document.createElement('img');
-  specialEasterEggImgElement.style.width = '27.1vw'; // 固定寬度 27.1vw（再調小 5%）
+  // 根據裝置類型設定不同大小
+  if (isMobileMode) {
+    specialEasterEggImgElement.style.width = '60vw'; // 手機版：35vw
+    specialEasterEggImgElement.style.maxWidth = 'none'; // 手機版不限制最大寬度
+  } else {
+    specialEasterEggImgElement.style.width = '27.1vw'; // 桌面版：27.1vw
+    specialEasterEggImgElement.style.maxWidth = '361px'; // 桌面版最大寬度 361px
+  }
   specialEasterEggImgElement.style.height = 'auto'; // 高度自動，保持圖片比例
-  specialEasterEggImgElement.style.maxWidth = '361px'; // 最大寬度 361px（再調小 5%）
   specialEasterEggImgElement.style.objectFit = 'contain'; // 保持比例，不壓縮
   specialEasterEggImgElement.style.opacity = '0';
   specialEasterEggImgElement.style.transform = 'rotate(0deg) scale(0)'; // 初始縮放為 0
