@@ -81,6 +81,7 @@ let isEasingSlider = false;
 
 // --- DOM 元素 ---
 let inputBox, inputBoxMobile;
+let mobileHiddenMeasurer; // 用於測量手機版輸入框文字高度
 let rotateButton, customButton, colormodeButton, colormodeBox;
 let randomButton, resetButton, saveButton, saveButtonMobile, saveBox;
 let rSlider, gSlider, bSlider;

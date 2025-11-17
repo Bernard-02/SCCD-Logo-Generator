@@ -901,29 +901,6 @@ function draw() {
   // --- 更新新彩蛋顯示（DOM 元素）---
   updateSpecialEasterEggDisplay();
 
-  // --- Color Wheel 自動旋轉 ---
-  if (mode === "Wireframe" && isColorWheelRotating) {
-    // 每幀增加 hue 值，實現循環播放
-    selectedHue = (selectedHue + 0.5) % 360; // 每幀增加 0.5 度
-
-    // 更新 wireframe 顏色
-    colorMode(HSB, 360, 100, 100);
-    wireframeColor = color(selectedHue, 80, 100);
-    colorMode(RGB, 255);
-
-    // 啟動描邊顏色過渡動畫
-    let newStrokeColor = getContrastColor(wireframeColor);
-    startStrokeColorTransition(newStrokeColor);
-
-    // 更新背景顏色
-    updateBackgroundColor(wireframeColor);
-
-    // 重繪 color wheel
-    if (colorPickerCanvas) {
-      drawColorWheel();
-    }
-  }
-
   // --- 描邊顏色 Lerp 動畫 ---
   if (mode === "Wireframe" && strokeColorLerpProgress < 1) {
     // 計算 lerp 進度
@@ -1450,6 +1427,12 @@ function handleInput(event) {
         } else {
             mobileInputBoxBottom.removeClass('small-text');
         }
+
+        // 等待 CSS transition 完成後再調整垂直置中（font-size transition 是 0.2s = 200ms）
+        // 加上一點緩衝時間確保渲染完成，與桌面版一致
+        setTimeout(() => {
+            updateMobileInputBoxVerticalAlignment(mobileInputBoxBottom, validInput);
+        }, 220);
     }
 
     // 彩蛋邏輯

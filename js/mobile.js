@@ -83,8 +83,25 @@ function initMobileUI() {
   mobileElements.colorpickerPanel = select('.mobile-colorpicker-panel');
   mobileElements.rotatePanel = select('.mobile-rotate-panel');
 
-  mobileElements.inputBox = select('#input-box-mobile');
+  mobileElements.inputBox = select('#mobile-input-box');
   mobileElements.modeIcon = select('#mobile-mode-icon');
+
+  // 創建隱藏的 div 用於測量文字高度（用於垂直置中）
+  if (mobileElements.inputBox) {
+    mobileHiddenMeasurer = createDiv('');
+    mobileHiddenMeasurer.style('visibility', 'hidden');
+    mobileHiddenMeasurer.style('position', 'absolute');
+    mobileHiddenMeasurer.style('top', '-9999px');
+    mobileHiddenMeasurer.style('left', '-9999px');
+    mobileHiddenMeasurer.style('width', mobileElements.inputBox.style('width'));
+    mobileHiddenMeasurer.style('font-family', mobileElements.inputBox.style('font-family'));
+    mobileHiddenMeasurer.style('font-weight', mobileElements.inputBox.style('font-weight'));
+    mobileHiddenMeasurer.style('font-size', mobileElements.inputBox.style('font-size'));
+    mobileHiddenMeasurer.style('line-height', mobileElements.inputBox.style('line-height'));
+    mobileHiddenMeasurer.style('white-space', 'pre-wrap');
+    mobileHiddenMeasurer.style('word-wrap', 'break-word');
+    mobileHiddenMeasurer.style('box-sizing', 'border-box');
+  }
 
   mobileElements.bentoCustomBtn = select('.mobile-custom-button');
   mobileElements.bentoPlayBtn = select('.mobile-play-button');
@@ -128,6 +145,11 @@ function initMobileUI() {
 
   // 綁定事件
   bindMobileEvents();
+
+  // 初始化 placeholder 的垂直置中
+  if (mobileElements.inputBox) {
+    updateMobileInputBoxVerticalAlignment(mobileElements.inputBox, '');
+  }
 
   console.log('手機版 UI 初始化完成');
 }
@@ -390,8 +412,6 @@ function cycleModeButton() {
       // 切換到 Standard/Inverse 模式：隱藏 Color Picker Bar
       mobileElements.mobileColorpickerBar.addClass('hidden');
     }
-    // 更新 Custom 區塊的位置（Color Picker 顯示狀態改變了）
-    updateCustomPosition();
   }
 
   updateUI();
@@ -415,76 +435,8 @@ function toggleMobileCustomPanel() {
     // 如果調整區顯示，隱藏它（但保持在 Custom 模式）
     mobileElements.customAngleControls.addClass('hidden');
   }
-
-  // 更新 Custom 區塊的位置（需要檢查 Color Picker 是否顯示）
-  updateCustomPosition();
 }
 
-// 更新 Custom 區塊的位置（根據 Color Picker 顯示狀態）
-function updateCustomPosition() {
-  if (!isMobileMode || !mobileElements.customAngleControls || !mobileElements.mobileColorpickerBar) {
-    return;
-  }
-
-  // 檢查 Color Picker 是否顯示
-  const isColorPickerVisible = !mobileElements.mobileColorpickerBar.hasClass('hidden');
-
-  // 根據 Color Picker 的顯示狀態，添加或移除 above-colorpicker class
-  if (isColorPickerVisible) {
-    mobileElements.customAngleControls.addClass('above-colorpicker');
-  } else {
-    mobileElements.customAngleControls.removeClass('above-colorpicker');
-  }
-
-  // 同時更新輸入框的位置
-  updateInputAreaPosition();
-}
-
-// 動態調整輸入框位置（根據彈出元素的高度）
-function updateInputAreaPosition() {
-  if (!isMobileMode) return;
-
-  const inputArea = select('.mobile-input-area');
-  if (!inputArea) return;
-
-  // 檢查各個彈出元素的顯示狀態
-  const isColorPickerVisible = mobileElements.mobileColorpickerBar && !mobileElements.mobileColorpickerBar.hasClass('hidden');
-  const isCustomVisible = mobileElements.customAngleControls && !mobileElements.customAngleControls.hasClass('hidden');
-
-  // 使用固定的高度值，避免動態讀取時的不準確
-  // Color Picker 內層高度：padding(1rem * 2) + border(2px * 2) + 內容(30px) = 2rem + 34px
-  // Custom 內層高度：需要實際測量，但使用 CSS 變數更可靠
-
-  // 計算 gap：每個彈出元素上方都有 1rem 的 gap
-  let gapCount = 0;
-  if (isColorPickerVisible) gapCount++;
-  if (isCustomVisible) gapCount++;
-
-  // 構建 bottom offset 字符串
-  let bottomOffset = 'calc(1rem + var(--mobile-btn-size)';
-
-  // 添加 gap
-  if (gapCount > 0) {
-    bottomOffset += ` + ${gapCount}rem`;
-  }
-
-  // 添加 Color Picker 高度：2rem (padding) + 34px (border + content)
-  if (isColorPickerVisible) {
-    bottomOffset += ' + 2rem + 34px';
-  }
-
-  // 添加 Custom 高度：使用實際測量值
-  if (isCustomVisible) {
-    // Custom 內層：padding(1.2rem * 2) + border(2px * 2) + 內容高度
-    // 3 個 slider 容器 + gaps = 約 100px 內容
-    bottomOffset += ' + 2.4rem + 104px';
-  }
-
-  bottomOffset += ')';
-
-  // 立即設定 bottom 位置
-  inputArea.style('bottom', bottomOffset);
-}
 
 // 切換到 Custom 模式
 function switchToCustomMode() {
@@ -540,7 +492,6 @@ function toggleAutoRotate() {
     // 手機版：隱藏 Custom 調整區
     if (isMobileMode && mobileElements.customAngleControls) {
       mobileElements.customAngleControls.addClass('hidden');
-      updateCustomPosition(); // 更新位置（雖然已隱藏，但保持狀態一致）
     }
   } else {
     // 已經在 Auto 模式，只是 toggle

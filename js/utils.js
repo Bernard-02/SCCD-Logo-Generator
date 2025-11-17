@@ -341,3 +341,82 @@ function updateMobileModeIcon() {
 
   mobileModeIcon.attribute('src', iconSrc);
 }
+
+// 更新手機版輸入框的垂直置中
+function updateMobileInputBoxVerticalAlignment(inputBox, text) {
+  console.log('✅ updateMobileInputBoxVerticalAlignment 被調用', {
+    isMobileMode,
+    hasMeasurer: !!mobileHiddenMeasurer,
+    hasInputBox: !!inputBox,
+    text: text ? text.substring(0, 20) : 'empty'
+  });
+
+  if (!isMobileMode || !mobileHiddenMeasurer || !inputBox) {
+    console.log('❌ 條件檢查失敗，函數提前返回');
+    return;
+  }
+
+  // 如果沒有文字，設置 padding 讓 placeholder 垂直居中
+  if (!text || text.trim() === '') {
+    // Placeholder 是一行文字 "TYPE AND ENTER"，需要垂直居中
+    const containerHeight = inputBox.elt.offsetHeight;
+    const currentFontSize = parseFloat(window.getComputedStyle(inputBox.elt).fontSize);
+    const lineHeight = currentFontSize * 1.2; // line-height: 1.2
+
+    // Placeholder 只有一行，計算一行的總高度
+    const placeholderHeight = lineHeight * 1;
+    const paddingTop = Math.max(0, (containerHeight - placeholderHeight) / 2);
+
+    inputBox.style('padding-top', `${paddingTop}px`);
+    inputBox.style('padding-bottom', '0');
+    return;
+  }
+
+  // 等待兩幀確保字體大小已經更新（第一幀更新 class，第二幀計算）
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // 同步 hidden measurer 的字體大小（因為 small-text class 可能剛被加上/移除）
+      const currentFontSize = window.getComputedStyle(inputBox.elt).fontSize;
+      const lineHeight = parseFloat(currentFontSize) * 1.2;
+      mobileHiddenMeasurer.style('font-size', currentFontSize);
+      mobileHiddenMeasurer.style('line-height', '1.2');
+      mobileHiddenMeasurer.style('width', inputBox.style('width'));
+
+      // 設置 measurer 的內容（將換行轉為 <br>）
+      const htmlContent = text.replace(/\n/g, '<br>');
+      mobileHiddenMeasurer.html(htmlContent);
+
+      // 獲取輸入框的固定高度和實際文字高度
+      const containerHeight = inputBox.elt.offsetHeight;
+      const textHeight = mobileHiddenMeasurer.elt.scrollHeight;
+
+    // 計算文字行數（基於實際測量的高度）
+    const estimatedLines = Math.round(textHeight / lineHeight);
+
+    // 規則：
+    // - 1-2 行：垂直居中
+    // - 3 行：不需要 padding，剛好 fit
+    let paddingTop = 0;
+    if (estimatedLines < 3) {
+      // 少於 3 行：垂直居中
+      paddingTop = Math.max(0, (containerHeight - textHeight) / 2);
+    } else {
+      // 3 行或更多：不需要 padding（雖然最多只能輸入 3 行）
+      paddingTop = 0;
+    }
+
+    console.log('🔍 垂直對齊計算:', {
+      text: text.substring(0, 20),
+      containerHeight,
+      textHeight,
+      lineHeight,
+      estimatedLines,
+      paddingTop
+    });
+
+      // 應用 padding（只設置 top，讓文字自然從上往下排列）
+      inputBox.style('padding-top', `${paddingTop}px`);
+      inputBox.style('padding-bottom', '0');
+    });
+  });
+}

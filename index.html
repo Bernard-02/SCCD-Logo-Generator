@@ -94,48 +94,51 @@
         </section>
 
 
-        <!-- 手機版：輸入框區域 -->
-        <section class="mobile-input-area">
-            <textarea id="mobile-input-box" placeholder="TYPE AND ENTER" maxlength="40"></textarea>
-        </section>
+        <!-- 手機版：統一的內容區域（包含輸入框、Custom 區塊、Color Picker Bar） -->
+        <section class="mobile-content-section">
+            <!-- 輸入框 -->
+            <div class="mobile-input-area">
+                <textarea id="mobile-input-box" placeholder="TYPE AND ENTER" maxlength="40"></textarea>
+            </div>
 
-        <!-- 手機版：Custom 調整區 -->
-        <section class="mobile-custom-angle-controls hidden">
-            <div class="controls-inner">
-                <div class="sliders-box">
-                    <div class="sliders-wrapper">
-                        <div class="slider-container">
-                            <input type="range" id="mobile-r-slider" class="custom-slider" min="-360" max="360" value="0">
-                            <input type="text" id="mobile-r-angle-label" class="angle-input" value="0" readonly>
-                        </div>
-                        <div class="slider-container">
-                            <input type="range" id="mobile-g-slider" class="custom-slider" min="-360" max="360" value="0">
-                            <input type="text" id="mobile-g-angle-label" class="angle-input" value="0" readonly>
-                        </div>
-                        <div class="slider-container">
-                            <input type="range" id="mobile-b-slider" class="custom-slider" min="-360" max="360" value="0">
-                            <input type="text" id="mobile-b-angle-label" class="angle-input" value="0" readonly>
+            <!-- Custom 調整區 -->
+            <div class="mobile-custom-angle-controls hidden">
+                <div class="controls-inner">
+                    <div class="sliders-box">
+                        <div class="sliders-wrapper">
+                            <div class="slider-container">
+                                <input type="range" id="mobile-r-slider" class="custom-slider" min="-360" max="360" value="0">
+                                <input type="text" id="mobile-r-angle-label" class="angle-input" value="0" readonly>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" id="mobile-g-slider" class="custom-slider" min="-360" max="360" value="0">
+                                <input type="text" id="mobile-g-angle-label" class="angle-input" value="0" readonly>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" id="mobile-b-slider" class="custom-slider" min="-360" max="360" value="0">
+                                <input type="text" id="mobile-b-angle-label" class="angle-input" value="0" readonly>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="icon-buttons-wrapper">
-                    <button id="mobile-random-button" class="image-button">
-                        <img id="mobile-random-img" src="Panel Icon/Random.svg" alt="Random Icon">
-                    </button>
-                    <button id="mobile-reset-button" class="image-button">
-                        <img id="mobile-reset-img" src="Panel Icon/Reset.svg" alt="Reset Icon">
-                    </button>
+                    <div class="icon-buttons-wrapper">
+                        <button id="mobile-random-button" class="image-button">
+                            <img id="mobile-random-img" src="Panel Icon/Random.svg" alt="Random Icon">
+                        </button>
+                        <button id="mobile-reset-button" class="image-button">
+                            <img id="mobile-reset-img" src="Panel Icon/Reset.svg" alt="Reset Icon">
+                        </button>
+                    </div>
                 </div>
             </div>
-        </section>
 
-        <!-- 手機版：Color Picker Bar -->
-        <section class="mobile-colorpicker-bar hidden">
-            <div class="colorpicker-bar-inner">
-                <div id="mobile-colorpicker-container"></div>
-                <button id="mobile-colorwheel-play-button" class="mobile-colorwheel-play-btn">
-                    <img id="mobile-colorwheel-play-icon" src="Panel Icon/Play.svg" alt="Play">
-                </button>
+            <!-- Color Picker Bar -->
+            <div class="mobile-colorpicker-bar hidden">
+                <div class="colorpicker-bar-inner">
+                    <div id="mobile-colorpicker-container"></div>
+                    <button id="mobile-colorwheel-play-button" class="mobile-colorwheel-play-btn">
+                        <img id="mobile-colorwheel-play-icon" src="Panel Icon/Play.svg" alt="Play">
+                    </button>
+                </div>
             </div>
         </section>
 
