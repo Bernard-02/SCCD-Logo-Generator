@@ -899,6 +899,17 @@ body.wireframe-mode .custom-slider.enabled::-moz-range-thumb {
 /* Disabled slider 也要保持 50% 透明度（所有模式） */
 .custom-slider:not(.enabled) {
   opacity: 0.5;
+  pointer-events: none; /* 禁用所有滑鼠互動 */
+  cursor: not-allowed; /* 顯示禁用游標 */
+}
+
+/* 確保 disabled slider 的 thumb 也不會有任何互動反應 */
+.custom-slider:not(.enabled)::-webkit-slider-thumb {
+  pointer-events: none;
+}
+
+.custom-slider:not(.enabled)::-moz-range-thumb {
+  pointer-events: none;
 }
 
 /* --- 滑桿標籤 / 角度輸入框 --- */

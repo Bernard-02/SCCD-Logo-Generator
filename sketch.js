@@ -2778,8 +2778,8 @@ function updateUI() {
     }
 
     // 移除自動顯示/隱藏邏輯，改為只通過按鈕控制
-    // 但當切換到 Auto 模式時，仍需要隱藏調整區
-    if (mobileCustomAngleControls && isAutoRotateMode) {
+    // 但當切換到 Auto 模式或沒有文字時，仍需要隱藏調整區
+    if (mobileCustomAngleControls && (isAutoRotateMode || !hasText)) {
         mobileCustomAngleControls.addClass('hidden');
     }
 
