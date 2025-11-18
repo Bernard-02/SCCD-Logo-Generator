@@ -248,16 +248,6 @@ function bindMobileEvents() {
     mobileElements.resetBtn.mousePressed(handleResetButton);
   }
 
-  // Color Wheel Play 按鈕 (桌面版)
-  if (mobileElements.colorWheelPlayBtn) {
-    mobileElements.colorWheelPlayBtn.mousePressed(() => {
-      if (mode === "Wireframe") {
-        isColorWheelRotating = !isColorWheelRotating;
-        updateColorWheelIcon();
-      }
-    });
-  }
-
   // 手機版 Color Wheel Play 按鈕
   if (mobileElements.mobileColorWheelPlayBtn) {
     mobileElements.mobileColorWheelPlayBtn.mousePressed(() => {

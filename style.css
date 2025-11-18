@@ -1019,14 +1019,13 @@ body.wireframe-mode .angle-input:not(.enabled) {
     display: flex !important;
   }
 
-  /* === 手機版 Logo 區域：固定在頂部 === */
+  /* === 手機版 Logo 區域：參與 flex 佈局 === */
   .display-area {
-    position: absolute;
-    top: 4rem; /* 遵循 main container 的 top padding */
-    left: 1.5rem;
-    right: 1.5rem;
-    width: calc(100vw - 3rem); /* 扣除左右 padding */
+    /* 改為參與 flex 佈局，不再使用 absolute */
+    flex: 0 1 auto; /* 可縮小但不擴展 */
+    width: 100%; /* 填滿寬度 */
     aspect-ratio: 1 / 1; /* 保持正方形 */
+    max-width: 100%; /* 不超過容器寬度 */
     display: flex;
     flex-direction: column;
     justify-content: center; /* 垂直置中 */
@@ -1360,11 +1359,13 @@ body.wireframe-mode .angle-input:not(.enabled) {
   .mobile-custom-angle-controls .custom-slider::-webkit-slider-thumb {
     width: 14px;
     height: 14px;
+    box-shadow: none; /* 移除任何陰影 */
   }
 
   .mobile-custom-angle-controls .custom-slider::-moz-range-thumb {
     width: 14px;
     height: 14px;
+    box-shadow: none; /* 移除任何陰影 */
   }
 
   /* 手機版 angle label 樣式 */
@@ -1731,17 +1732,16 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
   /* === 手機版內容區域：統一容器，包含輸入框、Custom 區塊、Color Picker Bar === */
   .mobile-content-section {
-    position: absolute;
-    top: calc(4rem + 100vw - 3rem + var(--mobile-btn-gap)); /* Logo 下方 + gap */
-    left: 1.5rem;
-    right: 1.5rem;
-    bottom: calc(1rem + var(--mobile-btn-size) + var(--mobile-btn-gap)); /* Btn Bar 上方 + gap */
+    /* 改為參與 flex 佈局 */
+    flex: 1 1 auto; /* 佔用剩餘空間 */
+    width: 100%; /* 填滿 parent 寬度（受 parent padding 限制）*/
     display: flex;
     flex-direction: column;
     justify-content: flex-end; /* Custom 和 Color Picker 對齊底部 */
     align-items: stretch;
     gap: var(--mobile-btn-gap); /* 統一的間距 */
     box-sizing: border-box;
+    min-height: 0; /* 允許縮小 */
     z-index: 50;
   }
 
@@ -1824,12 +1824,10 @@ body.wireframe-mode .angle-input:not(.enabled) {
     opacity: var(--wireframe-opacity);
   }
 
-  /* === 新版手機介面：底部按鈕列，固定在底部 === */
+  /* === 新版手機介面：底部按鈕列，參與 flex 佈局 === */
   .mobile-bottom-bar {
-    position: absolute;
-    bottom: 1rem; /* 對齊 main container 的 bottom padding */
-    left: 1.5rem;
-    right: 1.5rem;
+    /* 改為參與 flex 佈局 */
+    flex: 0 0 auto; /* 不縮小不擴展 */
     display: flex;
     /* 高度：等於按鈕的高度 */
     height: var(--mobile-btn-size);

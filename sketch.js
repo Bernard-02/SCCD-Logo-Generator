@@ -3337,8 +3337,14 @@ function drawColorBar() {
 function drawColorBarIndicator(w, h) {
   if (!colorPickerCanvas) return;
 
-  // 根據 selectedHue 計算 x 位置
-  let x = map(selectedHue, 0, 360, 0, w);
+  // 如果 color wheel 正在旋轉，固定 indicator 在中間
+  let x;
+  if (isColorWheelRotating) {
+    x = w / 2; // 固定在中間
+  } else {
+    // 正常情況：根據 selectedHue 計算 x 位置
+    x = map(selectedHue, 0, 360, 0, w);
+  }
   let y = h / 2; // 垂直置中
 
   // 圓圈尺寸：留出上下間距，不要完全切到邊緣
