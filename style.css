@@ -1044,6 +1044,8 @@ body.wireframe-mode .angle-input:not(.enabled) {
     padding: 0;
     box-sizing: border-box;
     z-index: 1;
+    /* 添加平滑過渡效果，當鍵盤出現時 logo 會平滑縮放 */
+    transition: max-height 0.3s ease, flex 0.3s ease;
   }
 
   #canvas-container {

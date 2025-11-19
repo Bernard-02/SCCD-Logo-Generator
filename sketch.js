@@ -3727,7 +3727,7 @@ function createSpecialEasterEggContainer() {
   specialEasterEggImgElement = document.createElement('img');
   // 根據裝置類型設定不同大小
   if (isMobileMode) {
-    specialEasterEggImgElement.style.width = '60vw'; // 手機版：35vw
+    specialEasterEggImgElement.style.width = '55vw'; // 手機版：35vw
     specialEasterEggImgElement.style.maxWidth = 'none'; // 手機版不限制最大寬度
   } else {
     specialEasterEggImgElement.style.width = '27.1vw'; // 桌面版：27.1vw

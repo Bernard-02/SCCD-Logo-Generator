@@ -880,7 +880,8 @@ function updateMobileModeIcon() {
 // ====================================
 // Visual Viewport API：處理鍵盤覆蓋行為
 // ====================================
-// 使用 Visual Viewport API 來偵測虛擬鍵盤的出現並調整佈局
+// 使用 Visual Viewport API 來偵測虛擬鍵盤的出現並動態調整佈局
+// 策略：鍵盤出現時，只顯示 logo + 輸入框，底部按鈕列可被覆蓋
 if (window.visualViewport) {
   let initialHeight = window.visualViewport.height;
 
@@ -889,16 +890,53 @@ if (window.visualViewport) {
 
     const currentHeight = window.visualViewport.height;
     const keyboardHeight = initialHeight - currentHeight;
+    const displayArea = document.querySelector('.display-area');
+    const mobileContentSection = document.querySelector('.mobile-content-section');
+    const mobileBottomBar = document.querySelector('.mobile-bottom-bar');
 
-    // 鍵盤彈出時（viewport 高度減少）
-    if (keyboardHeight > 0) {
-      // 不做任何調整，讓內容保持原位，鍵盤覆蓋在上方
-      // 確保 body 固定不動
-      document.body.style.height = `${initialHeight}px`;
+    // 鍵盤彈出時（viewport 高度減少超過 100px，避免誤判）
+    if (keyboardHeight > 100) {
+      // 計算輸入框的高度（包含 padding 和 gap）
+      // 假設輸入框高度約為 60px，加上 gap 和 padding 約 80-100px
+      const inputBoxEstimatedHeight = 100;
+
+      // 計算 logo 可用的最大高度 = 可見高度 - 輸入框高度 - main-container 的 padding (top 4rem + bottom 1rem + gaps)
+      // main-container padding: 4rem top + 1rem bottom = 5rem ≈ 80px
+      // gap: 1rem ≈ 16px
+      const containerPaddingAndGaps = 80 + 16 * 2; // top/bottom padding + gaps
+      const availableHeightForLogo = currentHeight - inputBoxEstimatedHeight - containerPaddingAndGaps;
+
+      // 設定 logo 的最大高度，確保它和輸入框都能在可見範圍內
+      if (displayArea) {
+        displayArea.style.maxHeight = `${Math.max(availableHeightForLogo, 150)}px`; // 最小 150px
+        displayArea.style.flex = '0 0 auto'; // 固定大小，不再彈性縮放
+      }
+
+      // 隱藏或縮小其他不必要的元素（Custom 區塊、Color Picker 可以被覆蓋）
+      if (mobileContentSection) {
+        // 確保只顯示輸入框，其他的可以被覆蓋
+        mobileContentSection.style.flex = '0 0 auto';
+      }
+
+      // 底部按鈕列維持原樣，允許被鍵盤覆蓋
+      if (mobileBottomBar) {
+        mobileBottomBar.style.flex = '0 0 auto';
+      }
+
     } else {
-      // 鍵盤收起時，恢復原本高度
-      document.body.style.height = '100vh';
-      document.body.style.height = '100dvh';
+      // 鍵盤收起時，恢復原本設定
+      if (displayArea) {
+        displayArea.style.maxHeight = 'none'; // 移除最大高度限制
+        displayArea.style.flex = '0 1 auto'; // 恢復可縮小設定
+      }
+
+      if (mobileContentSection) {
+        mobileContentSection.style.flex = '1 1 auto'; // 恢復佔用剩餘空間
+      }
+
+      if (mobileBottomBar) {
+        mobileBottomBar.style.flex = '0 0 auto';
+      }
     }
   });
 
