@@ -1052,36 +1052,35 @@ body.wireframe-mode .angle-input:not(.enabled) {
     flex: 0 0 auto; /* 不擴展，根據內容調整 */
     width: 100%; /* 填滿寬度 */
     aspect-ratio: 1 / 1; /* 保持正方形 */
-    max-width: 100%; /* 不超過容器寬度 */
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 0;
     box-sizing: border-box;
     /* 添加平滑過渡效果 */
-    transition: max-height 0.3s ease, opacity 0.3s ease;
+    transition: max-width 0.3s ease, opacity 0.3s ease;
   }
 
-  /* Logo 大小等級（使用 max-height 限制，確保不會溢出 padding） */
+  /* Logo 大小等級（使用 max-width 限制寬度，配合 aspect-ratio 保持等比例正方形） */
   /* 1. 正常模式（Standard/Inverse）：100% - 基準大小 */
   .mobile-logo-container {
-    max-height: 40vh; /* 基準：40vh */
+    max-width: 100%; /* 基準：填滿寬度 */
   }
 
   /* 2. Standard/Inverse + Custom：縮小至 50% */
   body.standard-mode .mobile-logo-container.has-custom,
   body.inverse-mode .mobile-logo-container.has-custom {
-    max-height: 20vh; /* 50% */
+    max-width: 50%; /* 50% 寬度，aspect-ratio 會讓高度也是 50% */
   }
 
   /* 3. Wireframe + Color Picker：縮小至 70% */
   body.wireframe-mode .mobile-logo-container.has-colorpicker {
-    max-height: 28vh; /* 70% */
+    max-width: 70%; /* 70% 寬度 */
   }
 
   /* 4. Wireframe + Custom + Color Picker（最滿狀態）：縮小至 50% */
   body.wireframe-mode .mobile-logo-container.has-custom.has-colorpicker {
-    max-height: 20vh; /* 50% */
+    max-width: 50%; /* 50% 寬度 */
   }
 
   #canvas-container {
