@@ -1053,8 +1053,8 @@ body.wireframe-mode .angle-input:not(.enabled) {
     width: 100%; /* 填滿寬度 */
     min-height: 0; /* 允許縮小 */
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: center; /* 水平置中 */
+    align-items: center; /* 垂直置中 */
     padding: 0;
     box-sizing: border-box;
     /* 添加平滑過渡效果 */
@@ -1078,9 +1078,9 @@ body.wireframe-mode .angle-input:not(.enabled) {
     max-width: 70%; /* 70% 寬度 */
   }
 
-  /* 4. Wireframe + Custom + Color Picker（最滿狀態）：縮小至 50% */
+  /* 4. Wireframe + Custom + Color Picker（最滿狀態）：縮小至 55% */
   body.wireframe-mode .mobile-logo-container.has-custom.has-colorpicker {
-    max-width: 50%; /* 50% 寬度 */
+    max-width: 55%; /* 55% 寬度 */
   }
 
   #canvas-container {
@@ -1799,8 +1799,10 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
   /* 最滿狀態（Wireframe + Custom + Color Picker）：減少輸入框上下空間 */
   body.wireframe-mode .mobile-input-area.has-custom.has-colorpicker {
-    flex: 0 1 auto; /* 不佔用額外空間，只保留內容高度 */
+    flex: 0 0 auto; /* 不佔用額外空間，只保留內容高度 */
     min-height: calc(2rem * 1.2); /* 最小高度：1行文字 */
+    padding-top: 0.2rem; /* 減少上方空間 */
+    padding-bottom: 0.2rem; /* 減少下方空間 */
   }
 
   #mobile-input-box {
