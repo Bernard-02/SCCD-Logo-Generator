@@ -386,15 +386,9 @@ function setup() {
   if (colorWheelPlayButton) {
     colorWheelPlayButton.mousePressed(() => {
       if (mode === "Wireframe") {
-        if (isColorWheelRotating) {
-          // 從 Play 切換到 Pause：不做任何事，圓圈停在當前位置
-          // animationHue 保持當前值
-        } else {
-          // 從 Pause 切換到 Play：將 animationHue 設定為 selectedHue
-          // 這樣動畫會從用戶選擇的顏色位置開始
-          animationHue = selectedHue;
-        }
-
+        // 切換 Play/Pause 狀態
+        // Play 時：selectedHue 會在 draw() 中持續增加
+        // Pause 時：selectedHue 停在當前位置，用戶可以點擊 bar 選擇新顏色
         isColorWheelRotating = !isColorWheelRotating;
         updateColorWheelIcon();
       }
@@ -1162,7 +1156,6 @@ function draw() {
 
       // 立即設定wireframe顏色（隨機色相），確保updateIconsForMode能使用正確的顏色
       selectedHue = random(0, 360);
-      animationHue = selectedHue; // 初始化動畫位置
       colorMode(HSB, 360, 100, 100);
       wireframeColor = color(selectedHue, 80, 100);
       colorMode(RGB, 255);
@@ -1222,23 +1215,23 @@ function draw() {
   // --- Color Wheel 旋轉動畫 ---
   if (mode === "Wireframe" && isColorWheelRotating) {
     // 使用與 R slider 相同的旋轉速度 (baseSpeeds[0] = 0.125)
-    // 更新 animationHue（動畫位置），不影響 selectedHue（選擇的顏色）
-    animationHue += baseSpeeds[0];
+    // 直接更新 selectedHue，讓圓圈往右移動
+    selectedHue += baseSpeeds[0];
 
-    // Play 模式：允許 animationHue 超出 0-360 範圍，實現循環效果
+    // Play 模式：允許 selectedHue 超出 0-360 範圍，實現循環效果
     // 當完成一個完整循環（超過一個週期）時才重置
-    if (animationHue >= 720) {
-      animationHue -= 360;
-    } else if (animationHue < -360) {
-      animationHue += 360;
+    if (selectedHue >= 720) {
+      selectedHue -= 360;
+    } else if (selectedHue < -360) {
+      selectedHue += 360;
     }
 
-    // 更新背景顏色（使用 animationHue 的 normalizedHue）
-    let normalizedAnimHue = animationHue % 360;
-    if (normalizedAnimHue < 0) normalizedAnimHue += 360;
+    // 更新背景顏色（使用 selectedHue 的 normalizedHue）
+    let normalizedHue = selectedHue % 360;
+    if (normalizedHue < 0) normalizedHue += 360;
 
     colorMode(HSB, 360, 100, 100);
-    wireframeColor = color(normalizedAnimHue, 80, 100);
+    wireframeColor = color(normalizedHue, 80, 100);
     colorMode(RGB, 255);
 
     // 根據亮度決定描邊顏色
@@ -1248,8 +1241,8 @@ function draw() {
     // 更新背景顏色
     updateBackgroundColor(wireframeColor, true);
 
-    // 計算 indicator 在色環上的位置（桌面版用 normalizedAnimHue）
-    let angleRad = radians(normalizedAnimHue - 90); // -90 因為從頂部開始
+    // 計算 indicator 在色環上的位置（桌面版用 normalizedHue）
+    let angleRad = radians(normalizedHue - 90); // -90 因為從頂部開始
     // 根據設備選擇正確的 container
     let containerId = isMobileMode ? 'mobile-colorpicker-container' : 'colorpicker-container';
     let container = select('#' + containerId);
@@ -3417,22 +3410,21 @@ function drawColorBarIndicator(w, h, circleRadius) {
 
   let y = h / 2; // 垂直置中
 
-  // === 兩個獨立系統 ===
-  // 1. Play 動畫：使用 animationHue（可以超出 0-360，實現循環效果）
-  // 2. Color Picker：使用 selectedHue（0-360，用戶點擊選擇的顏色）
-
-  let displayHue = isColorWheelRotating ? animationHue : selectedHue;
+  // === 單一圓圈，單一位置 ===
+  // selectedHue：圓圈的位置（可以超出 0-360）
+  // - Pause 時：用戶點擊選擇顏色，設定 selectedHue（0-360，不會被切掉）
+  // - Play 時：selectedHue 持續增加，可以超出 360，圓圈會被切掉
 
   // 先計算在 0-360 範圍內的基礎位置
-  let normalizedHue = displayHue % 360;
+  let normalizedHue = selectedHue % 360;
   if (normalizedHue < 0) normalizedHue += 360;
 
   // 計算基礎 x 位置
   let barWidth = w - 2 * circleRadius;
   let baseX = circleRadius + (normalizedHue / 360) * barWidth;
 
-  // 計算額外的循環偏移（當 displayHue 超出 0-360 時）
-  let extraRotation = displayHue - normalizedHue;
+  // 計算額外的循環偏移（當 selectedHue 超出 0-360 時）
+  let extraRotation = selectedHue - normalizedHue;
   let extraDistance = (extraRotation / 360) * barWidth;
 
   let x = baseX + extraDistance;
@@ -3455,27 +3447,24 @@ function drawColorBarIndicator(w, h, circleRadius) {
   colorPickerCanvas.strokeWeight(2);
   colorPickerCanvas.circle(x, y, circleRadius * 2);
 
-  // Play 模式：實現同步循環效果
-  // 右邊被遮住多少，左邊就同步出現多少
-  if (isColorWheelRotating) {
-    // 計算圓圈右邊緣超出 canvas 右邊界的距離
-    let rightEdge = x + circleRadius;
+  // 循環效果：右邊被遮住多少，左邊就同步出現多少
+  // 無論 play 或 pause，只要圓圈超出右邊界就繪製左邊的圓圈
+  let rightEdge = x + circleRadius;
 
-    // 當圓的右邊緣開始超出右邊界時，左邊就開始出現對應的部分
-    if (rightEdge > w) {
-      // 計算右邊被遮住的距離（超出多少）
-      let occludedDistance = rightEdge - w;
+  // 當圓的右邊緣開始超出右邊界時，左邊就開始出現對應的部分
+  if (rightEdge > w) {
+    // 計算右邊被遮住的距離（超出多少）
+    let occludedDistance = rightEdge - w;
 
-      // 左邊圓的位置：從左邊界外開始，根據被遮住的距離進入
-      // 當右邊遮住 X 距離時，左邊就進入 X 距離
-      let leftX = -circleRadius + occludedDistance;
+    // 左邊圓的位置：從左邊界外開始，根據被遮住的距離進入
+    // 當右邊遮住 X 距離時，左邊就進入 X 距離
+    let leftX = -circleRadius + occludedDistance;
 
-      // 繪製左邊出現的循環圓圈（與主圓同步，也是透明）
-      colorPickerCanvas.noFill();
-      colorPickerCanvas.stroke(borderColor);
-      colorPickerCanvas.strokeWeight(2);
-      colorPickerCanvas.circle(leftX, y, circleRadius * 2);
-    }
+    // 繪製左邊出現的循環圓圈（與主圓同步，也是透明）
+    colorPickerCanvas.noFill();
+    colorPickerCanvas.stroke(borderColor);
+    colorPickerCanvas.strokeWeight(2);
+    colorPickerCanvas.circle(leftX, y, circleRadius * 2);
   }
 }
 
