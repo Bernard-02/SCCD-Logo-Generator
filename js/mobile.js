@@ -160,9 +160,14 @@ function bindMobileEvents() {
   if (mobileElements.inputBox) {
     mobileElements.inputBox.input(handleInput);
 
-    // 阻擋空白鍵
+    // 阻擋空白鍵和 Enter 換行
     mobileElements.inputBox.elt.addEventListener('keydown', function(e) {
+      // 阻擋空白鍵
       if (e.key === ' ' || e.keyCode === 32) {
+        e.preventDefault();
+      }
+      // 阻擋 Enter 換行
+      if (e.key === 'Enter' || e.keyCode === 13) {
         e.preventDefault();
       }
     });
@@ -404,7 +409,36 @@ function cycleModeButton() {
     }
   }
 
+  // 處理 custom-open class（只在 Wireframe 模式且 Custom 打開時有效）
+  if (targetMode !== 'Wireframe' && mobileElements.inputBox) {
+    // 離開 Wireframe 模式：移除 custom-open class
+    mobileElements.inputBox.removeClass('custom-open');
+  } else if (targetMode === 'Wireframe' && mobileElements.inputBox &&
+             mobileElements.customAngleControls &&
+             !mobileElements.customAngleControls.hasClass('hidden')) {
+    // 進入 Wireframe 模式且 Custom 區塊已打開：添加 custom-open class
+    mobileElements.inputBox.addClass('custom-open');
+  }
+
   updateUI();
+}
+
+// 檢查輸入框文字是否溢出（用於 Wireframe + Custom 模式）
+function checkInputOverflow() {
+  if (!mobileElements.inputBox) return;
+
+  const inputElement = mobileElements.inputBox.elt;
+
+  // 檢查文字寬度是否超過容器寬度
+  const isOverflowing = inputElement.scrollWidth > inputElement.clientWidth;
+
+  if (isOverflowing) {
+    // 文字溢出：左對齊，可滾動
+    inputElement.classList.add('overflowing');
+  } else {
+    // 文字未溢出：置中顯示
+    inputElement.classList.remove('overflowing');
+  }
 }
 
 // 手機版：Toggle Custom 調整區
@@ -421,9 +455,22 @@ function toggleMobileCustomPanel() {
     }
     // 顯示調整區
     mobileElements.customAngleControls.removeClass('hidden');
+
+    // Wireframe 模式下，給輸入框添加 custom-open class（單行顯示）
+    if (mode === 'Wireframe' && mobileElements.inputBox) {
+      mobileElements.inputBox.addClass('custom-open');
+      // 檢查是否需要滾動
+      setTimeout(() => checkInputOverflow(), 50); // 延遲一點讓 CSS 生效
+    }
   } else {
     // 如果調整區顯示，隱藏它（但保持在 Custom 模式）
     mobileElements.customAngleControls.addClass('hidden');
+
+    // 移除 custom-open class，恢復原樣
+    if (mobileElements.inputBox) {
+      mobileElements.inputBox.removeClass('custom-open');
+      mobileElements.inputBox.elt.classList.remove('overflowing');
+    }
   }
 }
 
@@ -900,15 +947,21 @@ if (window.visualViewport) {
       // 假設輸入框高度約為 60px，加上 gap 和 padding 約 80-100px
       const inputBoxEstimatedHeight = 100;
 
-      // 計算 logo 可用的最大高度 = 可見高度 - 輸入框高度 - main-container 的 padding (top 4rem + bottom 1rem + gaps)
-      // main-container padding: 4rem top + 1rem bottom = 5rem ≈ 80px
+      // 計算 logo 可用的最大高度 = 可見高度 - 輸入框高度 - main-container 的 padding (top 3rem + bottom 2rem + gaps)
+      // main-container padding: 3rem top + 2rem bottom = 5rem ≈ 80px
       // gap: 1rem ≈ 16px
       const containerPaddingAndGaps = 80 + 16 * 2; // top/bottom padding + gaps
       const availableHeightForLogo = currentHeight - inputBoxEstimatedHeight - containerPaddingAndGaps;
 
-      // 設定 logo 的最大高度，確保它和輸入框都能在可見範圍內
+      // 計算 logo 的最大尺寸（正方形），確保它和輸入框都能在可見範圍內
+      const logoMaxSize = Math.max(availableHeightForLogo, 150); // 最小 150px
+
       if (displayArea) {
-        displayArea.style.maxHeight = `${Math.max(availableHeightForLogo, 150)}px`; // 最小 150px
+        // 同時設定 maxWidth 和 maxHeight 為相同值，保持正方形（aspect-ratio: 1/1）
+        displayArea.style.maxWidth = `${logoMaxSize}px`;
+        displayArea.style.maxHeight = `${logoMaxSize}px`;
+        displayArea.style.width = '100%'; // 寬度填滿容器
+        displayArea.style.height = 'auto'; // 高度自動
         displayArea.style.flex = '0 0 auto'; // 固定大小，不再彈性縮放
       }
 
@@ -926,7 +979,10 @@ if (window.visualViewport) {
     } else {
       // 鍵盤收起時，恢復原本設定
       if (displayArea) {
+        displayArea.style.maxWidth = 'none'; // 移除最大寬度限制
         displayArea.style.maxHeight = 'none'; // 移除最大高度限制
+        displayArea.style.width = '100%'; // 恢復寬度設定
+        displayArea.style.height = 'auto'; // 恢復高度設定
         displayArea.style.flex = '0 1 auto'; // 恢復可縮小設定
       }
 

@@ -386,6 +386,15 @@ function setup() {
   if (colorWheelPlayButton) {
     colorWheelPlayButton.mousePressed(() => {
       if (mode === "Wireframe") {
+        if (isColorWheelRotating) {
+          // 從 Play 切換到 Pause：不做任何事，圓圈停在當前位置
+          // animationHue 保持當前值
+        } else {
+          // 從 Pause 切換到 Play：將 animationHue 設定為 selectedHue
+          // 這樣動畫會從用戶選擇的顏色位置開始
+          animationHue = selectedHue;
+        }
+
         isColorWheelRotating = !isColorWheelRotating;
         updateColorWheelIcon();
       }
@@ -966,31 +975,63 @@ function draw() {
   // --- 頁面載入動畫 ---
   let timeSinceLoad = millis() - pageLoadStartTime;
 
-  // 1. 輸入框 fade in (0ms - fadeInDuration)
-  if (timeSinceLoad < fadeInDuration) {
-    inputBoxOpacity = map(timeSinceLoad, 0, fadeInDuration, 0, 1);
-  } else {
-    inputBoxOpacity = 1;
+  // === 桌面版動畫 ===
+  if (!isMobileMode) {
+    // 1. 輸入框 fade in (0ms - fadeInDuration)
+    if (timeSinceLoad < fadeInDuration) {
+      inputBoxOpacity = map(timeSinceLoad, 0, fadeInDuration, 0, 1);
+    } else {
+      inputBoxOpacity = 1;
+    }
+
+    // 2. Logo 和 Control panel 在打字機動畫結束後 + fadeInDelay 延遲後同時 fade in
+    // 打字機動畫持續時間：typewriterDuration (1200ms)
+    // 延遲時間：fadeInDelay (400ms)
+    // Logo 和 Panel 同時開始時間：typewriterDuration + fadeInDelay (1600ms)
+    let logoAndPanelStartTime = typewriterDuration + fadeInDelay;
+
+    // Logo fade in
+    if (timeSinceLoad >= logoAndPanelStartTime && timeSinceLoad < logoAndPanelStartTime + fadeInDuration) {
+      logoOpacity = map(timeSinceLoad, logoAndPanelStartTime, logoAndPanelStartTime + fadeInDuration, 0, 1);
+    } else if (timeSinceLoad >= logoAndPanelStartTime + fadeInDuration) {
+      logoOpacity = 1;
+    }
+
+    // Control panel fade in (與 Logo 同時開始)
+    if (timeSinceLoad >= logoAndPanelStartTime && timeSinceLoad < logoAndPanelStartTime + fadeInDuration) {
+      controlPanelOpacity = map(timeSinceLoad, logoAndPanelStartTime, logoAndPanelStartTime + fadeInDuration, 0, 1);
+    } else if (timeSinceLoad >= logoAndPanelStartTime + fadeInDuration) {
+      controlPanelOpacity = 1;
+    }
   }
+  // === 手機版動畫：依序 Logo → 輸入框 → Btn Bar ===
+  else {
+    // 1. Logo fade in (0ms - fadeInDuration)
+    if (timeSinceLoad < fadeInDuration) {
+      logoOpacity = map(timeSinceLoad, 0, fadeInDuration, 0, 1);
+    } else {
+      logoOpacity = 1;
+    }
 
-  // 2. Logo 和 Control panel 在打字機動畫結束後 + fadeInDelay 延遲後同時 fade in
-  // 打字機動畫持續時間：typewriterDuration (1200ms)
-  // 延遲時間：fadeInDelay (400ms)
-  // Logo 和 Panel 同時開始時間：typewriterDuration + fadeInDelay (1600ms)
-  let logoAndPanelStartTime = typewriterDuration + fadeInDelay;
+    // 2. 輸入框在 Logo 完成後 + fadeInDelay 延遲後 fade in
+    let inputBoxStartTime = fadeInDuration + fadeInDelay;
+    if (timeSinceLoad >= inputBoxStartTime && timeSinceLoad < inputBoxStartTime + fadeInDuration) {
+      inputBoxOpacity = map(timeSinceLoad, inputBoxStartTime, inputBoxStartTime + fadeInDuration, 0, 1);
+    } else if (timeSinceLoad >= inputBoxStartTime + fadeInDuration) {
+      inputBoxOpacity = 1;
+    } else {
+      inputBoxOpacity = 0;
+    }
 
-  // Logo fade in
-  if (timeSinceLoad >= logoAndPanelStartTime && timeSinceLoad < logoAndPanelStartTime + fadeInDuration) {
-    logoOpacity = map(timeSinceLoad, logoAndPanelStartTime, logoAndPanelStartTime + fadeInDuration, 0, 1);
-  } else if (timeSinceLoad >= logoAndPanelStartTime + fadeInDuration) {
-    logoOpacity = 1;
-  }
-
-  // Control panel fade in (與 Logo 同時開始)
-  if (timeSinceLoad >= logoAndPanelStartTime && timeSinceLoad < logoAndPanelStartTime + fadeInDuration) {
-    controlPanelOpacity = map(timeSinceLoad, logoAndPanelStartTime, logoAndPanelStartTime + fadeInDuration, 0, 1);
-  } else if (timeSinceLoad >= logoAndPanelStartTime + fadeInDuration) {
-    controlPanelOpacity = 1;
+    // 3. Btn Bar 在輸入框完成後 + fadeInDelay 延遲後 fade in
+    let btnBarStartTime = inputBoxStartTime + fadeInDuration + fadeInDelay;
+    if (timeSinceLoad >= btnBarStartTime && timeSinceLoad < btnBarStartTime + fadeInDuration) {
+      controlPanelOpacity = map(timeSinceLoad, btnBarStartTime, btnBarStartTime + fadeInDuration, 0, 1);
+    } else if (timeSinceLoad >= btnBarStartTime + fadeInDuration) {
+      controlPanelOpacity = 1;
+    } else {
+      controlPanelOpacity = 0;
+    }
   }
 
   // 應用透明度到 DOM 元素
@@ -1001,30 +1042,37 @@ function draw() {
   if (mobileInputBoxBottom) mobileInputBoxBottom.style('opacity', inputBoxOpacity.toString());
   // 桌面版：輸入框容器跟隨輸入框透明度
   let inputContainer = select('.input-container');
-  if (inputContainer) inputContainer.style('opacity', inputBoxOpacity.toString());
+  if (inputContainer && !isMobileMode) inputContainer.style('opacity', inputBoxOpacity.toString());
   // Canvas 容器跟隨 logo 透明度
   if (canvasContainer) canvasContainer.style('opacity', logoOpacity.toString());
   // 控制面板
   let controlPanel = select('.control-panel');
-  if (controlPanel) controlPanel.style('opacity', controlPanelOpacity.toString());
-  // 手機版：操作區域跟隨控制面板透明度
-  let mobileControlsWrapper = select('.mobile-controls-wrapper');
-  if (mobileControlsWrapper) mobileControlsWrapper.style('opacity', controlPanelOpacity.toString());
+  if (controlPanel && !isMobileMode) controlPanel.style('opacity', controlPanelOpacity.toString());
 
-  // 手機版輸入框區域：從左至右滑入動畫（與輸入框同時開始）
+  // 手機版：輸入框區域的滑入動畫
   let mobileInputArea = select('.mobile-input-area');
   if (mobileInputArea && isMobileMode) {
-    if (timeSinceLoad < fadeInDuration) {
-      let progress = timeSinceLoad / fadeInDuration;
+    let inputBoxStartTime = fadeInDuration + fadeInDelay;
+    if (timeSinceLoad >= inputBoxStartTime && timeSinceLoad < inputBoxStartTime + fadeInDuration) {
+      let progress = (timeSinceLoad - inputBoxStartTime) / fadeInDuration;
       // 使用 easeOutCubic 緩動函數讓動畫更自然
       let easeProgress = 1 - Math.pow(1 - progress, 3);
       let translateX = -100 + (easeProgress * 100); // 從 -100% 到 0%
       mobileInputArea.style('transform', `translateX(${translateX}%)`);
       mobileInputArea.style('opacity', progress.toString());
-    } else {
+    } else if (timeSinceLoad >= inputBoxStartTime + fadeInDuration) {
       mobileInputArea.style('transform', 'translateX(0)');
       mobileInputArea.style('opacity', '1');
+    } else {
+      mobileInputArea.style('transform', 'translateX(-100%)');
+      mobileInputArea.style('opacity', '0');
     }
+  }
+
+  // 手機版：底部按鈕列
+  let mobileBottomBar = select('.mobile-bottom-bar');
+  if (mobileBottomBar && isMobileMode) {
+    mobileBottomBar.style('opacity', controlPanelOpacity.toString());
   }
 
   // --- 打字機動畫更新 ---
@@ -1114,6 +1162,7 @@ function draw() {
 
       // 立即設定wireframe顏色（隨機色相），確保updateIconsForMode能使用正確的顏色
       selectedHue = random(0, 360);
+      animationHue = selectedHue; // 初始化動畫位置
       colorMode(HSB, 360, 100, 100);
       wireframeColor = color(selectedHue, 80, 100);
       colorMode(RGB, 255);
@@ -1173,18 +1222,34 @@ function draw() {
   // --- Color Wheel 旋轉動畫 ---
   if (mode === "Wireframe" && isColorWheelRotating) {
     // 使用與 R slider 相同的旋轉速度 (baseSpeeds[0] = 0.125)
-    // 直接更新 selectedHue，讓旋轉跟隨當前選擇的顏色
-    selectedHue += baseSpeeds[0];
+    // 更新 animationHue（動畫位置），不影響 selectedHue（選擇的顏色）
+    animationHue += baseSpeeds[0];
 
-    // 保持角度在 0-360 範圍內
-    if (selectedHue >= 360) {
-      selectedHue -= 360;
-    } else if (selectedHue < 0) {
-      selectedHue += 360;
+    // Play 模式：允許 animationHue 超出 0-360 範圍，實現循環效果
+    // 當完成一個完整循環（超過一個週期）時才重置
+    if (animationHue >= 720) {
+      animationHue -= 360;
+    } else if (animationHue < -360) {
+      animationHue += 360;
     }
 
-    // 計算 indicator 在色環上的位置
-    let angleRad = radians(selectedHue - 90); // -90 因為從頂部開始
+    // 更新背景顏色（使用 animationHue 的 normalizedHue）
+    let normalizedAnimHue = animationHue % 360;
+    if (normalizedAnimHue < 0) normalizedAnimHue += 360;
+
+    colorMode(HSB, 360, 100, 100);
+    wireframeColor = color(normalizedAnimHue, 80, 100);
+    colorMode(RGB, 255);
+
+    // 根據亮度決定描邊顏色
+    let newStrokeColor = getContrastColor(wireframeColor);
+    startStrokeColorTransition(newStrokeColor);
+
+    // 更新背景顏色
+    updateBackgroundColor(wireframeColor, true);
+
+    // 計算 indicator 在色環上的位置（桌面版用 normalizedAnimHue）
+    let angleRad = radians(normalizedAnimHue - 90); // -90 因為從頂部開始
     // 根據設備選擇正確的 container
     let containerId = isMobileMode ? 'mobile-colorpicker-container' : 'colorpicker-container';
     let container = select('#' + containerId);
@@ -1198,18 +1263,6 @@ function draw() {
       colorPickerIndicatorX = (cos(angleRad) * arcRadius + containerSize / 2) / containerSize;
       colorPickerIndicatorY = (sin(angleRad) * arcRadius + containerSize / 2) / containerSize;
     }
-
-    // 更新 wireframe 顏色（使用 HSB 模式：飽和度 80%，亮度 100%）
-    colorMode(HSB, 360, 100, 100);
-    wireframeColor = color(selectedHue, 80, 100);
-    colorMode(RGB, 255);
-
-    // 根據亮度決定描邊顏色（黑色或白色）- 啟動平滑過渡
-    let newStrokeColor = getContrastColor(wireframeColor);
-    startStrokeColorTransition(newStrokeColor);
-
-    // 更新背景顏色（即時更新）
-    updateBackgroundColor(wireframeColor, true);
 
     // 更新輸入框文字顏色（即時更新，與背景同步）
     updateInputTextColor();
@@ -1486,6 +1539,15 @@ function handleInput(event) {
     if (isEasterEggActive !== previousEasterEggState) {
         isFading = true;
         fadeStartTime = millis();
+    }
+
+    // 手機版：如果在 Wireframe + Custom 模式，檢查文字溢出狀態
+    if (isMobileMode && mode === 'Wireframe' && typeof checkInputOverflow === 'function') {
+        // 如果 custom 區塊是打開的
+        const mobileInputBox = select('#mobile-input-box');
+        if (mobileInputBox && mobileInputBox.hasClass('custom-open')) {
+            setTimeout(() => checkInputOverflow(), 0); // 延遲執行以確保 DOM 更新
+        }
     }
   
     // 最終，移除所有空格和換行符，得到用於生成 Logo 的純字母陣列
@@ -3318,67 +3380,103 @@ function drawColorBar() {
   // 使用 HSB 顏色模式繪製漸變
   colorPickerCanvas.colorMode(HSB, 360, 100, 100);
 
-  // 繪製漸變條：從左到右，色相從 0 到 360
+  // 計算 indicator 的半徑
+  let circleRadius = h * 0.4;
+
+  // === 第一層：繪製色彩漸變條（背景） ===
+  // Color pick 模式：實際可選的顏色範圍是 circleRadius 到 w - circleRadius
+  // Bar 的左右兩端補上紅色（hue = 0）
   colorPickerCanvas.noStroke();
-  for (let x = 0; x < w; x++) {
-    let hue = map(x, 0, w, 0, 360);
-    colorPickerCanvas.fill(hue, 80, 100); // S=80, B=100
+
+  // 左側紅色區域（0 到 circleRadius）
+  colorPickerCanvas.fill(0, 80, 100); // 紅色
+  colorPickerCanvas.rect(0, 0, circleRadius, h);
+
+  // 中間色彩漸變區域（circleRadius 到 w - circleRadius）
+  for (let x = circleRadius; x <= w - circleRadius; x++) {
+    let hue = map(x, circleRadius, w - circleRadius, 0, 360);
+    colorPickerCanvas.fill(hue, 80, 100);
     colorPickerCanvas.rect(x, 0, 1, h);
   }
 
+  // 右側紅色區域（w - circleRadius 到 w）
+  colorPickerCanvas.fill(0, 80, 100); // 紅色
+  colorPickerCanvas.rect(w - circleRadius, 0, circleRadius, h);
+
+  // === 第二層：繪製 indicator（圓圈），在 bar 上方 ===
+  colorPickerCanvas.colorMode(RGB, 255);
+  drawColorBarIndicator(w, h, circleRadius);
+
   // 切換回 RGB 模式
   colorPickerCanvas.colorMode(RGB, 255);
-
-  // 繪製 indicator（垂直線）
-  drawColorBarIndicator(w, h);
 }
 
 // 繪製色條的 indicator（圓圈）
-function drawColorBarIndicator(w, h) {
+function drawColorBarIndicator(w, h, circleRadius) {
   if (!colorPickerCanvas) return;
 
-  // 如果 color wheel 正在旋轉，固定 indicator 在中間
-  let x;
-  if (isColorWheelRotating) {
-    x = w / 2; // 固定在中間
-  } else {
-    // 正常情況：根據 selectedHue 計算 x 位置
-    x = map(selectedHue, 0, 360, 0, w);
-  }
   let y = h / 2; // 垂直置中
 
-  // 圓圈尺寸：留出上下間距，不要完全切到邊緣
-  let circleRadius = h * 0.4; // 改為 0.4，留出空間
+  // === 兩個獨立系統 ===
+  // 1. Play 動畫：使用 animationHue（可以超出 0-360，實現循環效果）
+  // 2. Color Picker：使用 selectedHue（0-360，用戶點擊選擇的顏色）
 
-  // 繪製圓圈：內部為當前顏色，邊框根據模式變化
-  // 1. 繪製填充（當前顏色）
-  colorPickerCanvas.colorMode(HSB, 360, 100, 100);
-  let currentColor = colorPickerCanvas.color(selectedHue, 80, 100);
-  colorPickerCanvas.colorMode(RGB, 255);
+  let displayHue = isColorWheelRotating ? animationHue : selectedHue;
 
-  colorPickerCanvas.fill(currentColor);
-  colorPickerCanvas.noStroke();
-  colorPickerCanvas.circle(x, y, circleRadius * 2);
+  // 先計算在 0-360 範圍內的基礎位置
+  let normalizedHue = displayHue % 360;
+  if (normalizedHue < 0) normalizedHue += 360;
 
-  // 2. 繪製邊框（根據模式切換顏色）
-  colorPickerCanvas.noFill();
+  // 計算基礎 x 位置
+  let barWidth = w - 2 * circleRadius;
+  let baseX = circleRadius + (normalizedHue / 360) * barWidth;
+
+  // 計算額外的循環偏移（當 displayHue 超出 0-360 時）
+  let extraRotation = displayHue - normalizedHue;
+  let extraDistance = (extraRotation / 360) * barWidth;
+
+  let x = baseX + extraDistance;
 
   // 根據當前模式設定邊框顏色
+  let borderColor;
   if (mode === "Standard") {
-    colorPickerCanvas.stroke(0, 0, 0); // 黑色邊框
+    borderColor = colorPickerCanvas.color(0, 0, 0); // 黑色邊框
   } else if (mode === "Inverse") {
-    colorPickerCanvas.stroke(255, 255, 255); // 白色邊框
+    borderColor = colorPickerCanvas.color(255, 255, 255); // 白色邊框
   } else if (mode === "Wireframe") {
     // Wireframe 模式：使用 wireframeStrokeColor
-    if (wireframeStrokeColor) {
-      colorPickerCanvas.stroke(wireframeStrokeColor);
-    } else {
-      colorPickerCanvas.stroke(255, 255, 255); // fallback
-    }
+    borderColor = wireframeStrokeColor ? wireframeStrokeColor : colorPickerCanvas.color(255, 255, 255);
   }
 
+  // 繪製主圓（永遠繪製）
+  // 圓圈內部透明，直接顯示 bar 的顏色（這樣左右兩邊的圓圈顏色會同步）
+  colorPickerCanvas.noFill();
+  colorPickerCanvas.stroke(borderColor);
   colorPickerCanvas.strokeWeight(2);
   colorPickerCanvas.circle(x, y, circleRadius * 2);
+
+  // Play 模式：實現同步循環效果
+  // 右邊被遮住多少，左邊就同步出現多少
+  if (isColorWheelRotating) {
+    // 計算圓圈右邊緣超出 canvas 右邊界的距離
+    let rightEdge = x + circleRadius;
+
+    // 當圓的右邊緣開始超出右邊界時，左邊就開始出現對應的部分
+    if (rightEdge > w) {
+      // 計算右邊被遮住的距離（超出多少）
+      let occludedDistance = rightEdge - w;
+
+      // 左邊圓的位置：從左邊界外開始，根據被遮住的距離進入
+      // 當右邊遮住 X 距離時，左邊就進入 X 距離
+      let leftX = -circleRadius + occludedDistance;
+
+      // 繪製左邊出現的循環圓圈（與主圓同步，也是透明）
+      colorPickerCanvas.noFill();
+      colorPickerCanvas.stroke(borderColor);
+      colorPickerCanvas.strokeWeight(2);
+      colorPickerCanvas.circle(leftX, y, circleRadius * 2);
+    }
+  }
 }
 
 // 繪製 indicator（線段，黑色）- 桌面版色環用
@@ -3448,11 +3546,16 @@ function updateColorFromMouse(e) {
 
   if (isMobileMode) {
     // 手機版：色條邏輯（橫向）
-    // 限制 x 在 0 到 w 範圍內
-    x = constrain(x, 0, w);
+    // 計算圓圈半徑
+    let circleRadius = h * 0.4;
+
+    // 限制 x 在圓圈不被切掉的範圍內
+    // 範圍：circleRadius (左邊緣) 到 w - circleRadius (右邊緣)
+    x = constrain(x, circleRadius, w - circleRadius);
 
     // 根據 x 位置計算色相（0-360）
-    selectedHue = map(x, 0, w, 0, 360);
+    // 使用與繪製相同的 mapping
+    selectedHue = map(x, circleRadius, w - circleRadius, 0, 360);
 
     // 更新 wireframeColor
     colorMode(HSB, 360, 100, 100);

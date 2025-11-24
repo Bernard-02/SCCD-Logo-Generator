@@ -1010,14 +1010,13 @@ body.wireframe-mode .angle-input:not(.enabled) {
     width: 100vw;
     height: 100vh;
     height: 100dvh; /* 使用 dynamic viewport height */
-    padding: 4rem 1.5rem 1rem; /* 上 4rem，左右 1.5rem，下 1rem */
-    gap: 1rem; /* 統一所有子元素的間距 */
+    padding: 3rem 1.5rem 2rem; /* 上 3rem，左右 1.5rem，下 2rem */
+    gap: 1rem; /* logo 和 content section 之間的間距 */
     overflow: hidden;
     box-sizing: border-box;
-    /* 定義 CSS 變數：按鈕的實際尺寸 */
-    /* 計算方式：(可用寬度 - 3個gap) / 4列 */
-    /* 可用寬度 = 100vw - 3rem (左右padding)，gap = 1rem */
-    --mobile-btn-gap: 1rem;
+    /* 定義 CSS 變數：按鈕列和內容區塊的 gap */
+    --mobile-content-gap: 1rem; /* Custom 區塊和 Color Picker 的 gap */
+    --mobile-btn-gap: 2rem; /* 底部按鈕列的 gap */
     --mobile-btn-size: calc((100vw - 3rem - 3 * var(--mobile-btn-gap)) / 4);
   }
 
@@ -1752,7 +1751,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     flex-direction: column;
     justify-content: flex-end; /* Custom 和 Color Picker 對齊底部 */
     align-items: stretch;
-    gap: var(--mobile-btn-gap); /* 統一的間距 */
+    gap: var(--mobile-content-gap); /* 使用 1rem 的內容 gap */
     box-sizing: border-box;
     min-height: 0; /* 允許縮小 */
     z-index: 50;
@@ -1802,6 +1801,31 @@ body.wireframe-mode .angle-input:not(.enabled) {
   /* 當輸入超過 6 個字時，縮小字體到 2rem */
   #mobile-input-box.small-text {
     font-size: 2rem;
+  }
+
+  /* Wireframe 模式 + Custom 打開時：單行、最小字體 */
+  body.wireframe-mode #mobile-input-box.custom-open {
+    font-size: 2rem !important; /* 強制使用最小字體 */
+    min-height: calc(2rem * 1.2); /* 單行高度 */
+    white-space: nowrap; /* 不換行 */
+    overflow-x: auto; /* 允許水平滾動 */
+    overflow-y: hidden; /* 隱藏垂直滾動 */
+    text-align: center; /* 預設置中 */
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    /* 隱藏滾動條但保留滾動功能 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  /* 文字溢出時：左對齊，方便滑動查看 */
+  body.wireframe-mode #mobile-input-box.custom-open.overflowing {
+    text-align: left;
+  }
+
+  /* 隱藏 WebKit 瀏覽器的滾動條 */
+  body.wireframe-mode #mobile-input-box.custom-open::-webkit-scrollbar {
+    display: none;
   }
 
   /* Standard 模式下的輸入框顏色 */
