@@ -132,19 +132,23 @@ body.wireframe-mode {
 
 /* --- Canvas & 輸入框 --- */
 /* 共用的背景顏色規則 */
-body.standard-mode #canvas-container {
+/* Canvas container 背景色（桌面版和手機版共用） */
+body.standard-mode #canvas-container,
+body.standard-mode #desktop-canvas-container {
   background-color: var(--standard-bg);
 }
-body.inverse-mode #canvas-container {
+body.inverse-mode #canvas-container,
+body.inverse-mode #desktop-canvas-container {
   background-color: var(--inverse-bg);
 }
-body.wireframe-mode #canvas-container {
+body.wireframe-mode #canvas-container,
+body.wireframe-mode #desktop-canvas-container {
   background-color: var(--wireframe-bg); /* 使用 CSS 變數，由 JS 動態更新 */
 }
 
-/* 桌面版 canvas-container 規則 */
+/* 桌面版 desktop-canvas-container 規則 */
 @media (min-width: 769px) {
-  #canvas-container {
+  #desktop-canvas-container {
     /* 桌面版固定尺寸 - 432x540 */
     width: 432px;
     height: 540px;
@@ -984,6 +988,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
   display: none !important;
 }
 
+
 /* --- 響應式設計 (RWD) --- */
 @media (max-width: 768px) {
   /* 取消所有手機版的 hover 效果（但保留 :active 效果以提供觸摸反饋）*/
@@ -1029,26 +1034,36 @@ body.wireframe-mode .angle-input:not(.enabled) {
     display: flex !important;
   }
 
-  /* === 手機版 Logo 區域：參與 flex 佈局 === */
-  .display-area {
-    /* 改為參與 flex 佈局，不再使用 absolute */
-    flex: 0 1 auto; /* 可縮小但不擴展 */
+  /* === 隱藏桌面版元素 === */
+  .display-area.desktop-only {
+    display: none !important; /* 隱藏桌面版的 display-area */
+  }
+
+  .input-container {
+    display: none; /* 隱藏桌面版的輸入框 */
+  }
+
+  .control-panel {
+    display: none; /* 隱藏桌面版的 control-panel */
+  }
+
+  /* === 手機版 Logo 容器：在 mobile-content-section 內 === */
+  .mobile-logo-container {
+    flex: 0 0 auto; /* 不擴展，根據內容調整 */
     width: 100%; /* 填滿寬度 */
     aspect-ratio: 1 / 1; /* 保持正方形 */
     max-width: 100%; /* 不超過容器寬度 */
     display: flex;
-    flex-direction: column;
-    justify-content: center; /* 垂直置中 */
+    justify-content: center;
     align-items: center;
     padding: 0;
     box-sizing: border-box;
-    z-index: 1;
-    /* 添加平滑過渡效果，當鍵盤出現時 logo 會平滑縮放 */
-    transition: max-height 0.3s ease, flex 0.3s ease;
+    /* 添加平滑過渡效果 */
+    transition: transform 0.3s ease, opacity 0.3s ease;
   }
 
   #canvas-container {
-    /* 手機版 Canvas Container：正方形，填滿 display-area */
+    /* 手機版 Canvas Container：正方形，填滿 logo container */
     width: 100%;
     height: 100%;
     display: flex;
@@ -1063,16 +1078,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
     width: 100% !important;
     height: 100% !important;
     display: block;
-  }
-
-  /* === 隱藏桌面版的輸入框 === */
-  .input-container {
-    display: none;
-  }
-
-  /* === 隱藏桌面版的 control-panel === */
-  .control-panel {
-    display: none; /* 手機版隱藏桌面版的 control-panel */
   }
 
   /* === 第二大區塊：手機版操作區域包裝器 === */

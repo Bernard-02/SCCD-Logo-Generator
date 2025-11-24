@@ -80,16 +80,18 @@ function setup() {
   // 初始化去飽和顏色
   initializeDesaturatedColors();
 
-  // 選取 HTML 中的 Canvas 容器
-  canvasContainer = select('#canvas-container');
-
   // 初始檢測手機模式
   checkMobileMode();
+
+  // 根據設備選擇正確的 Canvas 容器
+  // 桌面版使用 desktop-canvas-container，手機版使用 canvas-container
+  let canvasContainerId = isMobileMode ? 'canvas-container' : 'desktop-canvas-container';
+  canvasContainer = select('#' + canvasContainerId);
 
   // 根據模式創建合適尺寸的Canvas
   let canvasSize = getCanvasSize();
   let canvas = createCanvas(canvasSize.width, canvasSize.height);
-  canvas.parent('canvas-container');
+  canvas.parent(canvasContainerId);
 
   // --- 移除：不再需要計算中心點 ---
   // circleX = width * 0.7; // 參考 ref.js 的佈局

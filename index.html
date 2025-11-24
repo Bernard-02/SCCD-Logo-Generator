@@ -10,15 +10,15 @@
     <!-- 主容器，將使用 Flexbox 或 Grid 來進行整體佈局 -->
     <main class="main-container">
 
-        <!-- 上方顯示區域 -->
-        <section class="display-area">
+        <!-- 上方顯示區域（桌面版） -->
+        <section class="display-area desktop-only">
             <!-- 左側：文字輸入區域 -->
             <div class="input-container">
                 <textarea id="input-box" placeholder="TYPE&#10;AND&#10;ENTER" maxlength="40" rows="3"></textarea>
             </div>
 
             <!-- 右側：p5.js Canvas 容器 -->
-            <div id="canvas-container"></div>
+            <div id="desktop-canvas-container"></div>
         </section>
 
         <!-- 桌面版：下方控制面板區域 -->
@@ -94,8 +94,13 @@
         </section>
 
 
-        <!-- 手機版：統一的內容區域（包含輸入框、Custom 區塊、Color Picker Bar） -->
+        <!-- 手機版：統一的內容區域（包含 Logo、輸入框、Custom 區塊、Color Picker Bar） -->
         <section class="mobile-content-section">
+            <!-- Logo 區域（從 display-area 移入） -->
+            <div class="mobile-logo-container">
+                <div id="canvas-container"></div>
+            </div>
+
             <!-- 輸入框 -->
             <div class="mobile-input-area">
                 <textarea id="mobile-input-box" placeholder="TYPE AND ENTER" maxlength="40" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
