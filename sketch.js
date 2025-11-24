@@ -393,6 +393,23 @@ function setup() {
         // Pause 時：selectedHue 停在當前位置，用戶可以點擊 bar 選擇新顏色
         isColorWheelRotating = !isColorWheelRotating;
         updateColorWheelIcon();
+
+        // 如果從 Play 切換到 Pause，恢復 transition
+        if (!isColorWheelRotating) {
+          let body = select('body');
+          let canvasContainer = select('#canvas-container');
+          let desktopCanvasContainer = select('#desktop-canvas-container');
+
+          if (body) {
+            body.elt.style.transition = '';
+          }
+          if (canvasContainer) {
+            canvasContainer.elt.style.transition = '';
+          }
+          if (desktopCanvasContainer) {
+            desktopCanvasContainer.elt.style.transition = '';
+          }
+        }
       }
     });
   }
@@ -1189,11 +1206,15 @@ function draw() {
       // 恢復 transition，確保切換模式時有 fade 效果
       let body = select('body');
       let canvasContainer = select('#canvas-container');
+      let desktopCanvasContainer = select('#desktop-canvas-container');
       if (body) {
         body.elt.style.transition = '';
       }
       if (canvasContainer) {
         canvasContainer.elt.style.transition = '';
+      }
+      if (desktopCanvasContainer) {
+        desktopCanvasContainer.elt.style.transition = '';
       }
     }
 
@@ -1203,11 +1224,15 @@ function draw() {
     if (targetMode !== "Wireframe") {
       let body = select('body');
       let canvasContainer = select('#canvas-container');
+      let desktopCanvasContainer = select('#desktop-canvas-container');
       if (body) {
         body.elt.style.transition = '';
       }
       if (canvasContainer) {
         canvasContainer.elt.style.transition = '';
+      }
+      if (desktopCanvasContainer) {
+        desktopCanvasContainer.elt.style.transition = '';
       }
     }
 
@@ -3516,12 +3541,16 @@ function handleColorPickerMouseUp() {
   // 恢復 transition（移除內聯樣式，讓 CSS 接管）
   let body = select('body');
   let canvasContainer = select('#canvas-container');
+  let desktopCanvasContainer = select('#desktop-canvas-container');
 
   if (body) {
     body.elt.style.removeProperty('transition');
   }
   if (canvasContainer) {
     canvasContainer.elt.style.removeProperty('transition');
+  }
+  if (desktopCanvasContainer) {
+    desktopCanvasContainer.elt.style.removeProperty('transition');
   }
 }
 
@@ -3714,12 +3743,16 @@ function updateBackgroundColor(bgColor, disableTransition = false) {
     // 拖動色環時：臨時禁用 transition，實現即時更新
     let body = select('body');
     let canvasContainer = select('#canvas-container');
+    let desktopCanvasContainer = select('#desktop-canvas-container');
 
     if (body) {
       body.elt.style.transition = 'none';
     }
     if (canvasContainer) {
       canvasContainer.elt.style.transition = 'none';
+    }
+    if (desktopCanvasContainer) {
+      desktopCanvasContainer.elt.style.transition = 'none';
     }
 
     // 更新 CSS 變數

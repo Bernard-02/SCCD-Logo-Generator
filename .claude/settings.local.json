@@ -11,7 +11,8 @@
       "Bash(node -pe:*)",
       "Bash(git stash:*)",
       "Bash(git checkout:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

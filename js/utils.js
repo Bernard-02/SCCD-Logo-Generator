@@ -356,6 +356,20 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
     return;
   }
 
+  // 檢查父容器是否同時有 has-custom 和 has-colorpicker（最滿狀態）
+  const inputArea = document.querySelector('.mobile-input-area');
+  const isMaxState = inputArea &&
+                     inputArea.classList.contains('has-custom') &&
+                     inputArea.classList.contains('has-colorpicker');
+
+  // 如果是最滿狀態或輸入框有 custom-open class，不需要動態調整 padding
+  if (isMaxState || inputBox.elt.classList.contains('custom-open')) {
+    console.log('⏭️ 最滿狀態（has-custom + has-colorpicker）或 custom-open，跳過 padding 調整');
+    inputBox.style('padding-top', '0');
+    inputBox.style('padding-bottom', '0');
+    return;
+  }
+
   // 如果沒有文字，設置 padding 讓 placeholder 垂直居中
   if (!text || text.trim() === '') {
     // Placeholder 是一行文字 "TYPE AND ENTER"，需要垂直居中
