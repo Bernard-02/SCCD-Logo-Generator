@@ -399,13 +399,24 @@ function cycleModeButton() {
   }
 
   // 根據模式自動顯示/隱藏 Color Picker Bar
+  const logoContainer = document.querySelector('.mobile-logo-container');
+  const inputArea = document.querySelector('.mobile-input-area');
+
   if (mobileElements.mobileColorpickerBar) {
     if (targetMode === "Wireframe") {
       // 切換到 Wireframe 模式：顯示 Color Picker Bar
       mobileElements.mobileColorpickerBar.removeClass('hidden');
+
+      // 為 logo 和 input-area 添加 has-colorpicker 類
+      if (logoContainer) logoContainer.classList.add('has-colorpicker');
+      if (inputArea) inputArea.classList.add('has-colorpicker');
     } else {
       // 切換到 Standard/Inverse 模式：隱藏 Color Picker Bar
       mobileElements.mobileColorpickerBar.addClass('hidden');
+
+      // 移除 has-colorpicker 類
+      if (logoContainer) logoContainer.classList.remove('has-colorpicker');
+      if (inputArea) inputArea.classList.remove('has-colorpicker');
     }
   }
 
@@ -448,6 +459,10 @@ function toggleMobileCustomPanel() {
   // 檢查調整區當前是否顯示
   const isHidden = mobileElements.customAngleControls.hasClass('hidden');
 
+  // 選取 logo 和 input-area 元素
+  const logoContainer = document.querySelector('.mobile-logo-container');
+  const inputArea = document.querySelector('.mobile-input-area');
+
   if (isHidden) {
     // 如果調整區隱藏，需要先切換到 Custom 模式（如果還在 Auto 模式）
     if (isAutoRotateMode) {
@@ -455,6 +470,10 @@ function toggleMobileCustomPanel() {
     }
     // 顯示調整區
     mobileElements.customAngleControls.removeClass('hidden');
+
+    // 為 logo 和 input-area 添加 has-custom 類
+    if (logoContainer) logoContainer.classList.add('has-custom');
+    if (inputArea) inputArea.classList.add('has-custom');
 
     // Wireframe 模式下，給輸入框添加 custom-open class（單行顯示）
     if (mode === 'Wireframe' && mobileElements.inputBox) {
@@ -465,6 +484,10 @@ function toggleMobileCustomPanel() {
   } else {
     // 如果調整區顯示，隱藏它（但保持在 Custom 模式）
     mobileElements.customAngleControls.addClass('hidden');
+
+    // 移除 has-custom 類
+    if (logoContainer) logoContainer.classList.remove('has-custom');
+    if (inputArea) inputArea.classList.remove('has-custom');
 
     // 移除 custom-open class，恢復原樣
     if (mobileElements.inputBox) {
