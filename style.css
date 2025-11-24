@@ -1050,7 +1050,8 @@ body.wireframe-mode .angle-input:not(.enabled) {
   /* === 手機版 Logo 容器：在 mobile-content-section 內 === */
   .mobile-logo-container {
     flex: 1 1 auto; /* 允許被壓縮，佔用剩餘空間 */
-    width: 100%; /* 填滿寬度 */
+    width: auto; /* 寬度由 max-width 決定，不填滿 */
+    align-self: center; /* 在父容器中水平置中 */
     min-height: 0; /* 允許縮小 */
     display: flex;
     justify-content: center; /* 水平置中 */
@@ -1088,7 +1089,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
     width: 100%;
     height: 100%;
     aspect-ratio: 1 / 1; /* 確保 canvas container 是正方形 */
-    object-fit: contain; /* 保持比例，適應父容器 */
     display: flex;
     justify-content: center;
     align-items: center;
