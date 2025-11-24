@@ -1050,16 +1050,16 @@ body.wireframe-mode .angle-input:not(.enabled) {
   /* === 手機版 Logo 容器：在 mobile-content-section 內 === */
   .mobile-logo-container {
     flex: 1 1 auto; /* 允許被壓縮，佔用剩餘空間 */
-    width: auto; /* 寬度由 max-width 決定，不填滿 */
-    align-self: center; /* 在父容器中水平置中 */
+    width: 100%; /* 填滿父容器寬度，確保 canvas 能正確計算尺寸 */
     min-height: 0; /* 允許縮小 */
+    aspect-ratio: 1 / 1; /* 保持正方形 */
     display: flex;
     justify-content: center; /* 水平置中 */
     align-items: center; /* 垂直置中 */
     padding: 0;
     box-sizing: border-box;
     /* 添加平滑過渡效果 */
-    transition: max-width 0.3s ease, opacity 0.3s ease;
+    transition: max-width 0.3s ease, max-height 0.3s ease, opacity 0.3s ease;
   }
 
   /* Logo 大小等級（使用 max-width 限制寬度，配合 aspect-ratio 保持等比例正方形） */
@@ -1312,6 +1312,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     display: flex;
     flex-direction: row;
     align-items: stretch;
+    width: 100%; /* 填滿父容器寬度 */
     background: transparent;
     box-sizing: border-box;
     flex-shrink: 0; /* 不縮小 */
@@ -1475,6 +1476,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
   .mobile-colorpicker-bar {
     display: flex;
     align-items: stretch;
+    width: 100%; /* 填滿父容器寬度 */
     background: transparent;
     box-sizing: border-box;
     flex-shrink: 0; /* 不縮小 */
@@ -1781,7 +1783,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     display: flex;
     flex-direction: column;
     justify-content: flex-end; /* Custom 和 Color Picker 對齊底部 */
-    align-items: stretch;
+    align-items: center; /* 所有子元素水平置中 */
     gap: var(--mobile-content-gap); /* 使用 1rem 的內容 gap */
     box-sizing: border-box;
     min-height: 0; /* 允許縮小 */
@@ -1794,6 +1796,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     align-items: center;
     justify-content: center;
     flex: 1; /* 佔用剩餘空間 */
+    width: 100%; /* 填滿父容器寬度 */
     min-height: calc(2rem * 1.2 * 3); /* 最小高度：3行文字 */
   }
 
