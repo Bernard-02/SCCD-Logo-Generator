@@ -17,28 +17,47 @@ function checkMobileMode() {
 // 計算Canvas尺寸
 function getCanvasSize() {
   if (isMobileMode) {
-    // 手機版：根據 canvas-container 的寬度決定大小，保持 1:1 正方形比例
-    const container = document.getElementById('canvas-container');
-    if (container) {
-      const rect = container.getBoundingClientRect();
-      const containerWidth = rect.width;
-      const containerHeight = rect.height;
+    // 手機版：根據 mobile-logo-container 的可用空間，計算最佳 canvas 尺寸
+    // Logo 的理想比例是 1:1.05 (寬:高)
+    const LOGO_ASPECT_RATIO = 1.05; // 高度 = 寬度 × 1.05
 
-      // 使用較小的尺寸來確保正方形
-      const size = Math.min(containerWidth, containerHeight);
+    const logoContainer = document.querySelector('.mobile-logo-container');
+    if (logoContainer) {
+      const rect = logoContainer.getBoundingClientRect();
+      const availableWidth = rect.width;
+      const availableHeight = rect.height;
+
+      // 根據可用空間和 logo 比例，計算最大可能的 canvas 尺寸
+      // 情況1: 寬度是限制因素（容器較窄）
+      const widthBasedHeight = availableWidth * LOGO_ASPECT_RATIO;
+
+      // 情況2: 高度是限制因素（容器較矮）
+      const heightBasedWidth = availableHeight / LOGO_ASPECT_RATIO;
+
+      let canvasWidth, canvasHeight;
+
+      if (widthBasedHeight <= availableHeight) {
+        // 寬度是瓶頸，使用全部寬度
+        canvasWidth = availableWidth;
+        canvasHeight = widthBasedHeight;
+      } else {
+        // 高度是瓶頸，使用全部高度
+        canvasWidth = heightBasedWidth;
+        canvasHeight = availableHeight;
+      }
 
       return {
-        width: Math.floor(size),
-        height: Math.floor(size)
+        width: Math.floor(canvasWidth),
+        height: Math.floor(canvasHeight)
       };
     }
 
-    // 如果無法取得 container，使用預設計算（正方形）
+    // 如果無法取得 container，使用預設計算
     let availableWidth = window.innerWidth - 48; // 扣除左右 padding (1.5rem * 2 = 3rem = 48px)
 
     return {
       width: Math.floor(availableWidth),
-      height: Math.floor(availableWidth) // 正方形：寬度等於高度
+      height: Math.floor(availableWidth * LOGO_ASPECT_RATIO)
     };
   } else {
     // 桌面版：固定尺寸 432x540，與 canvas-container 一致

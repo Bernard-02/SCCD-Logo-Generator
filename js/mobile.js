@@ -438,6 +438,14 @@ function cycleModeButton() {
   }
 
   updateUI();
+
+  // 模式切換後，調整輸入框的 padding（延遲以等待 DOM 更新）
+  if (mobileElements.inputBox) {
+    setTimeout(() => {
+      const currentText = mobileElements.inputBox.value();
+      updateMobileInputBoxVerticalAlignment(mobileElements.inputBox, currentText);
+    }, 350); // 等待模式切換動畫完成（300ms）+ 50ms 緩衝
+  }
 }
 
 // 檢查輸入框文字是否溢出（用於最滿狀態：Wireframe + Custom + Color Picker）
@@ -501,6 +509,14 @@ function toggleMobileCustomPanel() {
       // 檢查是否需要滾動
       setTimeout(() => checkInputOverflow(), 50); // 延遲一點讓 CSS 生效
     }
+
+    // Custom 開啟後，調整輸入框的 padding
+    if (mobileElements.inputBox) {
+      setTimeout(() => {
+        const currentText = mobileElements.inputBox.value();
+        updateMobileInputBoxVerticalAlignment(mobileElements.inputBox, currentText);
+      }, 350); // 等待動畫完成
+    }
   } else {
     // 如果調整區顯示，隱藏它（但保持在 Custom 模式）
     mobileElements.customAngleControls.addClass('hidden');
@@ -517,6 +533,14 @@ function toggleMobileCustomPanel() {
 
     // 離開最滿狀態，檢查輸入框
     setTimeout(() => checkInputOverflow(), 50);
+
+    // Custom 關閉後，調整輸入框的 padding
+    if (mobileElements.inputBox) {
+      setTimeout(() => {
+        const currentText = mobileElements.inputBox.value();
+        updateMobileInputBoxVerticalAlignment(mobileElements.inputBox, currentText);
+      }, 350); // 等待動畫完成
+    }
   }
 }
 
@@ -572,9 +596,29 @@ function toggleAutoRotate() {
     autoRotate = true;
     resetRotationOffsets();
 
-    // 手機版：隱藏 Custom 調整區
+    // 手機版：隱藏 Custom 調整區並清理 Layout
     if (isMobileMode && mobileElements.customAngleControls) {
       mobileElements.customAngleControls.addClass('hidden');
+
+      // 移除 has-custom class，讓 Layout 調整
+      const logoContainer = document.querySelector('.mobile-logo-container');
+      const inputArea = document.querySelector('.mobile-input-area');
+      if (logoContainer) logoContainer.classList.remove('has-custom');
+      if (inputArea) inputArea.classList.remove('has-custom');
+
+      // 移除 custom-open class
+      if (mobileElements.inputBox) {
+        mobileElements.inputBox.removeClass('custom-open');
+        mobileElements.inputBox.elt.classList.remove('overflowing');
+      }
+
+      // 調整輸入框的 padding
+      if (mobileElements.inputBox) {
+        setTimeout(() => {
+          const currentText = mobileElements.inputBox.value();
+          updateMobileInputBoxVerticalAlignment(mobileElements.inputBox, currentText);
+        }, 350); // 等待動畫完成
+      }
     }
   } else {
     // 已經在 Auto 模式，只是 toggle

@@ -1049,42 +1049,38 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
   /* === 手機版 Logo 容器：在 mobile-content-section 內 === */
   .mobile-logo-container {
-    flex: 1 1 auto; /* 允許被壓縮，佔用剩餘空間 */
+    flex: 1 1 100%; /* 初始狀態：佔用 100% 空間 */
     width: 100%; /* 填滿父容器寬度，確保 canvas 能正確計算尺寸 */
     min-height: 0; /* 允許縮小 */
-    aspect-ratio: 1 / 1; /* 保持正方形 */
+    /* 移除 aspect-ratio，讓 JS 根據可用空間動態計算 canvas 尺寸 */
     display: flex;
     justify-content: center; /* 水平置中 */
     align-items: center; /* 垂直置中 */
     padding: 0;
     box-sizing: border-box;
     /* 添加平滑過渡效果 */
-    transition: max-width 0.3s ease, max-height 0.3s ease, opacity 0.3s ease;
+    transition: flex-basis 0.3s ease, opacity 0.3s ease;
   }
 
-  /* Logo 大小等級（使用 max-width 限制寬度，配合 aspect-ratio 保持等比例正方形） */
-  /* 1. 正常模式（Standard/Inverse）：100% - 基準大小 */
-  /* 1. 初始狀態：100% */
-  .mobile-logo-container {
-    max-width: 100%; /* 基準：填滿寬度 */
-  }
+  /* Logo 大小等級：使用 flex-basis 主動控制縮放比例 */
+  /* 1. 初始狀態：100% - 已在上方設定 */
 
   /* 2. Custom 或 Color Picker 其中一個出現：縮小至 70% */
   .mobile-logo-container.has-custom,
   .mobile-logo-container.has-colorpicker {
-    max-width: 70%; /* 70% 寬度 */
+    flex: 0 0 70%; /* flex-basis: 70%，不伸縮 */
   }
 
   /* 3. Custom 和 Color Picker 同時出現：縮小至 60% */
   .mobile-logo-container.has-custom.has-colorpicker {
-    max-width: 60%; /* 60% 寬度 */
+    flex: 0 0 60%; /* flex-basis: 60%，不伸縮 */
   }
 
   #canvas-container {
-    /* 手機版 Canvas Container：保持正方形，等比例縮小並置中 */
-    width: 100%;
-    height: 100%;
-    aspect-ratio: 1 / 1; /* 確保 canvas container 是正方形 */
+    /* 手機版 Canvas Container：自動尺寸，包裹 canvas 內容 */
+    width: auto;
+    height: auto;
+    /* 移除 aspect-ratio，讓 canvas 決定容器大小 */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1794,6 +1790,14 @@ body.wireframe-mode .angle-input:not(.enabled) {
     flex: 1; /* 佔用剩餘空間 */
     width: 100%; /* 填滿父容器寬度 */
     min-height: calc(2rem * 1.2 * 3); /* 最小高度：3行文字 */
+    margin-bottom: var(--mobile-content-gap); /* 畫面最大時，下方增加 gap */
+    transition: margin-bottom 0.3s ease; /* 平滑過渡 */
+  }
+
+  /* 當有 Custom 或 Color Picker 時，移除下方 gap（因為 flexbox gap 已處理間距） */
+  .mobile-input-area.has-custom,
+  .mobile-input-area.has-colorpicker {
+    margin-bottom: 0;
   }
 
   /* 最滿狀態（Wireframe + Custom + Color Picker）：減少輸入框上下空間 */
