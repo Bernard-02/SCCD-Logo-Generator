@@ -1095,7 +1095,7 @@ if (window.visualViewport) {
       // 4. 計算理想的內容高度
       const inputHeight = 50; // 輸入框固定高度（從 60px 改為 50px，更窄一點）
       const logoInputGap = 15; // Logo 和輸入框之間的間距
-      const idealLogoHeight = availableHeight * 0.75; // Logo 佔可視區域的 75%（從 70% 提高，更大一點）
+      const idealLogoHeight = availableHeight * 0.85; // Logo 佔可視區域的 85%（大幅提高）
       const totalContentHeight = idealLogoHeight + inputHeight + logoInputGap; // 加上 gap
 
       // 5. 計算需要的 padding-bottom 來「推」內容到可視區域
