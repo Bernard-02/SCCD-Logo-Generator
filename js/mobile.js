@@ -1141,6 +1141,23 @@ if (window.visualViewport) {
         inputArea.style.minHeight = 'auto';
         inputArea.style.marginBottom = '0';
         inputArea.style.paddingBottom = `${inputBottomGap}px`; // 輸入框距離鍵盤的小間距
+        inputArea.style.position = 'relative'; // 為了 absolute 定位
+
+        // 添加測試用的顏色塊（測試完後刪除）
+        let testDiv = inputArea.querySelector('.test-indicator-input');
+        if (!testDiv) {
+          testDiv = document.createElement('div');
+          testDiv.className = 'test-indicator-input';
+          testDiv.style.position = 'absolute';
+          testDiv.style.top = '0';
+          testDiv.style.left = '0';
+          testDiv.style.width = '100%';
+          testDiv.style.height = '100%';
+          testDiv.style.backgroundColor = 'rgba(0, 0, 255, 0.3)'; // 半透明藍色
+          testDiv.style.pointerEvents = 'none'; // 不影響點擊
+          testDiv.style.zIndex = '9999';
+          inputArea.appendChild(testDiv);
+        }
       }
 
       // 9. 重新計算 canvas 尺寸（因為 logo 寬度變成 65%）
