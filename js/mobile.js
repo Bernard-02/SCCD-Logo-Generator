@@ -1077,10 +1077,7 @@ if (window.visualViewport) {
       if (mainContainer) mainContainer.classList.add('keyboard-active');
       if (inputArea) inputArea.classList.add('keyboard-active');
 
-      // 2. 標記鍵盤已開啟（用於滑動偵測）
-      window.keyboardIsOpen = true;
-
-      // 2.5. 阻止滑動
+      // 2. 阻止滑動
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
@@ -1152,9 +1149,6 @@ if (window.visualViewport) {
       if (mainContainer) mainContainer.classList.remove('keyboard-active');
       if (inputArea) inputArea.classList.remove('keyboard-active');
 
-      // 標記鍵盤已關閉
-      window.keyboardIsOpen = false;
-
       // 恢復滑動功能
       document.body.style.overflow = '';
       document.body.style.position = '';
@@ -1207,30 +1201,10 @@ if (window.visualViewport) {
     }
   });
 
-  // 偵測往下滑動，自動關閉鍵盤
-  let touchStartY = 0;
-  let touchStartTime = 0;
-
-  document.addEventListener('touchstart', (e) => {
-    if (!isMobileMode || !window.keyboardIsOpen) return;
-    touchStartY = e.touches[0].clientY;
-    touchStartTime = Date.now();
-  }, { passive: true });
-
-  document.addEventListener('touchmove', (e) => {
-    if (!isMobileMode || !window.keyboardIsOpen) return;
-
-    const touchCurrentY = e.touches[0].clientY;
-    const touchDeltaY = touchCurrentY - touchStartY;
-    const touchDuration = Date.now() - touchStartTime;
-
-    // 如果往下滑動超過 30px，且在 300ms 內，則關閉鍵盤
-    if (touchDeltaY > 30 && touchDuration < 300) {
-      // 讓輸入框失去焦點，觸發鍵盤關閉
-      if (mobileElements.inputBox) {
-        mobileElements.inputBox.elt.blur();
-      }
-      document.activeElement.blur();
-    }
-  }, { passive: true });
+  // 偵測 scroll 事件，防止頁面被鍵盤推上去
+  window.visualViewport.addEventListener('scroll', () => {
+    if (!isMobileMode) return;
+    // 強制回到原位
+    window.scrollTo(0, 0);
+  });
 }
