@@ -1106,14 +1106,14 @@ if (window.visualViewport) {
         mobileContentSection.style.flex = 'none';
         mobileContentSection.style.paddingTop = '0';
         mobileContentSection.style.paddingBottom = `${neededPaddingBottom}px`; // 用 padding 推上去
-        mobileContentSection.style.gap = '0';
+        mobileContentSection.style.gap = '20px'; // Logo 和輸入框之間的間距
         mobileContentSection.style.justifyContent = 'center';
       }
 
       // 7. 設定 Logo 容器的大小
       if (logoContainer) {
         logoContainer.style.flex = 'none';
-        logoContainer.style.width = '55%'; // Logo 寬度 55%
+        logoContainer.style.width = '65%'; // Logo 寬度 65%
         logoContainer.style.height = `${idealLogoHeight}px`;
       }
 
