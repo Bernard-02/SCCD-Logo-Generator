@@ -1092,18 +1092,19 @@ if (window.visualViewport) {
       const topPadding = 48; // main-container 的 padding-top
       const availableHeight = currentHeight - topPadding;
 
-      // 4. 從底部開始計算：輸入框 + 下方 padding
+      // 4. 從底部開始計算：輸入框 + 間距
       const inputHeight = 60; // 輸入框固定高度（單行模式）
-      const inputBottomPadding = 20; // 輸入框下方的 padding
+      const inputBottomGap = 10; // 輸入框距離鍵盤的小間距
       const logoInputGap = 20; // Logo 和輸入框之間的間距
+      const contentTopGap = 30; // 整體內容距離頂部的間距
 
       // 5. 剩下的空間全部給 logo
-      const logoHeight = availableHeight - inputHeight - inputBottomPadding - logoInputGap;
+      const logoHeight = availableHeight - inputHeight - inputBottomGap - logoInputGap - contentTopGap;
 
       // 6. 設定 mobile-content-section 的佈局
       if (mobileContentSection) {
         mobileContentSection.style.flex = 'none';
-        mobileContentSection.style.paddingTop = '0';
+        mobileContentSection.style.paddingTop = `${contentTopGap}px`; // 距離頂部的間距
         mobileContentSection.style.paddingBottom = `${keyboardHeight}px`; // 用 padding 推上去
         mobileContentSection.style.gap = `${logoInputGap}px`; // Logo 和輸入框之間的間距
         mobileContentSection.style.justifyContent = 'flex-start'; // 從上開始排列
@@ -1133,13 +1134,13 @@ if (window.visualViewport) {
         }
       }
 
-      // 8. 設定輸入框為單行（包含下方 padding）
+      // 8. 設定輸入框為單行（包含下方間距）
       if (inputArea) {
         inputArea.style.flex = 'none';
         inputArea.style.height = `${inputHeight}px`;
         inputArea.style.minHeight = 'auto';
         inputArea.style.marginBottom = '0';
-        inputArea.style.paddingBottom = `${inputBottomPadding}px`; // 輸入框下方的 padding
+        inputArea.style.paddingBottom = `${inputBottomGap}px`; // 輸入框距離鍵盤的小間距
       }
 
       // 9. 重新計算 canvas 尺寸（因為 logo 寬度變成 65%）
