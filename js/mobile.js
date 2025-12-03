@@ -1092,40 +1092,57 @@ if (window.visualViewport) {
       const topPadding = 48; // main-container 的 padding-top
       const availableHeight = currentHeight - topPadding;
 
-      // 4. 計算理想的內容高度
+      // 4. 從底部開始計算：輸入框 + 下方 padding
       const inputHeight = 60; // 輸入框固定高度（單行模式）
-      const idealLogoHeight = availableHeight * 0.7; // Logo 佔可視區域的 70%
-      const totalContentHeight = idealLogoHeight + inputHeight;
+      const inputBottomPadding = 20; // 輸入框下方的 padding
+      const logoInputGap = 20; // Logo 和輸入框之間的間距
 
-      // 5. 計算需要的 padding-bottom 來「推」內容到可視區域
-      // 讓輸入框更靠近鍵盤，不要置中，而是接近底部
-      const neededPaddingBottom = keyboardHeight;
+      // 5. 剩下的空間全部給 logo
+      const logoHeight = availableHeight - inputHeight - inputBottomPadding - logoInputGap;
 
       // 6. 設定 mobile-content-section 的佈局
       if (mobileContentSection) {
         mobileContentSection.style.flex = 'none';
         mobileContentSection.style.paddingTop = '0';
-        mobileContentSection.style.paddingBottom = `${neededPaddingBottom}px`; // 用 padding 推上去
-        mobileContentSection.style.gap = '20px'; // Logo 和輸入框之間的間距
-        mobileContentSection.style.justifyContent = 'center';
+        mobileContentSection.style.paddingBottom = `${keyboardHeight}px`; // 用 padding 推上去
+        mobileContentSection.style.gap = `${logoInputGap}px`; // Logo 和輸入框之間的間距
+        mobileContentSection.style.justifyContent = 'flex-start'; // 從上開始排列
       }
 
       // 7. 設定 Logo 容器的大小
       if (logoContainer) {
         logoContainer.style.flex = 'none';
         logoContainer.style.width = '65%'; // Logo 寬度 65%
-        logoContainer.style.height = `${idealLogoHeight}px`;
+        logoContainer.style.height = `${logoHeight}px`;
+        logoContainer.style.position = 'relative'; // 為了 absolute 定位
+
+        // 添加測試用的顏色塊（測試完後刪除）
+        let testDiv = logoContainer.querySelector('.test-indicator');
+        if (!testDiv) {
+          testDiv = document.createElement('div');
+          testDiv.className = 'test-indicator';
+          testDiv.style.position = 'absolute';
+          testDiv.style.top = '0';
+          testDiv.style.left = '0';
+          testDiv.style.width = '100%';
+          testDiv.style.height = '100%';
+          testDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.3)'; // 半透明紅色
+          testDiv.style.pointerEvents = 'none'; // 不影響點擊
+          testDiv.style.zIndex = '9999';
+          logoContainer.appendChild(testDiv);
+        }
       }
 
-      // 8. 設定輸入框為單行
+      // 8. 設定輸入框為單行（包含下方 padding）
       if (inputArea) {
         inputArea.style.flex = 'none';
         inputArea.style.height = `${inputHeight}px`;
         inputArea.style.minHeight = 'auto';
         inputArea.style.marginBottom = '0';
+        inputArea.style.paddingBottom = `${inputBottomPadding}px`; // 輸入框下方的 padding
       }
 
-      // 9. 重新計算 canvas 尺寸（因為 logo 寬度變成 55%）
+      // 9. 重新計算 canvas 尺寸（因為 logo 寬度變成 65%）
       setTimeout(() => {
         if (typeof resizeMobileCanvas === 'function') {
           resizeMobileCanvas();
@@ -1176,6 +1193,7 @@ if (window.visualViewport) {
         inputArea.style.height = '';
         inputArea.style.minHeight = '';
         inputArea.style.marginBottom = '';
+        inputArea.style.paddingBottom = '';
       }
 
       // 重新計算 canvas 尺寸（恢復正常大小）
