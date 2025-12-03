@@ -1093,8 +1093,8 @@ if (window.visualViewport) {
       const availableHeight = currentHeight - topPadding;
 
       // 4. 從底部開始計算：輸入框 + 間距
-      const inputHeight = 60; // 輸入框固定高度（單行模式）
-      const inputBottomGap = 10; // 輸入框距離鍵盤的小間距
+      const inputHeight = 40; // 輸入框固定高度（單行模式，約 2rem * 1.2）
+      const inputBottomGap = 0; // 先移除輸入框距離鍵盤的間距
       const logoInputGap = 20; // Logo 和輸入框之間的間距
       const contentTopGap = 30; // 整體內容距離頂部的間距
 
