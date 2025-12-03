@@ -1077,41 +1077,41 @@ if (window.visualViewport) {
       if (mainContainer) mainContainer.classList.add('keyboard-active');
       if (inputArea) inputArea.classList.add('keyboard-active');
 
-      // 2. 隱藏所有額外元素
+      // 2. 隱藏所有額外元素（讓用戶看不到下方的空白區域）
       if (customControls) customControls.style.display = 'none';
       if (colorPickerBar) colorPickerBar.style.display = 'none';
       if (bottomBar) bottomBar.style.display = 'none';
 
       // 3. 計算可見空間
-      // currentHeight = 鍵盤上方的可見高度
-      // 扣除 main-container 的 padding: top 3rem ≈ 48px
-      const topPadding = 48;
+      const topPadding = 48; // main-container 的 padding-top
       const availableHeight = currentHeight - topPadding;
 
-      // 輸入框固定高度
-      const inputHeight = 60;
+      // 4. 計算理想的內容高度
+      const inputHeight = 60; // 輸入框固定高度（單行模式）
+      const idealLogoHeight = availableHeight * 0.6; // Logo 佔可視區域的 60%
+      const totalContentHeight = idealLogoHeight + inputHeight;
 
-      // Logo 高度 = 可用高度 - 輸入框高度
-      const logoHeight = availableHeight - inputHeight;
+      // 5. 計算需要的 padding-bottom 來「推」內容到可視區域
+      // 目標：讓 logo+輸入框在可視區域內垂直置中
+      const neededPaddingBottom = keyboardHeight + (availableHeight - totalContentHeight) / 2;
 
-      // 4. 設定 mobile-content-section 的高度和佈局
+      // 6. 設定 mobile-content-section 的佈局
       if (mobileContentSection) {
-        mobileContentSection.style.height = `${availableHeight}px`;
         mobileContentSection.style.flex = 'none';
-        mobileContentSection.style.paddingTop = '0';  // 取消 top gap
-        mobileContentSection.style.paddingBottom = '0';  // 取消 bottom gap
+        mobileContentSection.style.paddingTop = '0';
+        mobileContentSection.style.paddingBottom = `${neededPaddingBottom}px`; // 用 padding 推上去
         mobileContentSection.style.gap = '0';
-        mobileContentSection.style.justifyContent = 'center';  // 垂直置中
+        mobileContentSection.style.justifyContent = 'center';
       }
 
-      // 5. 設定 Logo 容器的大小
+      // 7. 設定 Logo 容器的大小
       if (logoContainer) {
         logoContainer.style.flex = 'none';
-        logoContainer.style.width = '50%';  // 縮小至 50%
-        logoContainer.style.height = `${logoHeight}px`;
+        logoContainer.style.width = '55%'; // Logo 寬度 55%
+        logoContainer.style.height = `${idealLogoHeight}px`;
       }
 
-      // 6. 設定輸入框為單行
+      // 8. 設定輸入框為單行
       if (inputArea) {
         inputArea.style.flex = 'none';
         inputArea.style.height = `${inputHeight}px`;
@@ -1119,14 +1119,14 @@ if (window.visualViewport) {
         inputArea.style.marginBottom = '0';
       }
 
-      // 7. 重新計算 canvas 尺寸（因為 logo 寬度變成 50%）
+      // 9. 重新計算 canvas 尺寸（因為 logo 寬度變成 55%）
       setTimeout(() => {
         if (typeof resizeMobileCanvas === 'function') {
           resizeMobileCanvas();
         }
       }, 50);
 
-      // 8. 調整輸入框的 padding（單行居中）
+      // 10. 調整輸入框的 padding（單行居中）
       if (mobileElements.inputBox) {
         setTimeout(() => {
           const currentText = mobileElements.inputBox.value();
@@ -1146,11 +1146,11 @@ if (window.visualViewport) {
 
       // 恢復佈局設定
       if (mobileContentSection) {
-        mobileContentSection.style.height = '';
         mobileContentSection.style.flex = '';
         mobileContentSection.style.paddingTop = '';
         mobileContentSection.style.paddingBottom = '';
         mobileContentSection.style.gap = '';
+        mobileContentSection.style.justifyContent = '';
       }
 
       if (logoContainer) {
