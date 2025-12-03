@@ -1092,53 +1092,29 @@ if (window.visualViewport) {
       const topPadding = 48; // main-container 的 padding-top
       const availableHeight = currentHeight - topPadding;
 
-      // 4. 從底部開始計算：輸入框固定在底部
-      const inputHeight = 40; // 輸入框固定高度（接近一行高度）
-      const logoInputGap = 10; // Logo 和輸入框之間的小間距
+      // 4. 計算理想的內容高度
+      const inputHeight = 60; // 輸入框固定高度（單行模式）
+      const idealLogoHeight = availableHeight * 0.7; // Logo 佔可視區域的 70%
+      const totalContentHeight = idealLogoHeight + inputHeight;
 
-      // 5. Logo 高度 = 剩下的所有空間
-      const idealLogoHeight = availableHeight - inputHeight - logoInputGap;
-
-      // Debug: 輸出計算值
-      console.log('=== 鍵盤佈局計算 ===');
-      console.log('availableHeight:', availableHeight);
-      console.log('idealLogoHeight:', idealLogoHeight);
-      console.log('inputHeight:', inputHeight);
-      console.log('logoInputGap:', logoInputGap);
+      // 5. 計算需要的 padding-bottom 來「推」內容到可視區域
+      // 讓輸入框更靠近鍵盤，不要置中，而是接近底部
+      const neededPaddingBottom = keyboardHeight;
 
       // 6. 設定 mobile-content-section 的佈局
-      // 使用 flex-end 讓輸入框固定在底部，logo 自動佔滿剩餘空間
       if (mobileContentSection) {
         mobileContentSection.style.flex = 'none';
-        mobileContentSection.style.height = `${availableHeight}px`; // 設定固定高度
         mobileContentSection.style.paddingTop = '0';
-        mobileContentSection.style.paddingBottom = `${keyboardHeight}px`; // 用 padding 推上去
-        mobileContentSection.style.gap = `${logoInputGap}px`; // Logo 和輸入框之間的間距
-        mobileContentSection.style.justifyContent = 'flex-end'; // 內容靠底部對齊，輸入框在底部
+        mobileContentSection.style.paddingBottom = `${neededPaddingBottom}px`; // 用 padding 推上去
+        mobileContentSection.style.gap = '0';
+        mobileContentSection.style.justifyContent = 'center';
       }
 
       // 7. 設定 Logo 容器的大小
       if (logoContainer) {
         logoContainer.style.flex = 'none';
-        logoContainer.style.width = '65%'; // Logo 寬度 65%
+        logoContainer.style.width = '55%'; // Logo 寬度 55%
         logoContainer.style.height = `${idealLogoHeight}px`;
-        logoContainer.style.position = 'relative'; // 為了 absolute 定位
-
-        // 添加測試用的顏色塊（測試完後刪除）
-        let testDiv = logoContainer.querySelector('.test-indicator');
-        if (!testDiv) {
-          testDiv = document.createElement('div');
-          testDiv.className = 'test-indicator';
-          testDiv.style.position = 'absolute';
-          testDiv.style.top = '0';
-          testDiv.style.left = '0';
-          testDiv.style.width = '100%';
-          testDiv.style.height = '100%';
-          testDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.3)'; // 半透明紅色
-          testDiv.style.pointerEvents = 'none'; // 不影響點擊
-          testDiv.style.zIndex = '9999';
-          logoContainer.appendChild(testDiv);
-        }
       }
 
       // 8. 設定輸入框為單行
@@ -1147,26 +1123,9 @@ if (window.visualViewport) {
         inputArea.style.height = `${inputHeight}px`;
         inputArea.style.minHeight = 'auto';
         inputArea.style.marginBottom = '0';
-        inputArea.style.position = 'relative'; // 為了 absolute 定位
-
-        // 添加測試用的顏色塊（測試完後刪除）
-        let testDiv = inputArea.querySelector('.test-indicator-input');
-        if (!testDiv) {
-          testDiv = document.createElement('div');
-          testDiv.className = 'test-indicator-input';
-          testDiv.style.position = 'absolute';
-          testDiv.style.top = '0';
-          testDiv.style.left = '0';
-          testDiv.style.width = '100%';
-          testDiv.style.height = '100%';
-          testDiv.style.backgroundColor = 'rgba(0, 0, 255, 0.3)'; // 半透明藍色
-          testDiv.style.pointerEvents = 'none'; // 不影響點擊
-          testDiv.style.zIndex = '9999';
-          inputArea.appendChild(testDiv);
-        }
       }
 
-      // 9. 重新計算 canvas 尺寸（因為 logo 寬度變成 65%）
+      // 9. 重新計算 canvas 尺寸（因為 logo 寬度變成 55%）
       setTimeout(() => {
         if (typeof resizeMobileCanvas === 'function') {
           resizeMobileCanvas();
@@ -1200,7 +1159,6 @@ if (window.visualViewport) {
       // 恢復佈局設定
       if (mobileContentSection) {
         mobileContentSection.style.flex = '';
-        mobileContentSection.style.height = '';
         mobileContentSection.style.paddingTop = '';
         mobileContentSection.style.paddingBottom = '';
         mobileContentSection.style.gap = '';
@@ -1218,8 +1176,6 @@ if (window.visualViewport) {
         inputArea.style.height = '';
         inputArea.style.minHeight = '';
         inputArea.style.marginBottom = '';
-        inputArea.style.paddingTop = '';
-        inputArea.style.paddingBottom = '';
       }
 
       // 重新計算 canvas 尺寸（恢復正常大小）
