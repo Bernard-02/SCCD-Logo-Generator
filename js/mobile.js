@@ -1101,6 +1101,17 @@ if (window.visualViewport) {
       // 讓輸入框更靠近鍵盤，不要置中，而是接近底部
       const neededPaddingBottom = keyboardHeight;
 
+      // Debug: 輸出所有計算值
+      console.log('=== 鍵盤佈局計算 ===');
+      console.log('currentHeight:', currentHeight);
+      console.log('availableHeight:', availableHeight);
+      console.log('idealLogoHeight:', idealLogoHeight);
+      console.log('inputHeight:', inputHeight);
+      console.log('totalContentHeight:', totalContentHeight);
+      console.log('剩餘空間 (留白):', availableHeight - totalContentHeight);
+      console.log('keyboardHeight:', keyboardHeight);
+      console.log('neededPaddingBottom:', neededPaddingBottom);
+
       // 6. 設定 mobile-content-section 的佈局
       if (mobileContentSection) {
         mobileContentSection.style.flex = 'none';
@@ -1108,6 +1119,9 @@ if (window.visualViewport) {
         mobileContentSection.style.paddingBottom = `${neededPaddingBottom}px`; // 用 padding 推上去
         mobileContentSection.style.gap = '0';
         mobileContentSection.style.justifyContent = 'center';
+
+        // 添加背景色顯示實際區域（測試用）
+        mobileContentSection.style.backgroundColor = 'rgba(0, 255, 0, 0.1)'; // 淡綠色
       }
 
       // 7. 設定 Logo 容器的大小
@@ -1123,6 +1137,10 @@ if (window.visualViewport) {
         inputArea.style.height = `${inputHeight}px`;
         inputArea.style.minHeight = 'auto';
         inputArea.style.marginBottom = '0';
+
+        // 添加邊框顯示實際區域（測試用）
+        inputArea.style.border = '2px solid red';
+        inputArea.style.boxSizing = 'border-box';
       }
 
       // 9. 重新計算 canvas 尺寸（因為 logo 寬度變成 55%）
