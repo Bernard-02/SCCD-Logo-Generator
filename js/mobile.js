@@ -1077,11 +1077,8 @@ if (window.visualViewport) {
       if (mainContainer) mainContainer.classList.add('keyboard-active');
       if (inputArea) inputArea.classList.add('keyboard-active');
 
-      // 2. 完全阻止滑動（防止用戶看到下方的空白區域）
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.height = '100%';
+      // 2. 標記鍵盤已開啟（用於滑動偵測）
+      window.keyboardIsOpen = true;
 
       // 3. 隱藏所有額外元素
       if (customControls) customControls.style.display = 'none';
@@ -1098,8 +1095,10 @@ if (window.visualViewport) {
       const totalContentHeight = idealLogoHeight + inputHeight;
 
       // 5. 計算需要的 padding-bottom 來「推」內容到可視區域
-      // 讓輸入框更靠近鍵盤，不要置中，而是接近底部
-      const neededPaddingBottom = keyboardHeight;
+      // 目標：讓輸入框底部距離鍵盤頂部約 10px
+      // padding-bottom = keyboardHeight + (availableHeight - totalContentHeight) - 10px
+      const bottomGap = 10; // 輸入框與鍵盤之間的小間距
+      const neededPaddingBottom = keyboardHeight + availableHeight - totalContentHeight - bottomGap;
 
       // 6. 設定 mobile-content-section 的佈局
       if (mobileContentSection) {
@@ -1107,13 +1106,13 @@ if (window.visualViewport) {
         mobileContentSection.style.paddingTop = '0';
         mobileContentSection.style.paddingBottom = `${neededPaddingBottom}px`; // 用 padding 推上去
         mobileContentSection.style.gap = '0';
-        mobileContentSection.style.justifyContent = 'center';
+        mobileContentSection.style.justifyContent = 'flex-start'; // 改為從上開始排列
       }
 
       // 7. 設定 Logo 容器的大小
       if (logoContainer) {
         logoContainer.style.flex = 'none';
-        logoContainer.style.width = '55%'; // Logo 寬度 55%
+        logoContainer.style.width = '70%'; // Logo 寬度 70%
         logoContainer.style.height = `${idealLogoHeight}px`;
       }
 
@@ -1145,11 +1144,8 @@ if (window.visualViewport) {
       if (mainContainer) mainContainer.classList.remove('keyboard-active');
       if (inputArea) inputArea.classList.remove('keyboard-active');
 
-      // 恢復滑動功能
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.height = '';
+      // 標記鍵盤已關閉
+      window.keyboardIsOpen = false;
 
       // 恢復所有元素的顯示
       if (customControls) customControls.style.display = '';
@@ -1195,10 +1191,30 @@ if (window.visualViewport) {
     }
   });
 
-  // 偵測 scroll 事件，防止頁面被鍵盤推上去
-  window.visualViewport.addEventListener('scroll', () => {
-    if (!isMobileMode) return;
-    // 強制回到原位
-    window.scrollTo(0, 0);
-  });
+  // 偵測往下滑動，自動關閉鍵盤
+  let touchStartY = 0;
+  let touchStartTime = 0;
+
+  document.addEventListener('touchstart', (e) => {
+    if (!isMobileMode || !window.keyboardIsOpen) return;
+    touchStartY = e.touches[0].clientY;
+    touchStartTime = Date.now();
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!isMobileMode || !window.keyboardIsOpen) return;
+
+    const touchCurrentY = e.touches[0].clientY;
+    const touchDeltaY = touchCurrentY - touchStartY;
+    const touchDuration = Date.now() - touchStartTime;
+
+    // 如果往下滑動超過 30px，且在 300ms 內，則關閉鍵盤
+    if (touchDeltaY > 30 && touchDuration < 300) {
+      // 讓輸入框失去焦點，觸發鍵盤關閉
+      if (mobileElements.inputBox) {
+        mobileElements.inputBox.elt.blur();
+      }
+      document.activeElement.blur();
+    }
+  }, { passive: true });
 }
