@@ -1093,8 +1093,8 @@ if (window.visualViewport) {
       const availableHeight = currentHeight - topPadding;
 
       // 4. 計算理想的內容高度
-      const inputHeight = 60; // 輸入框固定高度（單行模式）
-      const idealLogoHeight = availableHeight * 0.7; // Logo 佔可視區域的 70%
+      const inputHeight = 50; // 輸入框固定高度（從 60px 改為 50px，更窄一點）
+      const idealLogoHeight = availableHeight * 0.75; // Logo 佔可視區域的 75%（從 70% 提高，更大一點）
       const totalContentHeight = idealLogoHeight + inputHeight;
 
       // 5. 計算需要的 padding-bottom 來「推」內容到可視區域
@@ -1113,7 +1113,7 @@ if (window.visualViewport) {
       // 7. 設定 Logo 容器的大小
       if (logoContainer) {
         logoContainer.style.flex = 'none';
-        logoContainer.style.width = '55%'; // Logo 寬度 55%
+        logoContainer.style.width = '65%'; // Logo 寬度 65%（從 55% 提高，更大一點）
         logoContainer.style.height = `${idealLogoHeight}px`;
       }
 
