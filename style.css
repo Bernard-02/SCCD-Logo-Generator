@@ -1065,15 +1065,15 @@ body.wireframe-mode .angle-input:not(.enabled) {
   /* Logo 大小等級：直接控制寬度 */
   /* 1. 初始狀態：100% - 已在上方設定 */
 
-  /* 2. Custom 或 Color Picker 其中一個出現：縮小至 70% */
+  /* 2. Custom 或 Color Picker 其中一個出現：縮小至 75% */
   .mobile-logo-container.has-custom,
   .mobile-logo-container.has-colorpicker {
-    width: 70%;
+    width: 75%;
   }
 
-  /* 3. Custom 和 Color Picker 同時出現：縮小至 60% */
+  /* 3. Custom 和 Color Picker 同時出現：縮小至 65% */
   .mobile-logo-container.has-custom.has-colorpicker {
-    width: 60%;
+    width: 65%;
   }
 
   #canvas-container {

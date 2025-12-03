@@ -1082,36 +1082,33 @@ if (window.visualViewport) {
       if (colorPickerBar) colorPickerBar.style.display = 'none';
       if (bottomBar) bottomBar.style.display = 'none';
 
-      // 3. 計算可見空間的分配
-      // 可見高度 = visualViewport.height
+      // 3. 計算可見空間
+      // currentHeight = 鍵盤上方的可見高度
       // 扣除 main-container 的 padding: top 3rem ≈ 48px
       const topPadding = 48;
       const availableHeight = currentHeight - topPadding;
 
-      // 空間分配：
-      // - Top gap: 5% ≈ availableHeight * 0.05
-      // - Input (單行): 固定高度約 60px (2rem font + padding)
-      // - Bottom gap: 5% ≈ availableHeight * 0.05
-      // - Logo: 剩餘空間 ≈ 85%
-      const topGap = Math.floor(availableHeight * 0.05);
+      // 輸入框固定高度
       const inputHeight = 60;
-      const bottomGap = Math.floor(availableHeight * 0.05);
-      const logoHeight = availableHeight - topGap - inputHeight - bottomGap;
+
+      // Logo 高度 = 可用高度 - 輸入框高度
+      const logoHeight = availableHeight - inputHeight;
 
       // 4. 設定 mobile-content-section 的高度和佈局
       if (mobileContentSection) {
         mobileContentSection.style.height = `${availableHeight}px`;
         mobileContentSection.style.flex = 'none';
-        mobileContentSection.style.paddingTop = `${topGap}px`;
-        mobileContentSection.style.paddingBottom = `${bottomGap}px`;
+        mobileContentSection.style.paddingTop = '0';  // 取消 top gap
+        mobileContentSection.style.paddingBottom = '0';  // 取消 bottom gap
         mobileContentSection.style.gap = '0';
+        mobileContentSection.style.justifyContent = 'center';  // 垂直置中
       }
 
       // 5. 設定 Logo 容器的大小
       if (logoContainer) {
         logoContainer.style.flex = 'none';
+        logoContainer.style.width = '50%';  // 縮小至 50%
         logoContainer.style.height = `${logoHeight}px`;
-        // 寬度使用 100%，但 canvas 會根據 1:1.05 比例自適應
       }
 
       // 6. 設定輸入框為單行
@@ -1122,7 +1119,14 @@ if (window.visualViewport) {
         inputArea.style.marginBottom = '0';
       }
 
-      // 7. 調整輸入框的 padding（單行居中）
+      // 7. 重新計算 canvas 尺寸（因為 logo 寬度變成 50%）
+      setTimeout(() => {
+        if (typeof resizeMobileCanvas === 'function') {
+          resizeMobileCanvas();
+        }
+      }, 50);
+
+      // 8. 調整輸入框的 padding（單行居中）
       if (mobileElements.inputBox) {
         setTimeout(() => {
           const currentText = mobileElements.inputBox.value();
@@ -1151,6 +1155,7 @@ if (window.visualViewport) {
 
       if (logoContainer) {
         logoContainer.style.flex = '';
+        logoContainer.style.width = '';  // 恢復寬度
         logoContainer.style.height = '';
       }
 
@@ -1160,6 +1165,13 @@ if (window.visualViewport) {
         inputArea.style.minHeight = '';
         inputArea.style.marginBottom = '';
       }
+
+      // 重新計算 canvas 尺寸（恢復正常大小）
+      setTimeout(() => {
+        if (typeof resizeMobileCanvas === 'function') {
+          resizeMobileCanvas();
+        }
+      }, 50);
 
       // 調整輸入框的 padding（恢復正常狀態）
       if (mobileElements.inputBox) {
