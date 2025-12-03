@@ -1092,29 +1092,36 @@ if (window.visualViewport) {
       const topPadding = 48; // main-container 的 padding-top
       const availableHeight = currentHeight - topPadding;
 
-      // 4. 從底部開始計算：輸入框 + 間距
-      const inputHeight = 40; // 輸入框固定高度（單行模式，約 2rem * 1.2）
-      const inputBottomGap = 0; // 先移除輸入框距離鍵盤的間距
-      const logoInputGap = 20; // Logo 和輸入框之間的間距
-      const contentTopGap = 30; // 整體內容距離頂部的間距
+      // 4. 從底部開始計算：輸入框固定在底部
+      const inputHeight = 40; // 輸入框固定高度（接近一行高度）
+      const logoInputGap = 10; // Logo 和輸入框之間的小間距
 
-      // 5. 剩下的空間全部給 logo
-      const logoHeight = availableHeight - inputHeight - inputBottomGap - logoInputGap - contentTopGap;
+      // 5. Logo 高度 = 剩下的所有空間
+      const idealLogoHeight = availableHeight - inputHeight - logoInputGap;
+
+      // Debug: 輸出計算值
+      console.log('=== 鍵盤佈局計算 ===');
+      console.log('availableHeight:', availableHeight);
+      console.log('idealLogoHeight:', idealLogoHeight);
+      console.log('inputHeight:', inputHeight);
+      console.log('logoInputGap:', logoInputGap);
 
       // 6. 設定 mobile-content-section 的佈局
+      // 使用 flex-end 讓輸入框固定在底部，logo 自動佔滿剩餘空間
       if (mobileContentSection) {
         mobileContentSection.style.flex = 'none';
-        mobileContentSection.style.paddingTop = `${contentTopGap}px`; // 距離頂部的間距
+        mobileContentSection.style.height = `${availableHeight}px`; // 設定固定高度
+        mobileContentSection.style.paddingTop = '0';
         mobileContentSection.style.paddingBottom = `${keyboardHeight}px`; // 用 padding 推上去
         mobileContentSection.style.gap = `${logoInputGap}px`; // Logo 和輸入框之間的間距
-        mobileContentSection.style.justifyContent = 'flex-start'; // 從上開始排列
+        mobileContentSection.style.justifyContent = 'flex-end'; // 內容靠底部對齊，輸入框在底部
       }
 
       // 7. 設定 Logo 容器的大小
       if (logoContainer) {
         logoContainer.style.flex = 'none';
         logoContainer.style.width = '65%'; // Logo 寬度 65%
-        logoContainer.style.height = `${logoHeight}px`;
+        logoContainer.style.height = `${idealLogoHeight}px`;
         logoContainer.style.position = 'relative'; // 為了 absolute 定位
 
         // 添加測試用的顏色塊（測試完後刪除）
@@ -1134,13 +1141,12 @@ if (window.visualViewport) {
         }
       }
 
-      // 8. 設定輸入框為單行（包含下方間距）
+      // 8. 設定輸入框為單行
       if (inputArea) {
         inputArea.style.flex = 'none';
         inputArea.style.height = `${inputHeight}px`;
         inputArea.style.minHeight = 'auto';
         inputArea.style.marginBottom = '0';
-        inputArea.style.paddingBottom = `${inputBottomGap}px`; // 輸入框距離鍵盤的小間距
         inputArea.style.position = 'relative'; // 為了 absolute 定位
 
         // 添加測試用的顏色塊（測試完後刪除）
@@ -1194,6 +1200,7 @@ if (window.visualViewport) {
       // 恢復佈局設定
       if (mobileContentSection) {
         mobileContentSection.style.flex = '';
+        mobileContentSection.style.height = '';
         mobileContentSection.style.paddingTop = '';
         mobileContentSection.style.paddingBottom = '';
         mobileContentSection.style.gap = '';
@@ -1211,6 +1218,7 @@ if (window.visualViewport) {
         inputArea.style.height = '';
         inputArea.style.minHeight = '';
         inputArea.style.marginBottom = '';
+        inputArea.style.paddingTop = '';
         inputArea.style.paddingBottom = '';
       }
 
