@@ -1080,6 +1080,14 @@ if (window.visualViewport) {
       // 2. 標記鍵盤已開啟（用於滑動偵測）
       window.keyboardIsOpen = true;
 
+      // 2.5. 阻止滑動
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+      document.body.style.top = '0';
+      document.body.style.left = '0';
+
       // 3. 隱藏所有額外元素
       if (customControls) customControls.style.display = 'none';
       if (colorPickerBar) colorPickerBar.style.display = 'none';
@@ -1146,6 +1154,14 @@ if (window.visualViewport) {
 
       // 標記鍵盤已關閉
       window.keyboardIsOpen = false;
+
+      // 恢復滑動功能
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
 
       // 恢復所有元素的顯示
       if (customControls) customControls.style.display = '';
