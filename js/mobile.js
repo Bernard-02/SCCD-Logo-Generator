@@ -1077,7 +1077,13 @@ if (window.visualViewport) {
       if (mainContainer) mainContainer.classList.add('keyboard-active');
       if (inputArea) inputArea.classList.add('keyboard-active');
 
-      // 2. 隱藏所有額外元素（讓用戶看不到下方的空白區域）
+      // 2. 完全阻止滑動（防止用戶看到下方的空白區域）
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+
+      // 3. 隱藏所有額外元素
       if (customControls) customControls.style.display = 'none';
       if (colorPickerBar) colorPickerBar.style.display = 'none';
       if (bottomBar) bottomBar.style.display = 'none';
@@ -1088,12 +1094,12 @@ if (window.visualViewport) {
 
       // 4. 計算理想的內容高度
       const inputHeight = 60; // 輸入框固定高度（單行模式）
-      const idealLogoHeight = availableHeight * 0.6; // Logo 佔可視區域的 60%
+      const idealLogoHeight = availableHeight * 0.7; // Logo 佔可視區域的 70%
       const totalContentHeight = idealLogoHeight + inputHeight;
 
       // 5. 計算需要的 padding-bottom 來「推」內容到可視區域
-      // 目標：讓 logo+輸入框在可視區域內垂直置中
-      const neededPaddingBottom = keyboardHeight + (availableHeight - totalContentHeight) / 2;
+      // 讓輸入框更靠近鍵盤，不要置中，而是接近底部
+      const neededPaddingBottom = keyboardHeight;
 
       // 6. 設定 mobile-content-section 的佈局
       if (mobileContentSection) {
@@ -1138,6 +1144,12 @@ if (window.visualViewport) {
       // 鍵盤收起時，恢復原本設定
       if (mainContainer) mainContainer.classList.remove('keyboard-active');
       if (inputArea) inputArea.classList.remove('keyboard-active');
+
+      // 恢復滑動功能
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
 
       // 恢復所有元素的顯示
       if (customControls) customControls.style.display = '';
