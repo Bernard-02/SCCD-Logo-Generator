@@ -1064,24 +1064,20 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
   /* Logo 大小等級（使用 max-width 限制寬度，配合 aspect-ratio 保持等比例正方形） */
   /* 1. 正常模式（Standard/Inverse）：100% - 基準大小 */
+  /* 1. 初始狀態：100% */
   .mobile-logo-container {
     max-width: 100%; /* 基準：填滿寬度 */
   }
 
-  /* 2. Standard/Inverse + Custom：縮小至 50% */
-  body.standard-mode .mobile-logo-container.has-custom,
-  body.inverse-mode .mobile-logo-container.has-custom {
-    max-width: 50%; /* 50% 寬度，aspect-ratio 會讓高度也是 50% */
-  }
-
-  /* 3. Wireframe + Color Picker：縮小至 70% */
-  body.wireframe-mode .mobile-logo-container.has-colorpicker {
+  /* 2. Custom 或 Color Picker 其中一個出現：縮小至 70% */
+  .mobile-logo-container.has-custom,
+  .mobile-logo-container.has-colorpicker {
     max-width: 70%; /* 70% 寬度 */
   }
 
-  /* 4. Wireframe + Custom + Color Picker（最滿狀態）：縮小至 55% */
-  body.wireframe-mode .mobile-logo-container.has-custom.has-colorpicker {
-    max-width: 55%; /* 55% 寬度 */
+  /* 3. Custom 和 Color Picker 同時出現：縮小至 60% */
+  .mobile-logo-container.has-custom.has-colorpicker {
+    max-width: 60%; /* 60% 寬度 */
   }
 
   #canvas-container {
@@ -1344,7 +1340,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     width: 100%;
     padding: 1.2rem;
     border: 2px solid;
-    border-radius: 24px;
+    border-radius: 18px;
     box-sizing: border-box;
     gap: 0.8rem;
     overflow: hidden; /* 內容物不能超出 */
@@ -1509,7 +1505,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     gap: 1rem; /* 與其他元素統一的 gap */
     padding: 1rem; /* 上下左右 1rem padding */
     border: 2px solid;
-    border-radius: 24px; /* 與 btn bar 相同 */
+    border-radius: 18px; /* 與 btn bar 相同 */
     box-sizing: border-box;
   }
 
@@ -1845,14 +1841,18 @@ body.wireframe-mode .angle-input:not(.enabled) {
     font-size: 2rem;
   }
 
-  /* Wireframe 模式 + Custom 打開時：單行、最小字體 */
-  body.wireframe-mode #mobile-input-box.custom-open {
+  /* 最滿狀態（Wireframe + Custom + Color Picker 同時出現）：單行、最小字體 */
+  body.wireframe-mode .mobile-input-area.has-custom.has-colorpicker #mobile-input-box {
     font-size: 2rem !important; /* 強制使用最小字體 */
+    height: calc(2rem * 1.2); /* 強制單行高度 */
     min-height: calc(2rem * 1.2); /* 單行高度 */
+    max-height: calc(2rem * 1.2); /* 限制最大高度為單行 */
     white-space: nowrap; /* 不換行 */
     overflow-x: auto; /* 允許水平滾動 */
     overflow-y: hidden; /* 隱藏垂直滾動 */
     text-align: center; /* 預設置中 */
+    padding-top: 0 !important; /* 強制移除上下 padding */
+    padding-bottom: 0 !important;
     padding-left: 0.5rem;
     padding-right: 0.5rem;
     /* 隱藏滾動條但保留滾動功能 */
@@ -1860,13 +1860,13 @@ body.wireframe-mode .angle-input:not(.enabled) {
     -ms-overflow-style: none; /* IE/Edge */
   }
 
-  /* 文字溢出時：左對齊，方便滑動查看 */
-  body.wireframe-mode #mobile-input-box.custom-open.overflowing {
+  /* 最滿狀態下文字溢出時：左對齊，方便滑動查看 */
+  body.wireframe-mode .mobile-input-area.has-custom.has-colorpicker #mobile-input-box.overflowing {
     text-align: left;
   }
 
-  /* 隱藏 WebKit 瀏覽器的滾動條 */
-  body.wireframe-mode #mobile-input-box.custom-open::-webkit-scrollbar {
+  /* 最滿狀態下隱藏 WebKit 瀏覽器的滾動條 */
+  body.wireframe-mode .mobile-input-area.has-custom.has-colorpicker #mobile-input-box::-webkit-scrollbar {
     display: none;
   }
 
@@ -2003,7 +2003,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
   .mobile-mode-btn,
   .mobile-custom-btn,
   .mobile-rotate-btn {
-    border-radius: 24px; /* 增加圓角從 18px 到 24px */
+    border-radius: 18px; /* 增加圓角從 18px 到 24px */
   }
 
   /* Save 按鈕：圓形 */

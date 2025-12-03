@@ -410,6 +410,9 @@ function cycleModeButton() {
       // 為 logo 和 input-area 添加 has-colorpicker 類
       if (logoContainer) logoContainer.classList.add('has-colorpicker');
       if (inputArea) inputArea.classList.add('has-colorpicker');
+
+      // 檢查是否需要調整輸入框（可能進入最滿狀態）
+      setTimeout(() => checkInputOverflow(), 50);
     } else {
       // 切換到 Standard/Inverse 模式：隱藏 Color Picker Bar
       mobileElements.mobileColorpickerBar.addClass('hidden');
@@ -417,6 +420,9 @@ function cycleModeButton() {
       // 移除 has-colorpicker 類
       if (logoContainer) logoContainer.classList.remove('has-colorpicker');
       if (inputArea) inputArea.classList.remove('has-colorpicker');
+
+      // 離開最滿狀態，檢查輸入框
+      setTimeout(() => checkInputOverflow(), 50);
     }
   }
 
@@ -434,20 +440,34 @@ function cycleModeButton() {
   updateUI();
 }
 
-// 檢查輸入框文字是否溢出（用於 Wireframe + Custom 模式）
+// 檢查輸入框文字是否溢出（用於最滿狀態：Wireframe + Custom + Color Picker）
 function checkInputOverflow() {
   if (!mobileElements.inputBox) return;
 
   const inputElement = mobileElements.inputBox.elt;
+  const logoContainer = document.querySelector('.mobile-logo-container');
 
-  // 檢查文字寬度是否超過容器寬度
-  const isOverflowing = inputElement.scrollWidth > inputElement.clientWidth;
+  // 檢查是否為最滿狀態（同時有 has-custom 和 has-colorpicker）
+  const isFullState = logoContainer &&
+                      logoContainer.classList.contains('has-custom') &&
+                      logoContainer.classList.contains('has-colorpicker');
 
-  if (isOverflowing) {
-    // 文字溢出：左對齊，可滾動
-    inputElement.classList.add('overflowing');
+  if (isFullState) {
+    // 最滿狀態：移除任何 inline padding-top
+    inputElement.style.paddingTop = '';
+
+    // 檢查文字寬度是否超過容器寬度
+    const isOverflowing = inputElement.scrollWidth > inputElement.clientWidth;
+
+    if (isOverflowing) {
+      // 文字溢出：左對齊，可滾動
+      inputElement.classList.add('overflowing');
+    } else {
+      // 文字未溢出：置中顯示
+      inputElement.classList.remove('overflowing');
+    }
   } else {
-    // 文字未溢出：置中顯示
+    // 非最滿狀態：移除 overflowing class
     inputElement.classList.remove('overflowing');
   }
 }
@@ -494,6 +514,9 @@ function toggleMobileCustomPanel() {
       mobileElements.inputBox.removeClass('custom-open');
       mobileElements.inputBox.elt.classList.remove('overflowing');
     }
+
+    // 離開最滿狀態，檢查輸入框
+    setTimeout(() => checkInputOverflow(), 50);
   }
 }
 
