@@ -3057,6 +3057,19 @@ function resetLayoutAfterKeyboard() {
   }
 }
 
+// --- 重新調整 Canvas 尺寸（手機版專用）---
+function resizeMobileCanvas() {
+  if (!isMobileMode) return;
+
+  // 重新計算 canvas 尺寸（會根據當前 logo-container 的大小）
+  let canvasSize = getCanvasSize();
+  resizeCanvas(canvasSize.width, canvasSize.height);
+
+  // 根據 canvas 尺寸動態調整 logo 文字大小
+  let baseTextSize = (canvasSize.width / 432) * 367.5 * 1.1;
+  textSize(baseTextSize);
+}
+
 function windowResized() {
     // 延遲處理響應式變化，確保CSS媒體查詢先生效
     setTimeout(() => {

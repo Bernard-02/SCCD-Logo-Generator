@@ -1808,6 +1808,22 @@ body.wireframe-mode .angle-input:not(.enabled) {
     padding-bottom: 0.2rem; /* 減少下方空間 */
   }
 
+  /* 鍵盤激活狀態：輸入框強制單行顯示 */
+  .mobile-input-area.keyboard-active {
+    flex: none !important;
+    min-height: auto !important;
+    padding: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .mobile-input-area.keyboard-active #mobile-input-box {
+    min-height: auto !important;
+    max-height: 60px !important;
+    overflow: hidden; /* 隱藏多餘內容 */
+    white-space: nowrap; /* 強制單行 */
+    text-align: center; /* 文字置中 */
+  }
+
   #mobile-input-box {
     width: 100%;
     height: auto;

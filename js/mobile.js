@@ -413,6 +413,13 @@ function cycleModeButton() {
 
       // 檢查是否需要調整輸入框（可能進入最滿狀態）
       setTimeout(() => checkInputOverflow(), 50);
+
+      // 重新調整 canvas 尺寸（因為 logo-container 縮小了）
+      setTimeout(() => {
+        if (typeof resizeMobileCanvas === 'function') {
+          resizeMobileCanvas();
+        }
+      }, 350); // 等待 CSS transition 完成
     } else {
       // 切換到 Standard/Inverse 模式：隱藏 Color Picker Bar
       mobileElements.mobileColorpickerBar.addClass('hidden');
@@ -423,6 +430,13 @@ function cycleModeButton() {
 
       // 離開最滿狀態，檢查輸入框
       setTimeout(() => checkInputOverflow(), 50);
+
+      // 重新調整 canvas 尺寸（因為 logo-container 變大了）
+      setTimeout(() => {
+        if (typeof resizeMobileCanvas === 'function') {
+          resizeMobileCanvas();
+        }
+      }, 350); // 等待 CSS transition 完成
     }
   }
 
@@ -517,6 +531,13 @@ function toggleMobileCustomPanel() {
         updateMobileInputBoxVerticalAlignment(mobileElements.inputBox, currentText);
       }, 350); // 等待動畫完成
     }
+
+    // 重新調整 canvas 尺寸（因為 logo-container 縮小了）
+    setTimeout(() => {
+      if (typeof resizeMobileCanvas === 'function') {
+        resizeMobileCanvas();
+      }
+    }, 350); // 等待 CSS transition 完成
   } else {
     // 如果調整區顯示，隱藏它（但保持在 Custom 模式）
     mobileElements.customAngleControls.addClass('hidden');
@@ -541,6 +562,13 @@ function toggleMobileCustomPanel() {
         updateMobileInputBoxVerticalAlignment(mobileElements.inputBox, currentText);
       }, 350); // 等待動畫完成
     }
+
+    // 重新調整 canvas 尺寸（因為 logo-container 變大了）
+    setTimeout(() => {
+      if (typeof resizeMobileCanvas === 'function') {
+        resizeMobileCanvas();
+      }
+    }, 350); // 等待 CSS transition 完成
   }
 }
 
@@ -619,6 +647,13 @@ function toggleAutoRotate() {
           updateMobileInputBoxVerticalAlignment(mobileElements.inputBox, currentText);
         }, 350); // 等待動畫完成
       }
+
+      // 重新調整 canvas 尺寸（因為 logo-container 變大了）
+      setTimeout(() => {
+        if (typeof resizeMobileCanvas === 'function') {
+          resizeMobileCanvas();
+        }
+      }, 350); // 等待 CSS transition 完成
     }
   } else {
     // 已經在 Auto 模式，只是 toggle
@@ -1018,7 +1053,7 @@ function updateMobileModeIcon() {
 // Visual Viewport API：處理鍵盤覆蓋行為
 // ====================================
 // 使用 Visual Viewport API 來偵測虛擬鍵盤的出現並動態調整佈局
-// 策略：鍵盤出現時，只顯示 logo + 輸入框，底部按鈕列可被覆蓋
+// 策略：鍵盤出現時，只顯示 logo + 輸入框（單行），隱藏其他元素
 if (window.visualViewport) {
   let initialHeight = window.visualViewport.height;
 
@@ -1027,61 +1062,111 @@ if (window.visualViewport) {
 
     const currentHeight = window.visualViewport.height;
     const keyboardHeight = initialHeight - currentHeight;
-    const displayArea = document.querySelector('.display-area');
+
+    const mainContainer = document.querySelector('.main-container');
     const mobileContentSection = document.querySelector('.mobile-content-section');
-    const mobileBottomBar = document.querySelector('.mobile-bottom-bar');
+    const logoContainer = document.querySelector('.mobile-logo-container');
+    const inputArea = document.querySelector('.mobile-input-area');
+    const customControls = document.querySelector('.mobile-custom-angle-controls');
+    const colorPickerBar = document.querySelector('.mobile-colorpicker-bar');
+    const bottomBar = document.querySelector('.mobile-bottom-bar');
 
     // 鍵盤彈出時（viewport 高度減少超過 100px，避免誤判）
     if (keyboardHeight > 100) {
-      // 計算輸入框的高度（包含 padding 和 gap）
-      // 假設輸入框高度約為 60px，加上 gap 和 padding 約 80-100px
-      const inputBoxEstimatedHeight = 100;
+      // 1. 添加鍵盤激活狀態的 class
+      if (mainContainer) mainContainer.classList.add('keyboard-active');
+      if (inputArea) inputArea.classList.add('keyboard-active');
 
-      // 計算 logo 可用的最大高度 = 可見高度 - 輸入框高度 - main-container 的 padding (top 3rem + bottom 2rem + gaps)
-      // main-container padding: 3rem top + 2rem bottom = 5rem ≈ 80px
-      // gap: 1rem ≈ 16px
-      const containerPaddingAndGaps = 80 + 16 * 2; // top/bottom padding + gaps
-      const availableHeightForLogo = currentHeight - inputBoxEstimatedHeight - containerPaddingAndGaps;
+      // 2. 隱藏所有額外元素
+      if (customControls) customControls.style.display = 'none';
+      if (colorPickerBar) colorPickerBar.style.display = 'none';
+      if (bottomBar) bottomBar.style.display = 'none';
 
-      // 計算 logo 的最大尺寸（正方形），確保它和輸入框都能在可見範圍內
-      const logoMaxSize = Math.max(availableHeightForLogo, 150); // 最小 150px
+      // 3. 計算可見空間的分配
+      // 可見高度 = visualViewport.height
+      // 扣除 main-container 的 padding: top 3rem ≈ 48px
+      const topPadding = 48;
+      const availableHeight = currentHeight - topPadding;
 
-      if (displayArea) {
-        // 同時設定 maxWidth 和 maxHeight 為相同值，保持正方形（aspect-ratio: 1/1）
-        displayArea.style.maxWidth = `${logoMaxSize}px`;
-        displayArea.style.maxHeight = `${logoMaxSize}px`;
-        displayArea.style.width = '100%'; // 寬度填滿容器
-        displayArea.style.height = 'auto'; // 高度自動
-        displayArea.style.flex = '0 0 auto'; // 固定大小，不再彈性縮放
-      }
+      // 空間分配：
+      // - Top gap: 5% ≈ availableHeight * 0.05
+      // - Input (單行): 固定高度約 60px (2rem font + padding)
+      // - Bottom gap: 5% ≈ availableHeight * 0.05
+      // - Logo: 剩餘空間 ≈ 85%
+      const topGap = Math.floor(availableHeight * 0.05);
+      const inputHeight = 60;
+      const bottomGap = Math.floor(availableHeight * 0.05);
+      const logoHeight = availableHeight - topGap - inputHeight - bottomGap;
 
-      // 隱藏或縮小其他不必要的元素（Custom 區塊、Color Picker 可以被覆蓋）
+      // 4. 設定 mobile-content-section 的高度和佈局
       if (mobileContentSection) {
-        // 確保只顯示輸入框，其他的可以被覆蓋
-        mobileContentSection.style.flex = '0 0 auto';
+        mobileContentSection.style.height = `${availableHeight}px`;
+        mobileContentSection.style.flex = 'none';
+        mobileContentSection.style.paddingTop = `${topGap}px`;
+        mobileContentSection.style.paddingBottom = `${bottomGap}px`;
+        mobileContentSection.style.gap = '0';
       }
 
-      // 底部按鈕列維持原樣，允許被鍵盤覆蓋
-      if (mobileBottomBar) {
-        mobileBottomBar.style.flex = '0 0 auto';
+      // 5. 設定 Logo 容器的大小
+      if (logoContainer) {
+        logoContainer.style.flex = 'none';
+        logoContainer.style.height = `${logoHeight}px`;
+        // 寬度使用 100%，但 canvas 會根據 1:1.05 比例自適應
+      }
+
+      // 6. 設定輸入框為單行
+      if (inputArea) {
+        inputArea.style.flex = 'none';
+        inputArea.style.height = `${inputHeight}px`;
+        inputArea.style.minHeight = 'auto';
+        inputArea.style.marginBottom = '0';
+      }
+
+      // 7. 調整輸入框的 padding（單行居中）
+      if (mobileElements.inputBox) {
+        setTimeout(() => {
+          const currentText = mobileElements.inputBox.value();
+          updateMobileInputBoxVerticalAlignment(mobileElements.inputBox, currentText);
+        }, 50);
       }
 
     } else {
       // 鍵盤收起時，恢復原本設定
-      if (displayArea) {
-        displayArea.style.maxWidth = 'none'; // 移除最大寬度限制
-        displayArea.style.maxHeight = 'none'; // 移除最大高度限制
-        displayArea.style.width = '100%'; // 恢復寬度設定
-        displayArea.style.height = 'auto'; // 恢復高度設定
-        displayArea.style.flex = '0 1 auto'; // 恢復可縮小設定
-      }
+      if (mainContainer) mainContainer.classList.remove('keyboard-active');
+      if (inputArea) inputArea.classList.remove('keyboard-active');
 
+      // 恢復所有元素的顯示
+      if (customControls) customControls.style.display = '';
+      if (colorPickerBar) colorPickerBar.style.display = '';
+      if (bottomBar) bottomBar.style.display = '';
+
+      // 恢復佈局設定
       if (mobileContentSection) {
-        mobileContentSection.style.flex = '1 1 auto'; // 恢復佔用剩餘空間
+        mobileContentSection.style.height = '';
+        mobileContentSection.style.flex = '';
+        mobileContentSection.style.paddingTop = '';
+        mobileContentSection.style.paddingBottom = '';
+        mobileContentSection.style.gap = '';
       }
 
-      if (mobileBottomBar) {
-        mobileBottomBar.style.flex = '0 0 auto';
+      if (logoContainer) {
+        logoContainer.style.flex = '';
+        logoContainer.style.height = '';
+      }
+
+      if (inputArea) {
+        inputArea.style.flex = '';
+        inputArea.style.height = '';
+        inputArea.style.minHeight = '';
+        inputArea.style.marginBottom = '';
+      }
+
+      // 調整輸入框的 padding（恢復正常狀態）
+      if (mobileElements.inputBox) {
+        setTimeout(() => {
+          const currentText = mobileElements.inputBox.value();
+          updateMobileInputBoxVerticalAlignment(mobileElements.inputBox, currentText);
+        }, 50);
       }
     }
   });
