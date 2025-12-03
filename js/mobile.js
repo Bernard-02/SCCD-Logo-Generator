@@ -1094,12 +1094,14 @@ if (window.visualViewport) {
 
       // 4. 計算理想的內容高度
       const inputHeight = 50; // 輸入框固定高度（從 60px 改為 50px，更窄一點）
+      const logoInputGap = 15; // Logo 和輸入框之間的間距
       const idealLogoHeight = availableHeight * 0.75; // Logo 佔可視區域的 75%（從 70% 提高，更大一點）
-      const totalContentHeight = idealLogoHeight + inputHeight;
+      const totalContentHeight = idealLogoHeight + inputHeight + logoInputGap; // 加上 gap
 
       // 5. 計算需要的 padding-bottom 來「推」內容到可視區域
-      // 讓輸入框更靠近鍵盤，不要置中，而是接近底部
-      const neededPaddingBottom = keyboardHeight;
+      // 減少 paddingBottom，讓剩餘空間出現在輸入框下方，而不是被 padding 吃掉
+      const remainingSpace = availableHeight - totalContentHeight; // 剩餘空間
+      const neededPaddingBottom = keyboardHeight - remainingSpace; // 減少 padding
 
       // Debug: 輸出所有計算值
       console.log('=== 鍵盤佈局計算 ===');
@@ -1107,17 +1109,19 @@ if (window.visualViewport) {
       console.log('availableHeight:', availableHeight);
       console.log('idealLogoHeight:', idealLogoHeight);
       console.log('inputHeight:', inputHeight);
+      console.log('logoInputGap:', logoInputGap);
       console.log('totalContentHeight:', totalContentHeight);
-      console.log('剩餘空間 (留白):', availableHeight - totalContentHeight);
+      console.log('剩餘空間 (留白):', remainingSpace);
       console.log('keyboardHeight:', keyboardHeight);
-      console.log('neededPaddingBottom:', neededPaddingBottom);
+      console.log('neededPaddingBottom (舊):', keyboardHeight);
+      console.log('neededPaddingBottom (新):', neededPaddingBottom);
 
       // 6. 設定 mobile-content-section 的佈局
       if (mobileContentSection) {
         mobileContentSection.style.flex = 'none';
         mobileContentSection.style.paddingTop = '0';
         mobileContentSection.style.paddingBottom = `${neededPaddingBottom}px`; // 用 padding 推上去
-        mobileContentSection.style.gap = '0';
+        mobileContentSection.style.gap = `${logoInputGap}px`; // Logo 和輸入框之間的間距
         mobileContentSection.style.justifyContent = 'center';
 
         // 添加背景色顯示實際區域（測試用）
