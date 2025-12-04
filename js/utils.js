@@ -375,15 +375,10 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
     return;
   }
 
-  // 檢查父容器是否同時有 has-custom 和 has-colorpicker（最滿狀態）
-  const inputArea = document.querySelector('.mobile-input-area');
-  const isMaxState = inputArea &&
-                     inputArea.classList.contains('has-custom') &&
-                     inputArea.classList.contains('has-colorpicker');
-
-  // 如果是最滿狀態或輸入框有 custom-open class，不需要動態調整 padding
-  if (isMaxState || inputBox.elt.classList.contains('custom-open')) {
-    console.log('⏭️ 最滿狀態（has-custom + has-colorpicker）或 custom-open，跳過 padding 調整');
+  // 檢查是否有 custom-open class（這個狀態才需要靠上）
+  // 注意：最滿狀態和鍵盤狀態現在都會走垂直居中邏輯，不會提前返回
+  if (inputBox.elt.classList.contains('custom-open')) {
+    console.log('⏭️ custom-open 狀態，文字靠上對齊（padding-top: 0）');
     inputBox.style('padding-top', '0');
     inputBox.style('padding-bottom', '0');
     return;
@@ -426,17 +421,8 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
     // 計算文字行數（基於實際測量的高度）
     const estimatedLines = Math.round(textHeight / lineHeight);
 
-    // 規則：
-    // - 1-2 行：垂直居中
-    // - 3 行：不需要 padding，剛好 fit
-    let paddingTop = 0;
-    if (estimatedLines < 3) {
-      // 少於 3 行：垂直居中
-      paddingTop = Math.max(0, (containerHeight - textHeight) / 2);
-    } else {
-      // 3 行或更多：不需要 padding（雖然最多只能輸入 3 行）
-      paddingTop = 0;
-    }
+    // 規則：無論幾行，都垂直居中
+    const paddingTop = Math.max(0, (containerHeight - textHeight) / 2);
 
     console.log('🔍 垂直對齊計算:', {
       text: text.substring(0, 20),

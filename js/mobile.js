@@ -1149,8 +1149,8 @@ if (window.visualViewport) {
 
       // 4. 鍵盤專屬 layout：從底部開始規劃固定元素
       const inputHeight = 40; // 輸入框固定高度（單行，採用最滿情況）
-      const inputBottomGap = 10; // 輸入框距離鍵盤的固定距離
-      const logoInputGap = 15; // Logo 和輸入框之間的固定間距
+      const inputBottomGap = 5; // 輸入框距離鍵盤的固定距離（從 10px 縮小到 5px）
+      const logoInputGap = 10; // Logo 和輸入框之間的固定間距（從 15px 縮小到 10px，讓 logo 更大）
 
       // 5. Logo 高度 = 剩下的所有空間（自動適應不同手機的鍵盤高度）
       const idealLogoHeight = availableHeight - inputHeight - inputBottomGap - logoInputGap;
@@ -1186,7 +1186,7 @@ if (window.visualViewport) {
       // 7. 設定 Logo 容器的大小
       if (logoContainer) {
         logoContainer.style.flex = 'none';
-        logoContainer.style.width = '65%'; // Logo 寬度 65%（從 55% 提高，更大一點）
+        logoContainer.style.width = '75%'; // Logo 寬度 75%（從 65% 提高，更大）
         logoContainer.style.height = `${idealLogoHeight}px`;
       }
 
