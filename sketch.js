@@ -3063,7 +3063,7 @@ function resizeMobileCanvas() {
 
   // 重新計算 canvas 尺寸（會根據當前 logo-container 的大小）
   let canvasSize = getCanvasSize();
-  resizeCanvas(canvasSize.width, canvasSize.height);
+  resizeCanvas(canvasSize.width, canvasSize.height, true); // noRedraw=true，防止自動重繪
 
   // 根據 canvas 尺寸動態調整 logo 文字大小
   let baseTextSize = (canvasSize.width / 432) * 367.5 * 1.1;
@@ -3080,15 +3080,22 @@ function windowResized() {
         checkMobileMode();
 
         // 根據新的模式重新計算並調整Canvas尺寸
-        let canvasSize = getCanvasSize();
-        resizeCanvas(canvasSize.width, canvasSize.height);
-
-        // 根據 canvas 尺寸動態調整 logo 文字大小
-        let baseTextSize = isMobileMode ? (canvasSize.width / 432) * 367.5 * 1.1: 367.5;
-        textSize(baseTextSize);
-
-        // 調整字體大小和輸入框高度（僅桌面版）
-        if (!isMobileMode) {
+        if (isMobileMode) {
+            // 手機版：使用統一的 resize 機制（如果有的話）
+            if (typeof requestCanvasResize === 'function') {
+                requestCanvasResize(true); // 傳入 immediate=true，因為 window resize 沒有 CSS transition
+            } else {
+                // Fallback：直接執行
+                let canvasSize = getCanvasSize();
+                resizeCanvas(canvasSize.width, canvasSize.height, true); // noRedraw=true
+                let baseTextSize = (canvasSize.width / 432) * 367.5 * 1.1;
+                textSize(baseTextSize);
+            }
+        } else {
+            // 桌面版：直接執行 resize
+            let canvasSize = getCanvasSize();
+            resizeCanvas(canvasSize.width, canvasSize.height, true); // noRedraw=true
+            textSize(367.5);
             adjustInputFontSize(); // 這個函數內部會調用 adjustTextareaHeight()
         }
 

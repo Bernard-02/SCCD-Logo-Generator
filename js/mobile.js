@@ -3,6 +3,81 @@
 // ====================================
 // 此文件只在手機模式下運行，與桌面版邏輯互通但 UI 獨立
 
+// ====================================
+// 統一的 Canvas Resize 處理機制
+// ====================================
+let pendingCanvasResize = false; // 標記是否有待處理的 resize
+let resizeTransitionListener = null; // transitionend 監聽器引用
+let lastResizeTime = 0; // 上次 resize 的時間戳
+let resizeDebounceTimer = null; // 防抖計時器
+
+/**
+ * 請求 canvas resize（統一入口）
+ * @param {boolean} immediate - 是否立即執行（跳過 transition 等待）
+ * 使用 transitionend 事件確保在 CSS transition 結束後才執行
+ */
+function requestCanvasResize(immediate = false) {
+  if (!isMobileMode || typeof resizeMobileCanvas !== 'function') return;
+
+  const now = Date.now();
+  const timeSinceLastResize = now - lastResizeTime;
+
+  // 防抖：如果距離上次 resize 不到 300ms，延遲執行（即使 immediate=true）
+  // 這可以避免在輸入文字時觸發 windowResized 導致抖動
+  if (timeSinceLastResize < 300) {
+    if (resizeDebounceTimer) {
+      clearTimeout(resizeDebounceTimer);
+    }
+    resizeDebounceTimer = setTimeout(() => {
+      requestCanvasResize(immediate);
+    }, 300 - timeSinceLastResize); // 等待剩餘時間
+    return;
+  }
+
+  const logoContainer = document.querySelector('.mobile-logo-container');
+  if (!logoContainer || immediate) {
+    // 如果沒有 logo container 或要求立即執行，直接執行 resize
+    lastResizeTime = Date.now();
+    resizeMobileCanvas();
+    return;
+  }
+
+  // 標記有待處理的 resize
+  pendingCanvasResize = true;
+
+  // 移除舊的監聽器（避免重複）
+  if (resizeTransitionListener) {
+    logoContainer.removeEventListener('transitionend', resizeTransitionListener);
+  }
+
+  // 建立新的監聽器
+  resizeTransitionListener = (event) => {
+    // 只處理 width 的 transition（避免被其他屬性的 transition 觸發）
+    if (event.propertyName === 'width' && pendingCanvasResize) {
+      pendingCanvasResize = false;
+      lastResizeTime = Date.now();
+      resizeMobileCanvas();
+      logoContainer.removeEventListener('transitionend', resizeTransitionListener);
+      resizeTransitionListener = null;
+    }
+  };
+
+  logoContainer.addEventListener('transitionend', resizeTransitionListener);
+
+  // 保險機制：如果 500ms 後 transitionend 還沒觸發，強制執行
+  setTimeout(() => {
+    if (pendingCanvasResize) {
+      pendingCanvasResize = false;
+      lastResizeTime = Date.now();
+      resizeMobileCanvas();
+      if (resizeTransitionListener) {
+        logoContainer.removeEventListener('transitionend', resizeTransitionListener);
+        resizeTransitionListener = null;
+      }
+    }
+  }, 500);
+}
+
 // 手機版 DOM 元素
 let mobileElements = {
   // 底部按鈕列
@@ -415,11 +490,7 @@ function cycleModeButton() {
       setTimeout(() => checkInputOverflow(), 50);
 
       // 重新調整 canvas 尺寸（因為 logo-container 縮小了）
-      setTimeout(() => {
-        if (typeof resizeMobileCanvas === 'function') {
-          resizeMobileCanvas();
-        }
-      }, 350); // 等待 CSS transition 完成
+      requestCanvasResize();
     } else {
       // 切換到 Standard/Inverse 模式：隱藏 Color Picker Bar
       mobileElements.mobileColorpickerBar.addClass('hidden');
@@ -432,11 +503,7 @@ function cycleModeButton() {
       setTimeout(() => checkInputOverflow(), 50);
 
       // 重新調整 canvas 尺寸（因為 logo-container 變大了）
-      setTimeout(() => {
-        if (typeof resizeMobileCanvas === 'function') {
-          resizeMobileCanvas();
-        }
-      }, 350); // 等待 CSS transition 完成
+      requestCanvasResize();
     }
   }
 
@@ -533,11 +600,7 @@ function toggleMobileCustomPanel() {
     }
 
     // 重新調整 canvas 尺寸（因為 logo-container 縮小了）
-    setTimeout(() => {
-      if (typeof resizeMobileCanvas === 'function') {
-        resizeMobileCanvas();
-      }
-    }, 350); // 等待 CSS transition 完成
+    requestCanvasResize();
   } else {
     // 如果調整區顯示，隱藏它（但保持在 Custom 模式）
     mobileElements.customAngleControls.addClass('hidden');
@@ -564,11 +627,7 @@ function toggleMobileCustomPanel() {
     }
 
     // 重新調整 canvas 尺寸（因為 logo-container 變大了）
-    setTimeout(() => {
-      if (typeof resizeMobileCanvas === 'function') {
-        resizeMobileCanvas();
-      }
-    }, 350); // 等待 CSS transition 完成
+    requestCanvasResize();
   }
 }
 
@@ -649,11 +708,7 @@ function toggleAutoRotate() {
       }
 
       // 重新調整 canvas 尺寸（因為 logo-container 變大了）
-      setTimeout(() => {
-        if (typeof resizeMobileCanvas === 'function') {
-          resizeMobileCanvas();
-        }
-      }, 350); // 等待 CSS transition 完成
+      requestCanvasResize();
     }
   } else {
     // 已經在 Auto 模式，只是 toggle
@@ -1092,37 +1147,37 @@ if (window.visualViewport) {
       const topPadding = 48; // main-container 的 padding-top
       const availableHeight = currentHeight - topPadding;
 
-      // 4. 計算理想的內容高度
-      const inputHeight = 50; // 輸入框固定高度（從 60px 改為 50px，更窄一點）
-      const logoInputGap = 15; // Logo 和輸入框之間的間距
-      const idealLogoHeight = availableHeight * 0.85; // Logo 佔可視區域的 85%（大幅提高）
-      const totalContentHeight = idealLogoHeight + inputHeight + logoInputGap; // 加上 gap
+      // 4. 鍵盤專屬 layout：從底部開始規劃固定元素
+      const inputHeight = 40; // 輸入框固定高度（單行，採用最滿情況）
+      const inputBottomGap = 10; // 輸入框距離鍵盤的固定距離
+      const logoInputGap = 15; // Logo 和輸入框之間的固定間距
 
-      // 5. 計算需要的 padding-bottom 來「推」內容到可視區域
-      // 減少 paddingBottom，讓剩餘空間出現在輸入框下方，而不是被 padding 吃掉
-      const remainingSpace = availableHeight - totalContentHeight; // 剩餘空間
-      const neededPaddingBottom = keyboardHeight - remainingSpace; // 減少 padding
+      // 5. Logo 高度 = 剩下的所有空間（自動適應不同手機的鍵盤高度）
+      const idealLogoHeight = availableHeight - inputHeight - inputBottomGap - logoInputGap;
+
+      // 6. 計算 paddingBottom：剛好把內容推到正確位置
+      const neededPaddingBottom = keyboardHeight + inputBottomGap;
 
       // Debug: 輸出所有計算值
-      console.log('=== 鍵盤佈局計算 ===');
+      console.log('=== 鍵盤佈局計算（新邏輯）===');
       console.log('currentHeight:', currentHeight);
       console.log('availableHeight:', availableHeight);
-      console.log('idealLogoHeight:', idealLogoHeight);
-      console.log('inputHeight:', inputHeight);
-      console.log('logoInputGap:', logoInputGap);
-      console.log('totalContentHeight:', totalContentHeight);
-      console.log('剩餘空間 (留白):', remainingSpace);
+      console.log('固定參數:');
+      console.log('  - inputHeight:', inputHeight);
+      console.log('  - inputBottomGap:', inputBottomGap);
+      console.log('  - logoInputGap:', logoInputGap);
+      console.log('計算結果:');
+      console.log('  - idealLogoHeight (自動):', idealLogoHeight);
+      console.log('  - neededPaddingBottom:', neededPaddingBottom);
       console.log('keyboardHeight:', keyboardHeight);
-      console.log('neededPaddingBottom (舊):', keyboardHeight);
-      console.log('neededPaddingBottom (新):', neededPaddingBottom);
 
-      // 6. 設定 mobile-content-section 的佈局
+      // 7. 設定 mobile-content-section 的佈局
       if (mobileContentSection) {
         mobileContentSection.style.flex = 'none';
         mobileContentSection.style.paddingTop = '0';
         mobileContentSection.style.paddingBottom = `${neededPaddingBottom}px`; // 用 padding 推上去
         mobileContentSection.style.gap = `${logoInputGap}px`; // Logo 和輸入框之間的間距
-        mobileContentSection.style.justifyContent = 'center';
+        mobileContentSection.style.justifyContent = 'flex-end'; // 靠底部對齊，輸入框緊貼底部
 
         // 添加背景色顯示實際區域（測試用）
         mobileContentSection.style.backgroundColor = 'rgba(0, 255, 0, 0.1)'; // 淡綠色
@@ -1148,11 +1203,13 @@ if (window.visualViewport) {
       }
 
       // 9. 重新計算 canvas 尺寸（因為 logo 寬度變成 55%）
-      setTimeout(() => {
+      // Keyboard 使用 inline style（無 CSS transition），直接執行 resize
+      // 使用 requestAnimationFrame 確保 DOM 已更新
+      requestAnimationFrame(() => {
         if (typeof resizeMobileCanvas === 'function') {
           resizeMobileCanvas();
         }
-      }, 50);
+      });
 
       // 10. 調整輸入框的 padding（單行居中）
       if (mobileElements.inputBox) {
@@ -1201,11 +1258,13 @@ if (window.visualViewport) {
       }
 
       // 重新計算 canvas 尺寸（恢復正常大小）
-      setTimeout(() => {
+      // Keyboard 使用 inline style（無 CSS transition），直接執行 resize
+      // 使用 requestAnimationFrame 確保 DOM 已更新
+      requestAnimationFrame(() => {
         if (typeof resizeMobileCanvas === 'function') {
           resizeMobileCanvas();
         }
-      }, 50);
+      });
 
       // 調整輸入框的 padding（恢復正常狀態）
       if (mobileElements.inputBox) {
