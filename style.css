@@ -1822,6 +1822,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     overflow: hidden; /* 隱藏多餘內容 */
     white-space: nowrap; /* 強制單行 */
     text-align: center; /* 文字置中 */
+    font-size: 2rem !important; /* 鍵盤模式下統一使用小字體，不區分字數 */
   }
 
   #mobile-input-box {

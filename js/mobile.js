@@ -1149,14 +1149,11 @@ if (window.visualViewport) {
 
       // 4. 鍵盤專屬 layout：從底部開始規劃固定元素
       const inputHeight = 40; // 輸入框固定高度（單行，採用最滿情況）
-      const inputBottomGap = 5; // 輸入框距離鍵盤的固定距離（從 10px 縮小到 5px）
+      const inputBottomGap = 0; // 輸入框距離鍵盤的固定距離（設為 0，讓整體往下移動）
       const logoInputGap = 10; // Logo 和輸入框之間的固定間距（從 15px 縮小到 10px，讓 logo 更大）
 
       // 5. Logo 高度 = 剩下的所有空間（自動適應不同手機的鍵盤高度）
       const idealLogoHeight = availableHeight - inputHeight - inputBottomGap - logoInputGap;
-
-      // 6. 計算 paddingBottom：剛好把內容推到正確位置
-      const neededPaddingBottom = keyboardHeight + inputBottomGap;
 
       // Debug: 輸出所有計算值
       console.log('=== 鍵盤佈局計算（新邏輯）===');
@@ -1168,16 +1165,17 @@ if (window.visualViewport) {
       console.log('  - logoInputGap:', logoInputGap);
       console.log('計算結果:');
       console.log('  - idealLogoHeight (自動):', idealLogoHeight);
-      console.log('  - neededPaddingBottom:', neededPaddingBottom);
       console.log('keyboardHeight:', keyboardHeight);
 
-      // 7. 設定 mobile-content-section 的佈局
+      // 6. 設定 mobile-content-section 的佈局
+      // 直接設定高度 = 可見區域，確保不同手機鍵盤高度下視覺一致
       if (mobileContentSection) {
         mobileContentSection.style.flex = 'none';
+        mobileContentSection.style.height = `${availableHeight}px`; // 高度 = 可見區域
         mobileContentSection.style.paddingTop = '0';
-        mobileContentSection.style.paddingBottom = `${neededPaddingBottom}px`; // 用 padding 推上去
+        mobileContentSection.style.paddingBottom = '0';
         mobileContentSection.style.gap = `${logoInputGap}px`; // Logo 和輸入框之間的間距
-        mobileContentSection.style.justifyContent = 'flex-end'; // 靠底部對齊，輸入框緊貼底部
+        mobileContentSection.style.justifyContent = 'flex-end'; // 內容靠底部對齊
 
         // 添加背景色顯示實際區域（測試用）
         mobileContentSection.style.backgroundColor = 'rgba(0, 255, 0, 0.1)'; // 淡綠色
@@ -1238,10 +1236,12 @@ if (window.visualViewport) {
       // 恢復佈局設定
       if (mobileContentSection) {
         mobileContentSection.style.flex = '';
+        mobileContentSection.style.height = ''; // 恢復高度
         mobileContentSection.style.paddingTop = '';
         mobileContentSection.style.paddingBottom = '';
         mobileContentSection.style.gap = '';
         mobileContentSection.style.justifyContent = '';
+        mobileContentSection.style.backgroundColor = ''; // 移除測試背景色
       }
 
       if (logoContainer) {

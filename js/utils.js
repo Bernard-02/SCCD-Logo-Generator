@@ -384,6 +384,16 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
     return;
   }
 
+  // 檢查是否處於鍵盤激活狀態（單行模式，高度受限）
+  // 在此狀態下，輸入框高度固定且較小，不需要 padding 調整
+  const inputArea = document.querySelector('.mobile-input-area');
+  if (inputArea && inputArea.classList.contains('keyboard-active')) {
+    console.log('⏭️ keyboard-active 狀態，不調整 padding（保持單行居中）');
+    inputBox.style('padding-top', '0');
+    inputBox.style('padding-bottom', '0');
+    return;
+  }
+
   // 如果沒有文字，設置 padding 讓 placeholder 垂直居中
   if (!text || text.trim() === '') {
     // Placeholder 是一行文字 "TYPE AND ENTER"，需要垂直居中
