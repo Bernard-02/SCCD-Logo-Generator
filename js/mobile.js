@@ -632,7 +632,7 @@ function toggleMobileCustomPanel() {
     // 重新調整 canvas 尺寸（因為 logo-container 變大了）
     requestCanvasResize();
 
-    // 更新按鈕狀態
+    // 更新按鈕狀態（custom 關閉後應該回到 inactive 狀態 60%）
     updateCustomRotateButtonStates();
   }
 }
@@ -939,6 +939,16 @@ function updateMobileButtons() {
   // 更新底部按鈕的 disabled 狀態
   // Mode 按鈕始終啟用
 
+  // Rotation group 的 disabled 狀態（控制外框的 opacity）
+  const rotationGroup = document.querySelector('.mobile-rotation-group');
+  if (rotationGroup) {
+    if (!hasText) {
+      rotationGroup.classList.add('disabled');
+    } else {
+      rotationGroup.classList.remove('disabled');
+    }
+  }
+
   // Custom 按鈕：手機版只在沒有文字時禁用（與桌面版不同）
   if (mobileElements.customBtn) {
     if (!hasText) {
@@ -1191,7 +1201,7 @@ if (window.visualViewport) {
 
       // 4. 鍵盤專屬 layout：使用原本的邏輯（paddingBottom 推上去）
       const topPadding = 20; // main-container 的 padding-top（減少讓 logo 往上）
-      const logoInputGap = 12; // Logo 和輸入框之間的 gap（增加來保持輸入框位置）
+      const logoInputGap = 6; // Logo 和輸入框之間的 gap（增加來保持輸入框位置）
       const availableHeight = currentHeight - topPadding;
 
       const inputHeight = 40; // 輸入框固定高度（單行）

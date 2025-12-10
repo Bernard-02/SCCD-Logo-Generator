@@ -1058,7 +1058,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     box-sizing: border-box;
     /* 定義 CSS 變數：按鈕列和內容區塊的 gap */
     --mobile-content-gap: 1rem; /* Custom 區塊和 Color Picker 的 gap */
-    --mobile-btn-gap: 2rem; /* 底部按鈕列的 gap */
+    --mobile-btn-gap: 1.5rem; /* 底部按鈕列的 gap */
     --mobile-btn-size: calc((100vw - 3rem - 3 * var(--mobile-btn-gap)) / 4);
   }
 
@@ -2109,6 +2109,25 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
   body.wireframe-mode .mobile-bottom-btn:disabled {
     opacity: var(--wireframe-opacity);
+  }
+
+  /* Rotation group 的 disabled 狀態（使用 class 而非偽類）*/
+  /* 整個容器統一設定 opacity，內部按鈕保持 opacity: 1 避免疊加 */
+  body.standard-mode .mobile-rotation-group.disabled {
+    opacity: 0.25;
+  }
+
+  body.inverse-mode .mobile-rotation-group.disabled {
+    opacity: 0.5;
+  }
+
+  body.wireframe-mode .mobile-rotation-group.disabled {
+    opacity: var(--wireframe-opacity);
+  }
+
+  /* 內部按鈕在 disabled 時保持 opacity: 1，避免與外框的 opacity 疊加 */
+  .mobile-rotation-group.disabled .mobile-bottom-btn:disabled {
+    opacity: 1 !important;
   }
 
 
