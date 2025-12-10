@@ -1168,12 +1168,9 @@ if (window.visualViewport) {
       console.log('keyboardHeight:', keyboardHeight);
 
       // 6. 設定 mobile-content-section 的佈局
-      // 改為靠上對齊，避免底部位置計算問題
+      // 保持 100vh 不變，內容靠上對齊，鍵盤遮住下方空白即可
       if (mobileContentSection) {
-        mobileContentSection.style.flex = 'none';
-        mobileContentSection.style.height = `${availableHeight}px`; // 高度 = 可見區域
-        mobileContentSection.style.paddingTop = '0';
-        mobileContentSection.style.paddingBottom = '0';
+        // 不改變高度，讓它保持原本的 flex: 1（填滿剩餘空間）
         mobileContentSection.style.gap = `${logoInputGap}px`; // Logo 和輸入框之間的間距
         mobileContentSection.style.justifyContent = 'flex-start'; // 內容靠上對齊
 
@@ -1181,10 +1178,10 @@ if (window.visualViewport) {
         mobileContentSection.style.backgroundColor = 'rgba(0, 255, 0, 0.1)'; // 淡綠色
       }
 
-      // 7. 設定 Logo 容器的大小
+      // 7. 設定 Logo 容器的大小（縮小以配合鍵盤）
       if (logoContainer) {
         logoContainer.style.flex = 'none';
-        logoContainer.style.width = '75%'; // Logo 寬度 75%（從 65% 提高，更大）
+        logoContainer.style.width = '75%';
         logoContainer.style.height = `${idealLogoHeight}px`;
       }
 
