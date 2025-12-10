@@ -1144,12 +1144,12 @@ if (window.visualViewport) {
       if (bottomBar) bottomBar.style.setProperty('display', 'none', 'important');
 
       // 3. 計算可見空間
-      const topPadding = 48; // main-container 的 padding-top
+      const topPadding = 24; // main-container 的 padding-top
       const availableHeight = currentHeight - topPadding;
 
       // 4. 鍵盤專屬 layout：根據可見空間計算
       const inputHeight = 40; // 輸入框固定高度（單行）
-      const logoInputGap = 15; // Logo 和輸入框之間的間距
+      const logoInputGap = 10; // Logo 和輸入框之間的間距
 
       // 5. Logo 高度 = 可見空間 - 輸入框 - gap
       const logoHeight = availableHeight - inputHeight - logoInputGap;
