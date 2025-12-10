@@ -1136,56 +1136,43 @@ if (window.visualViewport) {
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
-      document.body.style.height = '100%';
+      document.body.style.height = `${initialHeight}px`; // 用固定值，不讓 body 跟著 viewport 縮小
 
-      // 3. 隱藏所有額外元素
-      if (customControls) customControls.style.display = 'none';
-      if (colorPickerBar) colorPickerBar.style.display = 'none';
-      if (bottomBar) bottomBar.style.display = 'none';
+      // 3. 隱藏所有額外元素（用 setProperty 強制 !important）
+      if (customControls) customControls.style.setProperty('display', 'none', 'important');
+      if (colorPickerBar) colorPickerBar.style.setProperty('display', 'none', 'important');
+      if (bottomBar) bottomBar.style.setProperty('display', 'none', 'important');
 
-      // 3. 計算可見空間
-      const topPadding = 48; // main-container 的 padding-top
-      const availableHeight = currentHeight - topPadding;
+      // 3. 鍵盤專屬 layout：用 paddingBottom 把內容往上推
+      const contentPaddingBottom = 250; // 固定值，把內容往上推
+      const logoInputGap = 10; // Logo 和輸入框之間的間距
+      const inputHeight = 40; // 輸入框固定高度（單行）
 
-      // 4. 鍵盤專屬 layout：從底部開始規劃固定元素
-      const inputHeight = 40; // 輸入框固定高度（單行，採用最滿情況）
-      const inputBottomGap = 0; // 輸入框距離鍵盤的固定距離（設為 0，讓整體往下移動）
-      const logoInputGap = 10; // Logo 和輸入框之間的固定間距（從 15px 縮小到 10px，讓 logo 更大）
-
-      // 5. Logo 高度 = 剩下的所有空間（自動適應不同手機的鍵盤高度）
-      const idealLogoHeight = availableHeight - inputHeight - inputBottomGap - logoInputGap;
-
-      // Debug: 輸出所有計算值
-      console.log('=== 鍵盤佈局計算（新邏輯）===');
-      console.log('currentHeight:', currentHeight);
-      console.log('availableHeight:', availableHeight);
-      console.log('固定參數:');
-      console.log('  - inputHeight:', inputHeight);
-      console.log('  - inputBottomGap:', inputBottomGap);
-      console.log('  - logoInputGap:', logoInputGap);
-      console.log('計算結果:');
-      console.log('  - idealLogoHeight (自動):', idealLogoHeight);
+      // Debug: 輸出計算值
+      console.log('=== 鍵盤佈局（paddingBottom 固定 250px）===');
       console.log('keyboardHeight:', keyboardHeight);
+      console.log('contentPaddingBottom:', contentPaddingBottom);
 
-      // 6. 設定 mobile-content-section 的佈局
-      // 保持 100vh 不變，內容靠上對齊，鍵盤遮住下方空白即可
+      // 4. 設定 mobile-content-section 的佈局
+      // 因為 body 高度固定為 initialHeight，所以用 flex-start 讓內容靠上
       if (mobileContentSection) {
-        // 不改變高度，讓它保持原本的 flex: 1（填滿剩餘空間）
-        mobileContentSection.style.gap = `${logoInputGap}px`; // Logo 和輸入框之間的間距
+        mobileContentSection.style.paddingBottom = '0';
+        mobileContentSection.style.gap = `${logoInputGap}px`;
         mobileContentSection.style.justifyContent = 'flex-start'; // 內容靠上對齊
 
         // 添加背景色顯示實際區域（測試用）
-        mobileContentSection.style.backgroundColor = 'rgba(0, 255, 0, 0.1)'; // 淡綠色
+        mobileContentSection.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
       }
 
-      // 7. 設定 Logo 容器的大小（縮小以配合鍵盤）
+      // 5. 設定 Logo 容器（固定高度，不用 flex:1 避免被壓縮）
+      const logoHeight = 200; // 固定高度
       if (logoContainer) {
         logoContainer.style.flex = 'none';
         logoContainer.style.width = '75%';
-        logoContainer.style.height = `${idealLogoHeight}px`;
+        logoContainer.style.height = `${logoHeight}px`;
       }
 
-      // 8. 設定輸入框為單行
+      // 6. 設定輸入框為單行
       if (inputArea) {
         inputArea.style.flex = 'none';
         inputArea.style.height = `${inputHeight}px`;
