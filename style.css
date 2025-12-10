@@ -1999,22 +1999,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
     box-sizing: border-box;
   }
 
-  /* Disabled 狀態：移除所有互動效果 */
-  .mobile-bottom-btn:disabled {
-    cursor: default;
-    pointer-events: none !important;
-    opacity: 1 !important;
-    background: none !important;
-    -webkit-tap-highlight-color: transparent !important; /* 移除 iOS 觸摸高亮 */
-    -webkit-touch-callout: none !important; /* 移除長按選單 */
-    user-select: none !important; /* 防止選取 */
-  }
-
-  .mobile-bottom-btn:disabled:active {
-    background: none !important;
-    opacity: 1 !important;
-    transform: none !important; /* 防止任何變形 */
-  }
 
   .mobile-bottom-btn img {
     width: 45%; /* icon 大小為按鈕的 45% */
@@ -2115,7 +2099,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
   /* Custom 和 Rotate 按鈕的 inactive 狀態（有文字但非當前選中）*/
   .mobile-custom-btn.inactive,
   .mobile-rotate-btn.inactive {
-    opacity: 0.8 !important;
+    opacity: 0.6 !important;
   }
 
   /* Active 狀態（當前選中）*/

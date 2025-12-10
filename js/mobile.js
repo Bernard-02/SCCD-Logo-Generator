@@ -1198,7 +1198,7 @@ if (window.visualViewport) {
       const totalContentHeight = idealLogoHeight + inputHeight;
 
       // 使用 paddingBottom 推內容上去，並額外增加一些 padding
-      const inputBottomPadding = 20; // 輸入框下方額外的 padding
+      const inputBottomPadding = 10; // 輸入框下方額外的 padding
       const neededPaddingBottom = keyboardHeight + inputBottomPadding;
 
       // Debug: 輸出計算值
