@@ -8,6 +8,34 @@
   box-sizing: border-box;
 }
 
+/* --- 橫向模式提示（僅手機） --- */
+@media (max-width: 768px) and (orientation: landscape) {
+  body::before {
+    content: "請旋轉手機，以獲得最佳使用體驗\APlease rotate your phone for the best experience";
+    white-space: pre-wrap;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: white;
+    color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 1.2rem;
+    line-height: 1.8;
+    padding: 2rem;
+    z-index: 99999;
+    font-family: var(--font-family);
+  }
+
+  body > * {
+    display: none !important;
+  }
+}
+
 :root {
   --font-family: "Inter-Medium", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -1961,6 +1989,23 @@ body.wireframe-mode .angle-input:not(.enabled) {
     box-sizing: border-box;
   }
 
+  /* Disabled 狀態：移除所有互動效果 */
+  .mobile-bottom-btn:disabled {
+    cursor: default;
+    pointer-events: none !important;
+    opacity: 1 !important;
+    background: none !important;
+    -webkit-tap-highlight-color: transparent !important; /* 移除 iOS 觸摸高亮 */
+    -webkit-touch-callout: none !important; /* 移除長按選單 */
+    user-select: none !important; /* 防止選取 */
+  }
+
+  .mobile-bottom-btn:disabled:active {
+    background: none !important;
+    opacity: 1 !important;
+    transform: none !important; /* 防止任何變形 */
+  }
+
   .mobile-bottom-btn img {
     width: 45%; /* icon 大小為按鈕的 45% */
     height: 45%;
@@ -2055,6 +2100,18 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
   body.wireframe-mode .mobile-bottom-btn:disabled {
     opacity: var(--wireframe-opacity);
+  }
+
+  /* Custom 和 Rotate 按鈕的 inactive 狀態（有文字但非當前選中）*/
+  .mobile-custom-btn.inactive,
+  .mobile-rotate-btn.inactive {
+    opacity: 0.8 !important;
+  }
+
+  /* Active 狀態（當前選中）*/
+  .mobile-custom-btn.active,
+  .mobile-rotate-btn.active {
+    opacity: 1 !important;
   }
 
   /* 手機版 Rotate 按鈕：當顯示 Play icon 時，向右調整 1px */

@@ -601,6 +601,9 @@ function toggleMobileCustomPanel() {
 
     // 重新調整 canvas 尺寸（因為 logo-container 縮小了）
     requestCanvasResize();
+
+    // 更新按鈕狀態
+    updateCustomRotateButtonStates();
   } else {
     // 如果調整區顯示，隱藏它（但保持在 Custom 模式）
     mobileElements.customAngleControls.addClass('hidden');
@@ -628,6 +631,9 @@ function toggleMobileCustomPanel() {
 
     // 重新調整 canvas 尺寸（因為 logo-container 變大了）
     requestCanvasResize();
+
+    // 更新按鈕狀態
+    updateCustomRotateButtonStates();
   }
 }
 
@@ -709,6 +715,9 @@ function toggleAutoRotate() {
 
       // 重新調整 canvas 尺寸（因為 logo-container 變大了）
       requestCanvasResize();
+
+      // 更新按鈕狀態
+      updateCustomRotateButtonStates();
     }
   } else {
     // 已經在 Auto 模式，只是 toggle
@@ -720,6 +729,9 @@ function toggleAutoRotate() {
 
   updateRotateIcon();
   updateUI();
+
+  // 更新按鈕狀態
+  updateCustomRotateButtonStates();
 }
 
 // 處理 Slider 變化
@@ -894,6 +906,32 @@ function updateMobileSliders() {
   }
 }
 
+// 更新 Custom 和 Rotate 按鈕的 active/inactive 狀態
+function updateCustomRotateButtonStates() {
+  if (!mobileElements.customBtn || !mobileElements.rotateBtn) return;
+
+  const hasText = letters.length > 0;
+  if (!hasText) return; // 沒有文字時不處理
+
+  // 檢查 custom panel 是否打開
+  const isCustomPanelOpen = mobileElements.customAngleControls &&
+                            !mobileElements.customAngleControls.hasClass('hidden');
+
+  if (isCustomPanelOpen) {
+    // Custom panel 打開：custom active, rotate inactive
+    mobileElements.customBtn.addClass('active');
+    mobileElements.customBtn.removeClass('inactive');
+    mobileElements.rotateBtn.addClass('inactive');
+    mobileElements.rotateBtn.removeClass('active');
+  } else {
+    // Custom panel 關閉：rotate active, custom inactive
+    mobileElements.customBtn.addClass('inactive');
+    mobileElements.customBtn.removeClass('active');
+    mobileElements.rotateBtn.addClass('active');
+    mobileElements.rotateBtn.removeClass('inactive');
+  }
+}
+
 // 更新手機版按鈕狀態
 function updateMobileButtons() {
   const hasText = letters.length > 0;
@@ -905,8 +943,12 @@ function updateMobileButtons() {
   if (mobileElements.customBtn) {
     if (!hasText) {
       mobileElements.customBtn.elt.disabled = true;
+      mobileElements.customBtn.removeClass('active');
+      mobileElements.customBtn.removeClass('inactive');
     } else {
       mobileElements.customBtn.elt.disabled = false;
+      // 更新 active/inactive 狀態
+      updateCustomRotateButtonStates();
     }
   }
 
@@ -914,8 +956,12 @@ function updateMobileButtons() {
   if (mobileElements.rotateBtn) {
     if (!hasText) {
       mobileElements.rotateBtn.elt.disabled = true;
+      mobileElements.rotateBtn.removeClass('active');
+      mobileElements.rotateBtn.removeClass('inactive');
     } else {
       mobileElements.rotateBtn.elt.disabled = false;
+      // 更新 active/inactive 狀態
+      updateCustomRotateButtonStates();
     }
   }
 
@@ -1138,29 +1184,29 @@ if (window.visualViewport) {
       document.body.style.width = '100%';
       document.body.style.height = `${initialHeight}px`; // 用固定值，不讓 body 跟著 viewport 縮小
 
-      // 3. 隱藏所有額外元素（用 setProperty 強制 !important）
+      // 3. 隱藏所有額外元素
       if (customControls) customControls.style.setProperty('display', 'none', 'important');
       if (colorPickerBar) colorPickerBar.style.setProperty('display', 'none', 'important');
       if (bottomBar) bottomBar.style.setProperty('display', 'none', 'important');
 
-      // 3. 計算可見空間
-      const topPadding = 48; // main-container 的 padding-top
-      const availableHeight = currentHeight - topPadding;
-
-      // 4. 鍵盤專屬 layout：根據可見空間計算
+      // 4. 鍵盤專屬 layout：使用固定值，更緊湊的佈局
+      const topPadding = 24; // main-container 的 padding-top（減少）
       const inputHeight = 40; // 輸入框固定高度（單行）
-      const logoInputGap = 15; // Logo 和輸入框之間的間距
-
-      // 5. Logo 高度 = 可見空間 - 輸入框 - gap
-      const logoHeight = availableHeight - inputHeight - logoInputGap;
+      const logoInputGap = 8; // Logo 和輸入框之間的間距（減少）
+      const logoHeight = 180; // Logo 固定高度（不隨可見空間變化）
 
       // Debug: 輸出計算值
       console.log('=== 鍵盤佈局 ===');
       console.log('currentHeight:', currentHeight);
-      console.log('availableHeight:', availableHeight);
+      console.log('topPadding:', topPadding);
       console.log('logoHeight:', logoHeight);
       console.log('inputHeight:', inputHeight);
       console.log('logoInputGap:', logoInputGap);
+
+      // 5. 設定 main-container 的 padding-top
+      if (mainContainer) {
+        mainContainer.style.setProperty('padding-top', `${topPadding}px`, 'important');
+      }
 
       // 6. 設定 mobile-content-section 的佈局
       if (mobileContentSection) {
@@ -1172,14 +1218,14 @@ if (window.visualViewport) {
         mobileContentSection.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
       }
 
-      // 7. 設定 Logo 容器（用 !important 確保覆蓋 CSS）
+      // 8. 設定 Logo 容器（用 !important 確保覆蓋 CSS）
       if (logoContainer) {
         logoContainer.style.setProperty('flex', 'none', 'important');
         logoContainer.style.setProperty('width', '75%', 'important');
         logoContainer.style.setProperty('height', `${logoHeight}px`, 'important');
       }
 
-      // 8. 設定輸入框為單行（用 !important 確保覆蓋 CSS）
+      // 9. 設定輸入框為單行（用 !important 確保覆蓋 CSS）
       if (inputArea) {
         inputArea.style.setProperty('flex', 'none', 'important');
         inputArea.style.setProperty('height', `${inputHeight}px`, 'important');
@@ -1191,16 +1237,14 @@ if (window.visualViewport) {
         inputArea.style.boxSizing = 'border-box';
       }
 
-      // 9. 重新計算 canvas 尺寸（因為 logo 寬度變成 55%）
-      // Keyboard 使用 inline style（無 CSS transition），直接執行 resize
-      // 使用 requestAnimationFrame 確保 DOM 已更新
+      // 10. 重新計算 canvas 尺寸
       requestAnimationFrame(() => {
         if (typeof resizeMobileCanvas === 'function') {
           resizeMobileCanvas();
         }
       });
 
-      // 10. 調整輸入框的 padding（單行居中）
+      // 11. 調整輸入框的 padding（單行居中）
       if (mobileElements.inputBox) {
         setTimeout(() => {
           const currentText = mobileElements.inputBox.value();
@@ -1225,6 +1269,10 @@ if (window.visualViewport) {
       if (bottomBar) bottomBar.style.display = '';
 
       // 恢復佈局設定
+      if (mainContainer) {
+        mainContainer.style.paddingTop = ''; // 恢復 main-container 的 padding-top
+      }
+
       if (mobileContentSection) {
         mobileContentSection.style.flex = '';
         mobileContentSection.style.height = ''; // 恢復高度
