@@ -1143,9 +1143,8 @@ if (window.visualViewport) {
       if (colorPickerBar) colorPickerBar.style.setProperty('display', 'none', 'important');
       if (bottomBar) bottomBar.style.setProperty('display', 'none', 'important');
 
-      // 3. 鍵盤專屬 layout：用 paddingBottom 把內容往上推
-      const contentPaddingBottom = 250; // 固定值，把內容往上推
-      const logoInputGap = 10; // Logo 和輸入框之間的間距
+      // 3. 鍵盤專屬 layout
+      const logoInputGap = 30; // Logo 和輸入框之間的間距（增大）
       const inputHeight = 40; // 輸入框固定高度（單行）
 
       // Debug: 輸出計算值
@@ -1239,6 +1238,7 @@ if (window.visualViewport) {
         inputArea.style.height = '';
         inputArea.style.minHeight = '';
         inputArea.style.marginBottom = '';
+        inputArea.style.border = ''; // 移除測試用紅框
       }
 
       // 重新計算 canvas 尺寸（恢復正常大小）
@@ -1251,11 +1251,12 @@ if (window.visualViewport) {
       });
 
       // 調整輸入框的 padding（恢復正常狀態）
+      // 等待 CSS transition 完成後再計算（font-size transition 是 0.2s）
       if (mobileElements.inputBox) {
         setTimeout(() => {
           const currentText = mobileElements.inputBox.value();
           updateMobileInputBoxVerticalAlignment(mobileElements.inputBox, currentText);
-        }, 50);
+        }, 250); // 增加等待時間
       }
     }
   });

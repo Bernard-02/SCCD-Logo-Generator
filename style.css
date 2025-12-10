@@ -1818,11 +1818,15 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
   .mobile-input-area.keyboard-active #mobile-input-box {
     min-height: auto !important;
-    max-height: 60px !important;
+    height: 100% !important; /* 填滿父容器高度 */
+    max-height: none !important;
     overflow: hidden; /* 隱藏多餘內容 */
     white-space: nowrap; /* 強制單行 */
-    text-align: center; /* 文字置中 */
+    text-align: center; /* 文字水平置中 */
     font-size: 2rem !important; /* 鍵盤模式下統一使用小字體，不區分字數 */
+    padding-top: 0 !important; /* 移除 padding */
+    padding-bottom: 0 !important;
+    line-height: 40px !important; /* 用 line-height 垂直居中，與 inputHeight 一致 */
   }
 
   #mobile-input-box {
