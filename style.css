@@ -10,15 +10,24 @@
 
 /* --- 橫向模式提示（僅手機） --- */
 @media (max-width: 768px) and (orientation: landscape) {
+  /* 確保 body 和 html 都是白色背景 */
+  html,
+  body {
+    background: white !important;
+    overflow: hidden !important;
+  }
+
   body::before {
     content: "請旋轉手機，以獲得最佳使用體驗\APlease rotate your phone for the best experience";
     white-space: pre-wrap;
     position: fixed;
     top: 0;
     left: 0;
+    right: 0;
+    bottom: 0;
     width: 100vw;
     height: 100vh;
-    background: white;
+    background: white !important;
     color: black;
     display: flex;
     align-items: center;
@@ -33,6 +42,7 @@
 
   body > * {
     display: none !important;
+    visibility: hidden !important;
   }
 }
 
@@ -2081,7 +2091,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     border-radius: 50%;
   }
 
-  .mobile-bottom-btn:active {
+  .mobile-bottom-btn:active:not(:disabled) {
     opacity: 0.6;
   }
 

@@ -1189,19 +1189,28 @@ if (window.visualViewport) {
       if (colorPickerBar) colorPickerBar.style.setProperty('display', 'none', 'important');
       if (bottomBar) bottomBar.style.setProperty('display', 'none', 'important');
 
-      // 4. 鍵盤專屬 layout：使用固定值，更緊湊的佈局
-      const topPadding = 24; // main-container 的 padding-top（減少）
+      // 4. 鍵盤專屬 layout：使用原本的邏輯（paddingBottom 推上去）
+      const topPadding = 32; // main-container 的 padding-top（減少一些）
+      const availableHeight = currentHeight - topPadding;
+
       const inputHeight = 40; // 輸入框固定高度（單行）
-      const logoInputGap = 8; // Logo 和輸入框之間的間距（減少）
-      const logoHeight = 180; // Logo 固定高度（不隨可見空間變化）
+      const idealLogoHeight = availableHeight * 0.75; // Logo 佔可視區域的 75%
+      const totalContentHeight = idealLogoHeight + inputHeight;
+
+      // 使用 paddingBottom 推內容上去，並額外增加一些 padding
+      const inputBottomPadding = 20; // 輸入框下方額外的 padding
+      const neededPaddingBottom = keyboardHeight + inputBottomPadding;
 
       // Debug: 輸出計算值
       console.log('=== 鍵盤佈局 ===');
       console.log('currentHeight:', currentHeight);
       console.log('topPadding:', topPadding);
-      console.log('logoHeight:', logoHeight);
+      console.log('availableHeight:', availableHeight);
+      console.log('idealLogoHeight:', idealLogoHeight);
       console.log('inputHeight:', inputHeight);
-      console.log('logoInputGap:', logoInputGap);
+      console.log('totalContentHeight:', totalContentHeight);
+      console.log('keyboardHeight:', keyboardHeight);
+      console.log('neededPaddingBottom:', neededPaddingBottom);
 
       // 5. 設定 main-container 的 padding-top
       if (mainContainer) {
@@ -1210,22 +1219,24 @@ if (window.visualViewport) {
 
       // 6. 設定 mobile-content-section 的佈局
       if (mobileContentSection) {
-        mobileContentSection.style.setProperty('padding-bottom', '0', 'important');
-        mobileContentSection.style.setProperty('gap', `${logoInputGap}px`, 'important');
-        mobileContentSection.style.setProperty('justify-content', 'flex-start', 'important');
+        mobileContentSection.style.setProperty('flex', 'none', 'important');
+        mobileContentSection.style.setProperty('padding-top', '0', 'important');
+        mobileContentSection.style.setProperty('padding-bottom', `${neededPaddingBottom}px`, 'important');
+        mobileContentSection.style.setProperty('gap', '0', 'important');
+        mobileContentSection.style.setProperty('justify-content', 'center', 'important');
 
         // 添加背景色顯示實際區域（測試用）
         mobileContentSection.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
       }
 
-      // 8. 設定 Logo 容器（用 !important 確保覆蓋 CSS）
+      // 7. 設定 Logo 容器（用 !important 確保覆蓋 CSS）
       if (logoContainer) {
         logoContainer.style.setProperty('flex', 'none', 'important');
-        logoContainer.style.setProperty('width', '75%', 'important');
-        logoContainer.style.setProperty('height', `${logoHeight}px`, 'important');
+        logoContainer.style.setProperty('width', '65%', 'important');
+        logoContainer.style.setProperty('height', `${idealLogoHeight}px`, 'important');
       }
 
-      // 9. 設定輸入框為單行（用 !important 確保覆蓋 CSS）
+      // 8. 設定輸入框為單行（用 !important 確保覆蓋 CSS）
       if (inputArea) {
         inputArea.style.setProperty('flex', 'none', 'important');
         inputArea.style.setProperty('height', `${inputHeight}px`, 'important');
