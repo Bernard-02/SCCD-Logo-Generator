@@ -25,8 +25,6 @@
     left: 0;
     right: 0;
     bottom: 0;
-    width: 100vw;
-    height: 100vh;
     background: white !important;
     color: black;
     display: flex;
@@ -35,7 +33,8 @@
     text-align: center;
     font-size: 1.2rem;
     line-height: 1.8;
-    padding: 2rem;
+    padding: 0;
+    margin: 0;
     z-index: 99999;
     font-family: var(--font-family);
   }
@@ -1982,6 +1981,17 @@ body.wireframe-mode .angle-input:not(.enabled) {
     z-index: 200;
   }
 
+  /* Custom + Rotate 按鈕組容器（共用外框） */
+  .mobile-rotation-group {
+    display: flex;
+    flex-shrink: 0;
+    flex-grow: 0;
+    height: var(--mobile-btn-size);
+    border: 2px solid;
+    border-radius: 18px; /* 與其他按鈕一致的圓角 */
+    box-sizing: border-box;
+  }
+
   .mobile-bottom-btn {
     /* 按鈕尺寸使用 CSS 變數，1:1 正方形 */
     width: var(--mobile-btn-size);
@@ -1995,8 +2005,13 @@ body.wireframe-mode .angle-input:not(.enabled) {
     align-items: center;
     justify-content: center;
     padding: 0;
-    transition: opacity 0.2s ease, border-color 0s ease;
+    transition: opacity 0.2s ease, border-color 0s ease, background-color 0.2s ease;
     box-sizing: border-box;
+  }
+
+  /* 在 rotation-group 內的按鈕移除外框（不需要分隔線） */
+  .mobile-rotation-group .mobile-bottom-btn {
+    border: none;
   }
 
 
@@ -2096,17 +2111,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
     opacity: var(--wireframe-opacity);
   }
 
-  /* Custom 和 Rotate 按鈕的 inactive 狀態（有文字但非當前選中）*/
-  .mobile-custom-btn.inactive,
-  .mobile-rotate-btn.inactive {
-    opacity: 0.6 !important;
-  }
-
-  /* Active 狀態（當前選中）*/
-  .mobile-custom-btn.active,
-  .mobile-rotate-btn.active {
-    opacity: 1 !important;
-  }
 
   /* 手機版 Rotate 按鈕：當顯示 Play icon 時，向右調整 1px */
   .mobile-rotate-btn.play-icon #mobile-rotate-icon {
@@ -2115,20 +2119,39 @@ body.wireframe-mode .angle-input:not(.enabled) {
   }
 
   /* 根據模式設定底部按鈕邊框顏色 */
-  body.standard-mode .mobile-bottom-btn {
+  body.standard-mode .mobile-bottom-btn,
+  body.standard-mode .mobile-rotation-group {
     border-color: black;
     color: black;
   }
 
-  body.inverse-mode .mobile-bottom-btn {
+  body.inverse-mode .mobile-bottom-btn,
+  body.inverse-mode .mobile-rotation-group {
     border-color: white;
     color: white;
   }
 
-  body.wireframe-mode .mobile-bottom-btn {
+  body.wireframe-mode .mobile-bottom-btn,
+  body.wireframe-mode .mobile-rotation-group {
     border-color: var(--wireframe-border);
     color: var(--wireframe-border);
     background-color: rgba(255, 255, 255, 0.28); /* 半透明 28% 白色 */
+  }
+
+  /* 移除 wireframe 模式下內部按鈕的背景 */
+  body.wireframe-mode .mobile-rotation-group .mobile-bottom-btn {
+    background-color: transparent; /* 內部按鈕移除背景 */
+  }
+
+  /* Rotation group 內的按鈕 opacity 邏輯（覆蓋原有的 inactive 設定）*/
+  /* Active 狀態：100% opacity */
+  .mobile-rotation-group .mobile-bottom-btn.active {
+    opacity: 1 !important;
+  }
+
+  /* Inactive 狀態：60% opacity */
+  .mobile-rotation-group .mobile-bottom-btn.inactive {
+    opacity: 0.6 !important;
   }
 
   /* 移除面板的邊框樣式（各元件有自己的邊框）*/

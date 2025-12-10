@@ -1190,7 +1190,8 @@ if (window.visualViewport) {
       if (bottomBar) bottomBar.style.setProperty('display', 'none', 'important');
 
       // 4. 鍵盤專屬 layout：使用原本的邏輯（paddingBottom 推上去）
-      const topPadding = 32; // main-container 的 padding-top（減少一些）
+      const topPadding = 20; // main-container 的 padding-top（減少讓 logo 往上）
+      const logoInputGap = 12; // Logo 和輸入框之間的 gap（增加來保持輸入框位置）
       const availableHeight = currentHeight - topPadding;
 
       const inputHeight = 40; // 輸入框固定高度（單行）
@@ -1222,7 +1223,7 @@ if (window.visualViewport) {
         mobileContentSection.style.setProperty('flex', 'none', 'important');
         mobileContentSection.style.setProperty('padding-top', '0', 'important');
         mobileContentSection.style.setProperty('padding-bottom', `${neededPaddingBottom}px`, 'important');
-        mobileContentSection.style.setProperty('gap', '0', 'important');
+        mobileContentSection.style.setProperty('gap', `${logoInputGap}px`, 'important');
         mobileContentSection.style.setProperty('justify-content', 'center', 'important');
 
         // 添加背景色顯示實際區域（測試用）
