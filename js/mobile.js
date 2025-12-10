@@ -1168,14 +1168,14 @@ if (window.visualViewport) {
       console.log('keyboardHeight:', keyboardHeight);
 
       // 6. 設定 mobile-content-section 的佈局
-      // 直接設定高度 = 可見區域，確保不同手機鍵盤高度下視覺一致
+      // 改為靠上對齊，避免底部位置計算問題
       if (mobileContentSection) {
         mobileContentSection.style.flex = 'none';
         mobileContentSection.style.height = `${availableHeight}px`; // 高度 = 可見區域
         mobileContentSection.style.paddingTop = '0';
         mobileContentSection.style.paddingBottom = '0';
         mobileContentSection.style.gap = `${logoInputGap}px`; // Logo 和輸入框之間的間距
-        mobileContentSection.style.justifyContent = 'flex-end'; // 內容靠底部對齊
+        mobileContentSection.style.justifyContent = 'flex-start'; // 內容靠上對齊
 
         // 添加背景色顯示實際區域（測試用）
         mobileContentSection.style.backgroundColor = 'rgba(0, 255, 0, 0.1)'; // 淡綠色
