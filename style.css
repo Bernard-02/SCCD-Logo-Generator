@@ -10,13 +10,6 @@
 
 /* --- 橫向模式提示（僅手機） --- */
 @media (max-width: 768px) and (orientation: landscape) {
-  /* 確保 body 和 html 都是白色背景 */
-  html,
-  body {
-    background: white !important;
-    overflow: hidden !important;
-  }
-
   /* 橫向提示覆蓋層 */
   #landscape-overlay {
     display: flex !important;
@@ -26,12 +19,10 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: white !important;
-    color: black;
-    flex-direction: column;
+    flex-direction: row; /* 改為橫向排列 */
     align-items: center;
     justify-content: center;
-    text-align: center;
+    gap: 2rem; /* icon 和文字之間的間距 */
     z-index: 99999;
     font-family: var(--font-family);
   }
@@ -39,18 +30,52 @@
   #landscape-overlay-icon {
     width: 80px;
     height: 80px;
-    margin-bottom: 2rem;
+    flex-shrink: 0; /* 防止 icon 被壓縮 */
   }
 
   #landscape-overlay-text {
     font-size: 1.2rem;
     line-height: 1.8;
     white-space: pre-wrap;
+    text-align: left; /* 文字靠左對齊 */
   }
 
   body > *:not(#landscape-overlay) {
     display: none !important;
     visibility: hidden !important;
+  }
+
+  /* Standard 模式：白底黑字 */
+  body.standard-mode,
+  body.standard-mode html {
+    background: white !important;
+  }
+
+  body.standard-mode #landscape-overlay {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Inverse 模式：黑底白字 */
+  body.inverse-mode,
+  body.inverse-mode html {
+    background: black !important;
+  }
+
+  body.inverse-mode #landscape-overlay {
+    background: black !important;
+    color: white !important;
+  }
+
+  /* Wireframe 模式：使用當前 wireframe 背景色 */
+  body.wireframe-mode,
+  body.wireframe-mode html {
+    background: var(--current-wireframe-bg) !important;
+  }
+
+  body.wireframe-mode #landscape-overlay {
+    background: var(--current-wireframe-bg) !important;
+    color: var(--current-wireframe-text) !important;
   }
 }
 

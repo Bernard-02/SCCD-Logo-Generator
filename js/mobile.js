@@ -1235,9 +1235,6 @@ if (window.visualViewport) {
         mobileContentSection.style.setProperty('padding-bottom', `${neededPaddingBottom}px`, 'important');
         mobileContentSection.style.setProperty('gap', `${logoInputGap}px`, 'important');
         mobileContentSection.style.setProperty('justify-content', 'center', 'important');
-
-        // 添加背景色顯示實際區域（測試用）
-        mobileContentSection.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
       }
 
       // 7. 設定 Logo 容器（用 !important 確保覆蓋 CSS）
@@ -1253,10 +1250,6 @@ if (window.visualViewport) {
         inputArea.style.setProperty('height', `${inputHeight}px`, 'important');
         inputArea.style.setProperty('min-height', 'auto', 'important');
         inputArea.style.setProperty('margin-bottom', '0', 'important');
-
-        // 添加邊框顯示實際區域（測試用）
-        inputArea.style.border = '2px solid red';
-        inputArea.style.boxSizing = 'border-box';
       }
 
       // 10. 重新計算 canvas 尺寸

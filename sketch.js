@@ -881,6 +881,36 @@ function setup() {
       body.addClass('standard-mode');
     }
   }
+
+  // --- 監聽螢幕方向變化（處理 landscape 模式下的 wireframe 動畫暫停）---
+  if (isMobileMode) {
+    window.addEventListener('orientationchange', handleOrientationChange);
+    // 也監聽 resize 事件作為備援（某些設備可能不觸發 orientationchange）
+    window.addEventListener('resize', handleOrientationChange);
+  }
+}
+
+// --- 處理螢幕方向變化 ---
+function handleOrientationChange() {
+  // 使用 setTimeout 確保在方向變化完成後再執行
+  setTimeout(() => {
+    // 在 landscape 模式下，確保 CSS 變數已設定（Wireframe 模式會在 draw() 中持續更新）
+    if (mode === "Wireframe" && wireframeColor) {
+      let r = red(wireframeColor);
+      let g = green(wireframeColor);
+      let b = blue(wireframeColor);
+      let cssColor = `rgb(${r}, ${g}, ${b})`;
+
+      let contrastColor = getContrastColor(wireframeColor);
+      let borderR = red(contrastColor);
+      let borderG = green(contrastColor);
+      let borderB = blue(contrastColor);
+      let borderCssColor = `rgb(${borderR}, ${borderG}, ${borderB})`;
+
+      document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
+      document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
+    }
+  }, 100); // 延遲 100ms 確保方向變化完成
 }
 
 // --- 打字機動畫函數 ---
@@ -3825,6 +3855,10 @@ function updateBackgroundColor(bgColor, disableTransition = false) {
     document.documentElement.style.setProperty('--wireframe-border', borderCssColor);
     document.documentElement.style.setProperty('--wireframe-opacity', opacityValue);
 
+    // 更新 landscape overlay 的 CSS 變數
+    document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
+    document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
+
     // 根據 icon 顏色添加或移除 dark-icons class
     if (isDarkIcons) {
       body.addClass('dark-icons');
@@ -3854,6 +3888,10 @@ function updateBackgroundColor(bgColor, disableTransition = false) {
     document.documentElement.style.setProperty('--wireframe-bg', cssColor);
     document.documentElement.style.setProperty('--wireframe-border', borderCssColor);
     document.documentElement.style.setProperty('--wireframe-opacity', opacityValue);
+
+    // 更新 landscape overlay 的 CSS 變數
+    document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
+    document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
 
     // 根據 icon 顏色添加或移除 dark-icons class
     if (body) {
