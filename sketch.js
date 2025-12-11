@@ -894,13 +894,18 @@ function setup() {
 }
 
 // --- 處理螢幕方向變化（使用 JS 控制 landscape/portrait 模式）---
+// Safari iOS 有嚴重的 display:none 問題，需要特殊處理
 function handleOrientationChange() {
   if (!isMobileMode) return;
 
-  const isLandscape = window.innerWidth > window.innerHeight;
+  // 使用 matchMedia 替代 innerWidth（Safari 更可靠）
+  const isLandscape = window.matchMedia("(orientation: landscape)").matches;
   const landscapeOverlay = document.getElementById('landscape-overlay');
   const mainContainer = document.querySelector('.main-container');
   const body = document.body;
+
+  console.log('Orientation:', isLandscape ? 'LANDSCAPE' : 'PORTRAIT',
+              'Width:', window.innerWidth, 'Height:', window.innerHeight);
 
   if (isLandscape) {
     // ==================== 進入 Landscape 模式 ====================
@@ -938,34 +943,60 @@ function handleOrientationChange() {
 
     // 2. 顯示 overlay，隱藏主容器
     landscapeOverlay.style.display = 'flex';
+    landscapeOverlay.style.opacity = '1';
+    landscapeOverlay.style.visibility = 'visible';
+    landscapeOverlay.style.zIndex = '99999';
+
     if (mainContainer) {
       mainContainer.style.setProperty('display', 'none', 'important');
+      mainContainer.style.setProperty('opacity', '0', 'important');
+      mainContainer.style.setProperty('visibility', 'hidden', 'important');
     }
+
+    console.log('Landscape overlay shown');
 
   } else {
     // ==================== 回到 Portrait 模式 ====================
+    console.log('Switching to portrait...');
 
-    // 1. 隱藏 overlay
+    // Safari 修復：先強制隱藏 overlay
     if (landscapeOverlay) {
       landscapeOverlay.style.display = 'none';
+      landscapeOverlay.style.opacity = '0';
+      landscapeOverlay.style.visibility = 'hidden';
+      landscapeOverlay.style.zIndex = '-1';
+      console.log('Landscape overlay hidden');
     }
 
-    // 2. 顯示主容器
+    // 強制 reflow（Safari 需要）
+    if (landscapeOverlay) landscapeOverlay.offsetHeight;
+
+    // 顯示主容器（移除所有限制）
     if (mainContainer) {
       mainContainer.style.removeProperty('display');
+      mainContainer.style.removeProperty('opacity');
+      mainContainer.style.removeProperty('visibility');
+      console.log('Main container restored');
     }
 
-    // 3. 恢復 body 背景
+    // 再次強制 reflow
+    if (mainContainer) mainContainer.offsetHeight;
+
+    // 恢復 body 背景
     body.style.removeProperty('background');
 
-    // 4. 重新渲染 canvas
+    // 使用多個 requestAnimationFrame 確保 Safari 正確渲染
     requestAnimationFrame(() => {
-      if (typeof resizeMobileCanvas === 'function') {
-        resizeMobileCanvas();
-      }
-      if (mainContainer) {
-        mainContainer.offsetHeight; // 觸發 reflow
-      }
+      requestAnimationFrame(() => {
+        if (typeof resizeMobileCanvas === 'function') {
+          resizeMobileCanvas();
+          console.log('Canvas resized');
+        }
+        if (mainContainer) {
+          mainContainer.offsetHeight; // 再次觸發 reflow
+        }
+        console.log('Portrait restoration complete');
+      });
     });
   }
 }
