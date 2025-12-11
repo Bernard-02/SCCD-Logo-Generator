@@ -1090,10 +1090,10 @@ body.wireframe-mode .angle-input:not(.enabled) {
   /* Logo 大小等級：直接控制寬度 */
   /* 1. 初始狀態：100% - 已在上方設定 */
 
-  /* 2. Custom 或 Color Picker 其中一個出現：縮小至 75% */
+  /* 2. Custom 或 Color Picker 其中一個出現：縮小至 90% */
   .mobile-logo-container.has-custom,
   .mobile-logo-container.has-colorpicker {
-    width: 75%;
+    width: 90%;
   }
 
   /* 3. Custom 和 Color Picker 同時出現：縮小至 65% */
@@ -1825,13 +1825,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     margin-bottom: 0;
   }
 
-  /* 最滿狀態（Wireframe + Custom + Color Picker）：減少輸入框上下空間 */
-  body.wireframe-mode .mobile-input-area.has-custom.has-colorpicker {
-    flex: 0 0 auto; /* 不佔用額外空間，只保留內容高度 */
-    min-height: calc(2rem * 1.2); /* 最小高度：1行文字 */
-    padding-top: 0.2rem; /* 減少上方空間 */
-    padding-bottom: 0.2rem; /* 減少下方空間 */
-  }
+  /* 最滿狀態（Wireframe + Custom + Color Picker）：Wireframe 輸入框永遠單行，不需要額外縮小，讓 logo 可以更大 */
 
   /* 鍵盤激活狀態：輸入框強制單行顯示 */
   .mobile-input-area.keyboard-active {
@@ -1942,9 +1936,29 @@ body.wireframe-mode .angle-input:not(.enabled) {
     opacity: 0.5;
   }
 
-  /* Wireframe 模式下的輸入框顏色 */
+  /* Wireframe 模式下的輸入框：永遠單行 */
   body.wireframe-mode #mobile-input-box {
     color: var(--wireframe-border);
+    font-size: 2rem !important; /* 使用較小字體 */
+    height: calc(2rem * 1.2); /* 單行高度 */
+    min-height: calc(2rem * 1.2);
+    max-height: calc(2rem * 1.2); /* 限制為單行 */
+    white-space: nowrap; /* 不換行 */
+    overflow-x: auto; /* 允許水平滾動 */
+    overflow-y: hidden; /* 隱藏垂直滾動 */
+    text-align: center;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    /* 隱藏滾動條 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  /* Wireframe 模式隱藏 WebKit 瀏覽器的滾動條 */
+  body.wireframe-mode #mobile-input-box::-webkit-scrollbar {
+    display: none;
   }
 
   /* Wireframe 模式下的 placeholder */
@@ -1957,6 +1971,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
   .mobile-bottom-bar {
     /* 改為參與 flex 佈局 */
     flex: 0 0 auto; /* 不縮小不擴展 */
+    width: 100%; /* 與 mobile-content-section 一致 */
     display: flex;
     /* 高度：等於按鈕的高度 */
     height: var(--mobile-btn-size);

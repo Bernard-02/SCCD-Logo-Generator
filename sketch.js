@@ -959,43 +959,52 @@ function handleOrientationChange() {
     // ==================== 回到 Portrait 模式 ====================
     console.log('Switching to portrait...');
 
-    // Safari 修復：先強制隱藏 overlay
+    // Safari iOS 修復：不使用 display:none，改用 transform 移出螢幕
+    // 這是針對 Safari iOS display:none bug 的 workaround
     if (landscapeOverlay) {
-      landscapeOverlay.style.display = 'none';
+      landscapeOverlay.style.transform = 'translate(-9999px, -9999px)';
       landscapeOverlay.style.opacity = '0';
-      landscapeOverlay.style.visibility = 'hidden';
-      landscapeOverlay.style.zIndex = '-1';
-      console.log('Landscape overlay hidden');
+      landscapeOverlay.style.zIndex = '-9999';
+      landscapeOverlay.style.pointerEvents = 'none';
+      console.log('Landscape overlay moved off-screen');
     }
 
-    // 強制 reflow（Safari 需要）
-    if (landscapeOverlay) landscapeOverlay.offsetHeight;
-
-    // 顯示主容器（移除所有限制）
+    // 顯示主容器（移除所有 inline style）
     if (mainContainer) {
       mainContainer.style.removeProperty('display');
       mainContainer.style.removeProperty('opacity');
       mainContainer.style.removeProperty('visibility');
+      mainContainer.style.removeProperty('transform'); // 移除任何可能的 transform
       console.log('Main container restored');
     }
 
-    // 再次強制 reflow
+    // 強制 reflow
     if (mainContainer) mainContainer.offsetHeight;
+    document.body.offsetHeight;
 
     // 恢復 body 背景
     body.style.removeProperty('background');
 
-    // 使用多個 requestAnimationFrame 確保 Safari 正確渲染
+    // 強制頁面重新layout（Safari iOS 需要）
+    window.scrollTo(0, 0);
+
+    // 使用多層 requestAnimationFrame 確保正確渲染
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (typeof resizeMobileCanvas === 'function') {
-          resizeMobileCanvas();
-          console.log('Canvas resized');
-        }
-        if (mainContainer) {
-          mainContainer.offsetHeight; // 再次觸發 reflow
-        }
-        console.log('Portrait restoration complete');
+        requestAnimationFrame(() => {
+          if (typeof resizeMobileCanvas === 'function') {
+            resizeMobileCanvas();
+            console.log('Canvas resized');
+          }
+
+          // 最後再次確認 overlay 完全隱藏（延遲設定 display:none）
+          if (landscapeOverlay) {
+            landscapeOverlay.style.display = 'none';
+            console.log('Landscape overlay display:none applied');
+          }
+
+          console.log('Portrait restoration complete');
+        });
       });
     });
   }
@@ -1777,8 +1786,8 @@ function drawPlaceholder(pg) {
 
   // 繪製尺寸：根據 canvas 大小動態調整
   // 桌面版基準：432x540 canvas，svgSize = 485.1
-  // 手機版：按相同比例縮放，再縮小 4% 作為安全邊距
-  let svgSize = isMobileMode ? (width / 432) * 485.1 * 1.1 : 485.1;
+  // 手機版：按相同比例縮放，縮小到 95% 讓 placeholder 更小
+  let svgSize = isMobileMode ? (width / 432) * 485.1 * 0.95 : 485.1 * 0.95;
 
   // 根據 isWhiteVersion 選擇正確的 SVG 檔案
   let rImg = isWhiteVersion ? placeholderR_white : placeholderR;
