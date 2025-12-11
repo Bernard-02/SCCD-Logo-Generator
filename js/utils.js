@@ -226,6 +226,13 @@ function updateIconsForMode() {
   // 更新手機版 Mode 按鈕圖標
   updateMobileModeIcon();
 
+  // 更新橫向提示的 Rotate Phone 圖標
+  const landscapeIcon = document.getElementById('landscape-overlay-icon');
+  if (landscapeIcon) {
+    const rotatePhoneIconSrc = `Panel Icon/Rotate_Phone${suffix}.svg`;
+    landscapeIcon.src = rotatePhoneIconSrc;
+  }
+
   // 更新手機版按鈕和面板的邊框顏色
   if (isWireframeMode && wireframeStrokeColor) {
     // Wireframe 模式：動態設定邊框顏色

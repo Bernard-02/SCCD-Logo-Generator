@@ -17,9 +17,10 @@
     overflow: hidden !important;
   }
 
-  body::before {
-    content: "請旋轉手機，以獲得最佳使用體驗\APlease rotate your phone for the best experience";
-    white-space: pre-wrap;
+  /* 橫向提示覆蓋層 */
+  #landscape-overlay {
+    display: flex !important;
+    visibility: visible !important;
     position: fixed;
     top: 0;
     left: 0;
@@ -27,22 +28,35 @@
     bottom: 0;
     background: white !important;
     color: black;
-    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    font-size: 1.2rem;
-    line-height: 1.8;
-    padding: 0;
-    margin: 0;
     z-index: 99999;
     font-family: var(--font-family);
   }
 
-  body > * {
+  #landscape-overlay-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 2rem;
+  }
+
+  #landscape-overlay-text {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+  }
+
+  body > *:not(#landscape-overlay) {
     display: none !important;
     visibility: hidden !important;
   }
+}
+
+/* 橫向提示覆蓋層（平常隱藏） */
+#landscape-overlay {
+  display: none;
 }
 
 :root {
@@ -1030,12 +1044,6 @@ body.wireframe-mode .angle-input:not(.enabled) {
 @media (max-width: 768px) {
   /* 取消所有手機版的 hover 效果（但保留 :active 效果以提供觸摸反饋）*/
   /* 排除 save button icon，避免干擾動畫 */
-  *:hover:not(:active):not(#save-img-mobile):not(#save-img) {
-    /* 重置所有 hover 效果，保持原始狀態 */
-    opacity: inherit !important;
-    /* background-color: inherit !important; 移除此行，避免干擾 body 背景色 */
-    }
-
   body {
     overflow: hidden; /* 手機版固定，不允許滾動 */
     position: fixed; /* 確保完全固定 */
@@ -2162,7 +2170,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     background-color: transparent; /* 內部按鈕移除背景 */
   }
 
-  /* Rotation group 內的按鈕 opacity 邏輯（覆蓋原有的 inactive 設定）*/
+  /* Rotation group 內的按鈕 opacity 邏輯 */
   /* Active 狀態：100% opacity */
   .mobile-rotation-group .mobile-bottom-btn.active {
     opacity: 1 !important;

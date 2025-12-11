@@ -1337,8 +1337,15 @@ function draw() {
           colorPickerCanvas.elt.addEventListener('mouseup', handleColorPickerMouseUp);
           colorPickerCanvas.elt.addEventListener('mouseleave', handleColorPickerMouseUp); // 鼠標離開時也停止拖曳
 
+          // 添加 touch 事件支持（手機端）
+          colorPickerCanvas.elt.addEventListener('touchstart', handleColorPickerTouchStart);
+          colorPickerCanvas.elt.addEventListener('touchmove', handleColorPickerTouchMove);
+          colorPickerCanvas.elt.addEventListener('touchend', handleColorPickerMouseUp);
+          colorPickerCanvas.elt.addEventListener('touchcancel', handleColorPickerMouseUp);
+
           // 全局 mouseup 事件，確保在 canvas 外放開鼠標也能停止拖曳
           document.addEventListener('mouseup', handleColorPickerMouseUp);
+          document.addEventListener('touchend', handleColorPickerMouseUp);
 
           // 繪製色環
           drawColorWheel();
@@ -2477,7 +2484,15 @@ function updateUI() {
                             colorPickerCanvas.elt.addEventListener('mousemove', handleColorPickerMouseMove);
                             colorPickerCanvas.elt.addEventListener('mouseup', handleColorPickerMouseUp);
                             colorPickerCanvas.elt.addEventListener('mouseleave', handleColorPickerMouseUp);
+
+                            // 添加 touch 事件支持（手機端）
+                            colorPickerCanvas.elt.addEventListener('touchstart', handleColorPickerTouchStart);
+                            colorPickerCanvas.elt.addEventListener('touchmove', handleColorPickerTouchMove);
+                            colorPickerCanvas.elt.addEventListener('touchend', handleColorPickerMouseUp);
+                            colorPickerCanvas.elt.addEventListener('touchcancel', handleColorPickerMouseUp);
+
                             document.addEventListener('mouseup', handleColorPickerMouseUp);
+                            document.addEventListener('touchend', handleColorPickerMouseUp);
 
                             // 立即繪製色環
                             drawColorWheel();
@@ -3572,6 +3587,36 @@ function handleColorPickerMouseUp() {
   if (desktopCanvasContainer) {
     desktopCanvasContainer.elt.style.removeProperty('transition');
   }
+}
+
+// Touch 事件處理函數
+function handleColorPickerTouchStart(e) {
+  if (!colorPickerCanvas) return;
+  e.preventDefault(); // 防止滾動
+  colorPickerDragging = true;
+  if (e.touches.length > 0) {
+    updateColorFromTouch(e.touches[0]);
+  }
+}
+
+function handleColorPickerTouchMove(e) {
+  if (!colorPickerCanvas || !colorPickerDragging) return;
+  e.preventDefault(); // 防止滾動
+  if (e.touches.length > 0) {
+    updateColorFromTouch(e.touches[0]);
+  }
+}
+
+function updateColorFromTouch(touch) {
+  if (!colorPickerCanvas) return;
+
+  // 創建一個類似 mouse event 的對象傳給 updateColorFromMouse
+  let fakeEvent = {
+    clientX: touch.clientX,
+    clientY: touch.clientY
+  };
+
+  updateColorFromMouse(fakeEvent);
 }
 
 function updateColorFromMouse(e) {
