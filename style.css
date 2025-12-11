@@ -19,20 +19,20 @@
   flex-direction: row; /* icon 左，文字右 */
   align-items: center;
   justify-content: center;
-  gap: 2rem;
+  gap: 1rem; /* 減少 icon 和文字之間的距離，從 2rem 改為 1rem */
   z-index: 99999;
   font-family: var(--font-family);
 }
 
 #landscape-overlay-icon {
-  width: 80px;
-  height: 80px;
+  width: 60px; /* 減小 icon 尺寸，從 80px 改為 60px */
+  height: 60px;
   flex-shrink: 0;
 }
 
 #landscape-overlay-text {
   font-size: 1.2rem;
-  line-height: 1.8;
+  line-height: 1.4; /* 減少文字行距，從 1.8 改為 1.4 */
   white-space: pre-wrap;
   text-align: left;
 }
@@ -1088,16 +1088,21 @@ body.wireframe-mode .angle-input:not(.enabled) {
   }
 
   /* Logo 大小等級：直接控制寬度 */
-  /* 1. 初始狀態：100% - 已在上方設定 */
+  /* 1. 初始狀態（standard/inverse，無 panel）：100% - 已在上方設定 */
 
-  /* 2. Custom 或 Color Picker 其中一個出現：縮小至 90% */
-  .mobile-logo-container.has-custom,
-  .mobile-logo-container.has-colorpicker {
-    width: 90%;
+  /* 2. Standard/Inverse 模式下有 custom 出現：縮小至 75% */
+  body.standard-mode .mobile-logo-container.has-custom,
+  body.inverse-mode .mobile-logo-container.has-custom {
+    width: 75%;
   }
 
-  /* 3. Custom 和 Color Picker 同時出現：縮小至 65% */
-  .mobile-logo-container.has-custom.has-colorpicker {
+  /* 3. Wireframe 模式下無 custom：保持 100%（color picker 一定存在但不縮小）*/
+  body.wireframe-mode .mobile-logo-container {
+    width: 100%;
+  }
+
+  /* 4. Wireframe 模式下有 custom：縮小至 65% */
+  body.wireframe-mode .mobile-logo-container.has-custom {
     width: 65%;
   }
 
@@ -1988,7 +1993,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
   .mobile-rotation-group {
     display: flex;
     flex-shrink: 0;
-    flex-grow: 0;
+    flex-grow: 1; /* 讓中間按鈕組填充可用空間 */
     height: var(--mobile-btn-size);
     border: 2px solid;
     border-radius: 18px; /* 與其他按鈕一致的圓角 */

@@ -898,28 +898,21 @@ function setup() {
 function handleOrientationChange() {
   if (!isMobileMode) return;
 
-  // 使用 matchMedia 替代 innerWidth（Safari 更可靠）
-  const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+  const isLandscape = window.innerWidth > window.innerHeight;
   const landscapeOverlay = document.getElementById('landscape-overlay');
   const mainContainer = document.querySelector('.main-container');
-  const body = document.body;
-
-  console.log('Orientation:', isLandscape ? 'LANDSCAPE' : 'PORTRAIT',
-              'Width:', window.innerWidth, 'Height:', window.innerHeight);
 
   if (isLandscape) {
-    // ==================== 進入 Landscape 模式 ====================
+    // 進入橫向模式
     if (!landscapeOverlay) return;
 
-    // 1. 根據當前模式設定 overlay 顏色
+    // 根據當前模式設定 overlay 顏色
     if (mode === "Standard") {
       landscapeOverlay.style.background = 'white';
       landscapeOverlay.style.color = 'black';
-      body.style.background = 'white';
     } else if (mode === "Inverse") {
       landscapeOverlay.style.background = 'black';
       landscapeOverlay.style.color = 'white';
-      body.style.background = 'black';
     } else if (mode === "Wireframe" && wireframeColor) {
       let r = red(wireframeColor);
       let g = green(wireframeColor);
@@ -934,79 +927,27 @@ function handleOrientationChange() {
 
       landscapeOverlay.style.background = cssColor;
       landscapeOverlay.style.color = borderCssColor;
-      body.style.background = cssColor;
-
-      // 更新 CSS 變數（用於 icon 顏色）
-      document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
-      document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
     }
 
-    // 2. 顯示 overlay，隱藏主容器
+    // 顯示 overlay
     landscapeOverlay.style.display = 'flex';
-    landscapeOverlay.style.opacity = '1';
-    landscapeOverlay.style.visibility = 'visible';
-    landscapeOverlay.style.zIndex = '99999';
-
     if (mainContainer) {
-      mainContainer.style.setProperty('display', 'none', 'important');
-      mainContainer.style.setProperty('opacity', '0', 'important');
-      mainContainer.style.setProperty('visibility', 'hidden', 'important');
+      mainContainer.style.display = 'none';
     }
-
-    console.log('Landscape overlay shown');
 
   } else {
-    // ==================== 回到 Portrait 模式 ====================
-    console.log('Switching to portrait...');
-
-    // Safari iOS 修復：不使用 display:none，改用 transform 移出螢幕
-    // 這是針對 Safari iOS display:none bug 的 workaround
+    // 回到直向模式
     if (landscapeOverlay) {
-      landscapeOverlay.style.transform = 'translate(-9999px, -9999px)';
-      landscapeOverlay.style.opacity = '0';
-      landscapeOverlay.style.zIndex = '-9999';
-      landscapeOverlay.style.pointerEvents = 'none';
-      console.log('Landscape overlay moved off-screen');
+      landscapeOverlay.style.display = 'none';
     }
-
-    // 顯示主容器（移除所有 inline style）
     if (mainContainer) {
-      mainContainer.style.removeProperty('display');
-      mainContainer.style.removeProperty('opacity');
-      mainContainer.style.removeProperty('visibility');
-      mainContainer.style.removeProperty('transform'); // 移除任何可能的 transform
-      console.log('Main container restored');
+      mainContainer.style.display = '';
     }
 
-    // 強制 reflow
-    if (mainContainer) mainContainer.offsetHeight;
-    document.body.offsetHeight;
-
-    // 恢復 body 背景
-    body.style.removeProperty('background');
-
-    // 強制頁面重新layout（Safari iOS 需要）
-    window.scrollTo(0, 0);
-
-    // 使用多層 requestAnimationFrame 確保正確渲染
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (typeof resizeMobileCanvas === 'function') {
-            resizeMobileCanvas();
-            console.log('Canvas resized');
-          }
-
-          // 最後再次確認 overlay 完全隱藏（延遲設定 display:none）
-          if (landscapeOverlay) {
-            landscapeOverlay.style.display = 'none';
-            console.log('Landscape overlay display:none applied');
-          }
-
-          console.log('Portrait restoration complete');
-        });
-      });
-    });
+    // 重新調整 canvas 大小
+    if (typeof resizeMobileCanvas === 'function') {
+      resizeMobileCanvas();
+    }
   }
 }
 
