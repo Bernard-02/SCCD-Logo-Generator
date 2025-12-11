@@ -882,119 +882,87 @@ function setup() {
     }
   }
 
-  // --- 監聽螢幕方向變化（處理 landscape 模式下的 wireframe 動畫）---
+  // --- 監聽螢幕方向變化（使用 JS 控制 landscape 模式）---
   if (isMobileMode) {
-    // 監聽 orientationchange（標準事件）
+    // 監聽方向和尺寸變化
     window.addEventListener('orientationchange', handleOrientationChange);
-    // 監聽 resize 事件（Safari 更可靠）
     window.addEventListener('resize', handleOrientationChange);
 
-    // Safari 特別處理：監聽 pageshow 事件（從 back/forward cache 恢復時）
-    window.addEventListener('pageshow', function(event) {
-      if (event.persisted) {
-        handleOrientationChange();
-      }
-    });
-
-    // 初始化時也調用一次，確保 CSS 變數已設定
+    // 初始化時調用一次
     setTimeout(handleOrientationChange, 100);
   }
 }
 
-// --- 處理螢幕方向變化 ---
+// --- 處理螢幕方向變化（使用 JS 控制 landscape/portrait 模式）---
 function handleOrientationChange() {
   if (!isMobileMode) return;
 
-  // 立即檢測方向（不使用 setTimeout 以移除 delay）
   const isLandscape = window.innerWidth > window.innerHeight;
   const landscapeOverlay = document.getElementById('landscape-overlay');
+  const mainContainer = document.querySelector('.main-container');
   const body = document.body;
 
-  console.log('Orientation change detected:', isLandscape ? 'LANDSCAPE' : 'PORTRAIT');
-
   if (isLandscape) {
-    // 進入 landscape 模式
-    console.log('Entering landscape mode');
-    if (landscapeOverlay) {
-      landscapeOverlay.style.display = 'flex';
-      landscapeOverlay.style.visibility = 'visible';
-      landscapeOverlay.style.opacity = '1';
+    // ==================== 進入 Landscape 模式 ====================
+    if (!landscapeOverlay) return;
 
-      // 根據當前模式設定顏色
-      if (mode === "Standard") {
-        landscapeOverlay.style.background = 'white';
-        landscapeOverlay.style.color = 'black';
-        body.style.background = 'white';
-      } else if (mode === "Inverse") {
-        landscapeOverlay.style.background = 'black';
-        landscapeOverlay.style.color = 'white';
-        body.style.background = 'black';
-      } else if (mode === "Wireframe" && wireframeColor) {
-        let r = red(wireframeColor);
-        let g = green(wireframeColor);
-        let b = blue(wireframeColor);
-        let cssColor = `rgb(${r}, ${g}, ${b})`;
+    // 1. 根據當前模式設定 overlay 顏色
+    if (mode === "Standard") {
+      landscapeOverlay.style.background = 'white';
+      landscapeOverlay.style.color = 'black';
+      body.style.background = 'white';
+    } else if (mode === "Inverse") {
+      landscapeOverlay.style.background = 'black';
+      landscapeOverlay.style.color = 'white';
+      body.style.background = 'black';
+    } else if (mode === "Wireframe" && wireframeColor) {
+      let r = red(wireframeColor);
+      let g = green(wireframeColor);
+      let b = blue(wireframeColor);
+      let cssColor = `rgb(${r}, ${g}, ${b})`;
 
-        let contrastColor = getContrastColor(wireframeColor);
-        let borderR = red(contrastColor);
-        let borderG = green(contrastColor);
-        let borderB = blue(contrastColor);
-        let borderCssColor = `rgb(${borderR}, ${borderG}, ${borderB})`;
+      let contrastColor = getContrastColor(wireframeColor);
+      let borderR = red(contrastColor);
+      let borderG = green(contrastColor);
+      let borderB = blue(contrastColor);
+      let borderCssColor = `rgb(${borderR}, ${borderG}, ${borderB})`;
 
-        landscapeOverlay.style.background = cssColor;
-        landscapeOverlay.style.color = borderCssColor;
-        body.style.background = cssColor;
+      landscapeOverlay.style.background = cssColor;
+      landscapeOverlay.style.color = borderCssColor;
+      body.style.background = cssColor;
 
-        // 更新 CSS 變數（用於 icon）
-        document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
-        document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
-      }
-
-      // 隱藏所有其他內容
-      const mainContainer = document.querySelector('.main-container');
-      if (mainContainer) {
-        mainContainer.style.display = 'none';
-        mainContainer.style.visibility = 'hidden';
-        mainContainer.style.opacity = '0';
-      }
+      // 更新 CSS 變數（用於 icon 顏色）
+      document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
+      document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
     }
-  } else {
-    // 離開 landscape 模式（回到 portrait）
-    console.log('Exiting landscape mode, returning to portrait');
 
+    // 2. 顯示 overlay，隱藏主容器
+    landscapeOverlay.style.display = 'flex';
+    if (mainContainer) {
+      mainContainer.style.setProperty('display', 'none', 'important');
+    }
+
+  } else {
+    // ==================== 回到 Portrait 模式 ====================
+
+    // 1. 隱藏 overlay
     if (landscapeOverlay) {
       landscapeOverlay.style.display = 'none';
-      landscapeOverlay.style.visibility = 'hidden';
-      landscapeOverlay.style.opacity = '0';
     }
 
-    // 顯示主要內容
-    const mainContainer = document.querySelector('.main-container');
+    // 2. 顯示主容器
     if (mainContainer) {
-      console.log('Restoring main container');
-      // 移除 inline style，讓 CSS 規則生效
       mainContainer.style.removeProperty('display');
-      mainContainer.style.removeProperty('visibility');
-      mainContainer.style.removeProperty('opacity');
-    } else {
-      console.error('Main container not found!');
     }
 
-    // 恢復 body 背景和樣式（讓 CSS 控制）
+    // 3. 恢復 body 背景
     body.style.removeProperty('background');
-    body.style.removeProperty('overflow');
-    body.style.removeProperty('position');
-    body.style.removeProperty('width');
-    body.style.removeProperty('height');
 
-    // 使用 requestAnimationFrame 確保 DOM 更新後再執行
+    // 4. 重新渲染 canvas
     requestAnimationFrame(() => {
-      // 強制重新渲染
       if (typeof resizeMobileCanvas === 'function') {
         resizeMobileCanvas();
       }
-
-      // 強制瀏覽器重新計算佈局
       if (mainContainer) {
         mainContainer.offsetHeight; // 觸發 reflow
       }

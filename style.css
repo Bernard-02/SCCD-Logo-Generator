@@ -8,26 +8,18 @@
   box-sizing: border-box;
 }
 
-/* --- 橫向模式提示（僅手機，由 JavaScript 控制顯示/隱藏） --- */
+/* --- 橫向模式提示（由 JavaScript 控制顯示/隱藏） --- */
 #landscape-overlay {
-  display: none; /* 預設隱藏，由 JS 控制 */
-  visibility: hidden;
+  display: none; /* 由 JS 控制 */
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
   width: 100vw;
-  width: 100dvw;
   height: 100vh;
-  height: 100dvh;
-  -webkit-flex-direction: row;
-  flex-direction: row; /* 橫向排列：icon 左，文字右 */
-  -webkit-align-items: center;
+  flex-direction: row; /* icon 左，文字右 */
   align-items: center;
-  -webkit-justify-content: center;
   justify-content: center;
-  gap: 2rem; /* icon 和文字之間的間距 */
+  gap: 2rem;
   z-index: 99999;
   font-family: var(--font-family);
 }
@@ -35,15 +27,14 @@
 #landscape-overlay-icon {
   width: 80px;
   height: 80px;
-  -webkit-flex-shrink: 0;
-  flex-shrink: 0; /* 防止 icon 被壓縮 */
+  flex-shrink: 0;
 }
 
 #landscape-overlay-text {
   font-size: 1.2rem;
   line-height: 1.8;
   white-space: pre-wrap;
-  text-align: left; /* 文字靠左對齊 */
+  text-align: left;
 }
 
 :root {
