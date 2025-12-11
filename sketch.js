@@ -910,11 +910,15 @@ function handleOrientationChange() {
   const landscapeOverlay = document.getElementById('landscape-overlay');
   const body = document.body;
 
+  console.log('Orientation change detected:', isLandscape ? 'LANDSCAPE' : 'PORTRAIT');
+
   if (isLandscape) {
     // 進入 landscape 模式
+    console.log('Entering landscape mode');
     if (landscapeOverlay) {
       landscapeOverlay.style.display = 'flex';
       landscapeOverlay.style.visibility = 'visible';
+      landscapeOverlay.style.opacity = '1';
 
       // 根據當前模式設定顏色
       if (mode === "Standard") {
@@ -950,28 +954,51 @@ function handleOrientationChange() {
       const mainContainer = document.querySelector('.main-container');
       if (mainContainer) {
         mainContainer.style.display = 'none';
+        mainContainer.style.visibility = 'hidden';
+        mainContainer.style.opacity = '0';
       }
     }
   } else {
     // 離開 landscape 模式（回到 portrait）
+    console.log('Exiting landscape mode, returning to portrait');
+
     if (landscapeOverlay) {
       landscapeOverlay.style.display = 'none';
       landscapeOverlay.style.visibility = 'hidden';
+      landscapeOverlay.style.opacity = '0';
     }
 
     // 顯示主要內容
     const mainContainer = document.querySelector('.main-container');
     if (mainContainer) {
-      mainContainer.style.display = '';
+      console.log('Restoring main container');
+      // 移除 inline style，讓 CSS 規則生效
+      mainContainer.style.removeProperty('display');
+      mainContainer.style.removeProperty('visibility');
+      mainContainer.style.removeProperty('opacity');
+    } else {
+      console.error('Main container not found!');
     }
 
-    // 恢復 body 背景（讓 CSS 控制）
-    body.style.background = '';
+    // 恢復 body 背景和樣式（讓 CSS 控制）
+    body.style.removeProperty('background');
+    body.style.removeProperty('overflow');
+    body.style.removeProperty('position');
+    body.style.removeProperty('width');
+    body.style.removeProperty('height');
 
-    // 強制重新渲染
-    if (typeof resizeMobileCanvas === 'function') {
-      resizeMobileCanvas();
-    }
+    // 使用 requestAnimationFrame 確保 DOM 更新後再執行
+    requestAnimationFrame(() => {
+      // 強制重新渲染
+      if (typeof resizeMobileCanvas === 'function') {
+        resizeMobileCanvas();
+      }
+
+      // 強制瀏覽器重新計算佈局
+      if (mainContainer) {
+        mainContainer.offsetHeight; // 觸發 reflow
+      }
+    });
   }
 }
 
