@@ -903,30 +903,76 @@ function setup() {
 
 // --- 處理螢幕方向變化 ---
 function handleOrientationChange() {
-  // Safari 需要更長的延遲時間來確保方向變化完成
-  setTimeout(() => {
-    // 在 landscape 模式下，確保 CSS 變數已設定（Wireframe 模式會在 draw() 中持續更新）
-    if (mode === "Wireframe" && wireframeColor) {
-      let r = red(wireframeColor);
-      let g = green(wireframeColor);
-      let b = blue(wireframeColor);
-      let cssColor = `rgb(${r}, ${g}, ${b})`;
+  if (!isMobileMode) return;
 
-      let contrastColor = getContrastColor(wireframeColor);
-      let borderR = red(contrastColor);
-      let borderG = green(contrastColor);
-      let borderB = blue(contrastColor);
-      let borderCssColor = `rgb(${borderR}, ${borderG}, ${borderB})`;
+  // 立即檢測方向（不使用 setTimeout 以移除 delay）
+  const isLandscape = window.innerWidth > window.innerHeight;
+  const landscapeOverlay = document.getElementById('landscape-overlay');
+  const body = document.body;
 
-      document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
-      document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
+  if (isLandscape) {
+    // 進入 landscape 模式
+    if (landscapeOverlay) {
+      landscapeOverlay.style.display = 'flex';
+      landscapeOverlay.style.visibility = 'visible';
+
+      // 根據當前模式設定顏色
+      if (mode === "Standard") {
+        landscapeOverlay.style.background = 'white';
+        landscapeOverlay.style.color = 'black';
+        body.style.background = 'white';
+      } else if (mode === "Inverse") {
+        landscapeOverlay.style.background = 'black';
+        landscapeOverlay.style.color = 'white';
+        body.style.background = 'black';
+      } else if (mode === "Wireframe" && wireframeColor) {
+        let r = red(wireframeColor);
+        let g = green(wireframeColor);
+        let b = blue(wireframeColor);
+        let cssColor = `rgb(${r}, ${g}, ${b})`;
+
+        let contrastColor = getContrastColor(wireframeColor);
+        let borderR = red(contrastColor);
+        let borderG = green(contrastColor);
+        let borderB = blue(contrastColor);
+        let borderCssColor = `rgb(${borderR}, ${borderG}, ${borderB})`;
+
+        landscapeOverlay.style.background = cssColor;
+        landscapeOverlay.style.color = borderCssColor;
+        body.style.background = cssColor;
+
+        // 更新 CSS 變數（用於 icon）
+        document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
+        document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
+      }
+
+      // 隱藏所有其他內容
+      const mainContainer = document.querySelector('.main-container');
+      if (mainContainer) {
+        mainContainer.style.display = 'none';
+      }
+    }
+  } else {
+    // 離開 landscape 模式（回到 portrait）
+    if (landscapeOverlay) {
+      landscapeOverlay.style.display = 'none';
+      landscapeOverlay.style.visibility = 'hidden';
     }
 
-    // 強制重新渲染（對 Safari 很重要）
+    // 顯示主要內容
+    const mainContainer = document.querySelector('.main-container');
+    if (mainContainer) {
+      mainContainer.style.display = '';
+    }
+
+    // 恢復 body 背景（讓 CSS 控制）
+    body.style.background = '';
+
+    // 強制重新渲染
     if (typeof resizeMobileCanvas === 'function') {
       resizeMobileCanvas();
     }
-  }, 300); // 延遲 300ms 確保 Safari 的方向變化完成
+  }
 }
 
 // --- 打字機動畫函數 ---
@@ -3874,6 +3920,14 @@ function updateBackgroundColor(bgColor, disableTransition = false) {
     // 更新 landscape overlay 的 CSS 變數
     document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
     document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
+
+    // 如果 landscape overlay 正在顯示，直接更新其顏色（立即生效，無 transition）
+    const landscapeOverlay = document.getElementById('landscape-overlay');
+    if (landscapeOverlay && landscapeOverlay.style.display === 'flex') {
+      landscapeOverlay.style.background = cssColor;
+      landscapeOverlay.style.color = borderCssColor;
+      document.body.style.background = cssColor;
+    }
 
     // 根據 icon 顏色添加或移除 dark-icons class
     if (isDarkIcons) {

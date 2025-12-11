@@ -8,102 +8,42 @@
   box-sizing: border-box;
 }
 
-/* --- 橫向模式提示（僅手機） --- */
-/* 使用 max-height 作為額外檢測（Safari 更可靠） */
-@media (max-width: 768px) and (max-height: 600px),
-       (max-width: 768px) and (orientation: landscape) {
-  /* 橫向提示覆蓋層 */
-  #landscape-overlay {
-    display: -webkit-flex !important;
-    display: flex !important;
-    visibility: visible !important;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100vw;
-    width: 100dvw;
-    height: 100vh;
-    height: 100dvh;
-    -webkit-flex-direction: row; /* 改為橫向排列 */
-    flex-direction: row; /* 改為橫向排列 */
-    -webkit-align-items: center;
-    align-items: center;
-    -webkit-justify-content: center;
-    justify-content: center;
-    gap: 2rem; /* icon 和文字之間的間距 */
-    z-index: 99999;
-    font-family: var(--font-family);
-  }
-
-  #landscape-overlay-icon {
-    width: 80px;
-    height: 80px;
-    flex-shrink: 0; /* 防止 icon 被壓縮 */
-  }
-
-  #landscape-overlay-text {
-    font-size: 1.2rem;
-    line-height: 1.8;
-    white-space: pre-wrap;
-    text-align: left; /* 文字靠左對齊 */
-  }
-
-  /* 隱藏除了 landscape overlay 以外的所有元素 */
-  body > *:not(#landscape-overlay) {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-  }
-
-  /* 確保 body 和 html 的背景正確顯示 */
-  html,
-  body {
-    width: 100vw !important;
-    width: 100dvw !important;
-    height: 100vh !important;
-    height: 100dvh !important;
-    overflow: hidden !important;
-  }
-
-  /* Standard 模式：白底黑字 */
-  body.standard-mode,
-  body.standard-mode html {
-    background: white !important;
-  }
-
-  body.standard-mode #landscape-overlay {
-    background: white !important;
-    color: black !important;
-  }
-
-  /* Inverse 模式：黑底白字 */
-  body.inverse-mode,
-  body.inverse-mode html {
-    background: black !important;
-  }
-
-  body.inverse-mode #landscape-overlay {
-    background: black !important;
-    color: white !important;
-  }
-
-  /* Wireframe 模式：使用當前 wireframe 背景色 */
-  body.wireframe-mode,
-  body.wireframe-mode html {
-    background: var(--current-wireframe-bg) !important;
-  }
-
-  body.wireframe-mode #landscape-overlay {
-    background: var(--current-wireframe-bg) !important;
-    color: var(--current-wireframe-text) !important;
-  }
+/* --- 橫向模式提示（僅手機，由 JavaScript 控制顯示/隱藏） --- */
+#landscape-overlay {
+  display: none; /* 預設隱藏，由 JS 控制 */
+  visibility: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  -webkit-flex-direction: row;
+  flex-direction: row; /* 橫向排列：icon 左，文字右 */
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  gap: 2rem; /* icon 和文字之間的間距 */
+  z-index: 99999;
+  font-family: var(--font-family);
 }
 
-/* 橫向提示覆蓋層（平常隱藏） */
-#landscape-overlay {
-  display: none;
+#landscape-overlay-icon {
+  width: 80px;
+  height: 80px;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0; /* 防止 icon 被壓縮 */
+}
+
+#landscape-overlay-text {
+  font-size: 1.2rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  text-align: left; /* 文字靠左對齊 */
 }
 
 :root {
