@@ -9,9 +9,12 @@
 }
 
 /* --- 橫向模式提示（僅手機） --- */
-@media (max-width: 768px) and (orientation: landscape) {
+/* 使用 max-height 作為額外檢測（Safari 更可靠） */
+@media (max-width: 768px) and (max-height: 600px),
+       (max-width: 768px) and (orientation: landscape) {
   /* 橫向提示覆蓋層 */
   #landscape-overlay {
+    display: -webkit-flex !important;
     display: flex !important;
     visibility: visible !important;
     position: fixed;
@@ -19,8 +22,15 @@
     left: 0;
     right: 0;
     bottom: 0;
+    width: 100vw;
+    width: 100dvw;
+    height: 100vh;
+    height: 100dvh;
+    -webkit-flex-direction: row; /* 改為橫向排列 */
     flex-direction: row; /* 改為橫向排列 */
+    -webkit-align-items: center;
     align-items: center;
+    -webkit-justify-content: center;
     justify-content: center;
     gap: 2rem; /* icon 和文字之間的間距 */
     z-index: 99999;
@@ -40,9 +50,21 @@
     text-align: left; /* 文字靠左對齊 */
   }
 
+  /* 隱藏除了 landscape overlay 以外的所有元素 */
   body > *:not(#landscape-overlay) {
     display: none !important;
     visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  /* 確保 body 和 html 的背景正確顯示 */
+  html,
+  body {
+    width: 100vw !important;
+    width: 100dvw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
   }
 
   /* Standard 模式：白底黑字 */
@@ -94,6 +116,8 @@
   --wireframe-bg: white; /* Wireframe 模式的背景色，由 JS 動態更新 */
   --wireframe-border: black; /* Wireframe 模式的邊框顏色，由 JS 根據背景亮度動態更新 */
   --wireframe-opacity: 0.5; /* Wireframe 模式的透明度（白色版本預設 50%） */
+  --current-wireframe-bg: white; /* Landscape overlay 的背景色（當前 wireframe 顏色） */
+  --current-wireframe-text: black; /* Landscape overlay 的文字色（當前對比色） */
   --disabled-color: rgba(0, 0, 0, 0.25); /* 統一使用黑色25%不透明度 */
   --disabled-color-inverse: rgba(0, 0, 0, 0.25); /* 統一使用黑色25%不透明度 */
   --r-color: rgb(255, 68, 138);
@@ -1085,7 +1109,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     width: 100vw;
     height: 100vh;
     height: 100dvh; /* 使用 dynamic viewport height */
-    padding: 3rem 1.5rem 2rem; /* 上 3rem，左右 1.5rem，下 2rem */
+    padding: 2rem 1.5rem 2rem; /* 上 2rem（從 3rem 減少），左右 1.5rem，下 2rem */
     gap: 1rem; /* logo 和 content section 之間的間距 */
     overflow: hidden;
     box-sizing: border-box;

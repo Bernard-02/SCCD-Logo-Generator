@@ -882,17 +882,28 @@ function setup() {
     }
   }
 
-  // --- 監聽螢幕方向變化（處理 landscape 模式下的 wireframe 動畫暫停）---
+  // --- 監聽螢幕方向變化（處理 landscape 模式下的 wireframe 動畫）---
   if (isMobileMode) {
+    // 監聽 orientationchange（標準事件）
     window.addEventListener('orientationchange', handleOrientationChange);
-    // 也監聽 resize 事件作為備援（某些設備可能不觸發 orientationchange）
+    // 監聽 resize 事件（Safari 更可靠）
     window.addEventListener('resize', handleOrientationChange);
+
+    // Safari 特別處理：監聽 pageshow 事件（從 back/forward cache 恢復時）
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted) {
+        handleOrientationChange();
+      }
+    });
+
+    // 初始化時也調用一次，確保 CSS 變數已設定
+    setTimeout(handleOrientationChange, 100);
   }
 }
 
 // --- 處理螢幕方向變化 ---
 function handleOrientationChange() {
-  // 使用 setTimeout 確保在方向變化完成後再執行
+  // Safari 需要更長的延遲時間來確保方向變化完成
   setTimeout(() => {
     // 在 landscape 模式下，確保 CSS 變數已設定（Wireframe 模式會在 draw() 中持續更新）
     if (mode === "Wireframe" && wireframeColor) {
@@ -910,7 +921,12 @@ function handleOrientationChange() {
       document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
       document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
     }
-  }, 100); // 延遲 100ms 確保方向變化完成
+
+    // 強制重新渲染（對 Safari 很重要）
+    if (typeof resizeMobileCanvas === 'function') {
+      resizeMobileCanvas();
+    }
+  }, 300); // 延遲 300ms 確保 Safari 的方向變化完成
 }
 
 // --- 打字機動畫函數 ---
