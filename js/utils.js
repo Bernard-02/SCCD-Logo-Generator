@@ -2,9 +2,43 @@
 // 工具函數模塊
 // ====================================
 
+// ====================================
+// 輔助函數：狀態檢查
+// ====================================
+
+// 檢查是否有文字輸入
+function hasText() {
+  return letters && letters.length > 0;
+}
+
+// 檢查是否可以進行旋轉控制（有文字且非彩蛋模式）
+function canControlRotation() {
+  return hasText() && !isEasterEggActive;
+}
+
+// 檢查是否可以使用 Custom 模式（有文字、非彩蛋、非自動旋轉）
+function canUseCustomMode() {
+  return canControlRotation() && !isAutoRotateMode;
+}
+
+// ====================================
+// 輔助函數：顏色和圖標
+// ====================================
+
 // 獲取禁用顏色（統一使用黑色25%不透明度）
 function getDisabledColor() {
   return 'rgba(0, 0, 0, 0.25)'; // 黑色25%不透明度
+}
+
+// 獲取圖標後綴（根據模式決定黑色或白色版本）
+function getIconSuffix(useTargetMode = false) {
+  const currentMode = useTargetMode && typeof targetMode !== 'undefined' ? targetMode : mode;
+
+  if (currentMode === "Wireframe") {
+    const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
+    return isWhiteIcon ? "_Inverse" : "";
+  }
+  return currentMode === "Inverse" ? "_Inverse" : "";
 }
 
 // 檢測手機模式
@@ -76,21 +110,7 @@ function updateRotateIcon() {
   }
 
   const hasText = letters.length > 0;
-  // 使用 targetMode 而不是 mode，以確保在模式切換時圖標正確更新
-  const currentMode = (typeof targetMode !== 'undefined') ? targetMode : mode;
-  const isInverseMode = currentMode === "Inverse";
-  const isWireframeMode = currentMode === "Wireframe";
-
-  // 決定 icon 後綴（黑色或白色版本）
-  let suffix = "";
-
-  if (isWireframeMode) {
-    // 根據 wireframeStrokeColor 判斷是使用黑色還是白色 icon
-    const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
-    suffix = isWhiteIcon ? "_Inverse" : "";
-  } else {
-    suffix = isInverseMode ? "_Inverse" : "";
-  }
+  const suffix = getIconSuffix(true); // 使用 targetMode
 
   // 確保變數有定義
   const autoRotateMode = (typeof isAutoRotateMode !== 'undefined') ? isAutoRotateMode : false;
@@ -153,42 +173,11 @@ function updateRotateIcon() {
 
 // 更新所有圖標根據當前模式
 function updateIconsForMode() {
-  const hasText = letters.length > 0;
-  const isInverseMode = targetMode === "Inverse";
   const isWireframeMode = targetMode === "Wireframe";
-
-  // 決定 icon 後綴（黑色或白色版本）
-  // 所有 icon 統一使用當前模式的顏色，透過 CSS opacity 控制 disabled 狀態
-  let suffix = "";
-
-  if (isWireframeMode) {
-    // 根據 wireframeStrokeColor 判斷是使用黑色還是白色 icon
-    const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
-    suffix = isWhiteIcon ? "_Inverse" : "";
-  } else {
-    // Standard 模式：使用黑色 icon（無後綴）
-    // Inverse 模式：使用白色 icon（_Inverse 後綴）
-    suffix = isInverseMode ? "_Inverse" : "";
-  }
+  const suffix = getIconSuffix(true); // 使用 targetMode
 
   // Colormode 圖標
-  let colormodeIconSrc;
-  if (isWireframeMode) {
-    // Wireframe 模式下，根據背景色選擇黑色或白色版本
-    const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
-    colormodeIconSrc = isWhiteIcon ? `Panel Icon/Inverse_Wireframe.svg` : `Panel Icon/Standard_Wireframe.svg`;
-  } else {
-    switch(mode) {
-      case "Standard":
-        colormodeIconSrc = `Panel Icon/Standard.svg`;
-        break;
-      case "Inverse":
-        colormodeIconSrc = `Panel Icon/Inverse_White.svg`;
-        break;
-      default:
-        colormodeIconSrc = `Panel Icon/Standard.svg`;
-    }
-  }
+  const colormodeIconSrc = getModeIconSrc();
 
   // Custom 圖標 - 統一使用當前模式的 icon，CSS 會根據 disabled 狀態調整 opacity
   const customIconSrc = `Panel Icon/Custom${suffix}.svg`;
@@ -234,73 +223,19 @@ function updateIconsForMode() {
   }
 
   // 更新手機版按鈕和面板的邊框顏色
-  if (isWireframeMode && wireframeStrokeColor) {
-    // Wireframe 模式：動態設定邊框顏色
-    const borderColor = `rgb(${red(wireframeStrokeColor)}, ${green(wireframeStrokeColor)}, ${blue(wireframeStrokeColor)})`;
-
-    // 更新底部按鈕邊框顏色
-    const mobileBottomBtns = selectAll('.mobile-bottom-btn');
-    mobileBottomBtns.forEach(btn => {
-      btn.style('border-color', borderColor);
-      btn.style('color', borderColor);
-    });
-
-    // 更新面板邊框顏色
-    const mobilePanels = selectAll('.mobile-panel');
-    mobilePanels.forEach(panel => {
-      panel.style('border-color', borderColor);
-      panel.style('color', borderColor);
-    });
-
-    // 更新 Bento 容器和按鈕邊框顏色
-    const mobileBentoContainer = select('.mobile-bento-container');
-    if (mobileBentoContainer) {
-      mobileBentoContainer.style('border-color', borderColor);
-    }
-
-    const mobileBentoButtons = selectAll('.mobile-bento-button');
-    mobileBentoButtons.forEach(btn => {
-      btn.style('border-color', borderColor);
-    });
-  } else {
-    // Standard/Inverse 模式：清除 inline style，讓 CSS 規則生效
-    const mobileBottomBtns = selectAll('.mobile-bottom-btn');
-    mobileBottomBtns.forEach(btn => {
-      btn.style('border-color', '');
-      btn.style('color', '');
-    });
-
-    const mobilePanels = selectAll('.mobile-panel');
-    mobilePanels.forEach(panel => {
-      panel.style('border-color', '');
-      panel.style('color', '');
-    });
-
-    const mobileBentoContainer = select('.mobile-bento-container');
-    if (mobileBentoContainer) {
-      mobileBentoContainer.style('border-color', '');
-    }
-
-    const mobileBentoButtons = selectAll('.mobile-bento-button');
-    mobileBentoButtons.forEach(btn => {
-      btn.style('border-color', '');
-    });
-  }
+  const borderColor = isWireframeMode ? getWireframeBorderColor() : null;
+  const mobileElements = [
+    ...selectAll('.mobile-bottom-btn'),
+    ...selectAll('.mobile-panel'),
+    select('.mobile-bento-container'),
+    ...selectAll('.mobile-bento-button')
+  ];
+  updateElementsBorderColor(mobileElements, borderColor);
 }
 
 // 更新 Color Wheel Play/Pause 圖標
 function updateColorWheelIcon() {
-  // 根據模式決定使用黑色或白色 icon
-  let suffix = "";
-  if (mode === "Inverse") {
-    suffix = "_Inverse"; // 白色 icon
-  } else if (mode === "Wireframe") {
-    // Wireframe 模式下，根據描邊顏色選擇
-    if (wireframeStrokeColor && red(wireframeStrokeColor) > 128) {
-      suffix = "_Inverse"; // 白色 icon
-    }
-  }
-  // Standard 模式：黑色 icon（無後綴）
+  const suffix = getIconSuffix();
 
   // 根據旋轉狀態選擇 Play 或 Pause icon
   let iconSrc = isColorWheelRotating
@@ -326,46 +261,53 @@ function updateColorWheelIcon() {
   }
 }
 
+// 獲取模式圖標路徑
+function getModeIconSrc() {
+  const isWireframeMode = mode === "Wireframe";
+
+  if (isWireframeMode) {
+    const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
+    return isWhiteIcon ? `Panel Icon/Inverse_Wireframe.svg` : `Panel Icon/Standard_Wireframe.svg`;
+  }
+
+  return mode === "Inverse" ? `Panel Icon/Inverse_White.svg` : `Panel Icon/Standard.svg`;
+}
+
+// 獲取邊框顏色（Wireframe 模式專用）
+function getWireframeBorderColor() {
+  if (!wireframeStrokeColor) return null;
+  return `rgb(${red(wireframeStrokeColor)}, ${green(wireframeStrokeColor)}, ${blue(wireframeStrokeColor)})`;
+}
+
+// 更新元素邊框顏色（Wireframe 模式）
+function updateElementsBorderColor(elements, borderColor) {
+  if (borderColor) {
+    elements.forEach(el => {
+      if (el) {
+        el.style('border-color', borderColor);
+        // 某些元素還需要更新文字顏色
+        if (el.hasClass('mobile-bottom-btn') || el.hasClass('mobile-panel')) {
+          el.style('color', borderColor);
+        }
+      }
+    });
+  } else {
+    // 清除 inline style，讓 CSS 規則生效
+    elements.forEach(el => {
+      if (el) {
+        el.style('border-color', '');
+        el.style('color', '');
+      }
+    });
+  }
+}
+
 // 更新手機版 Mode 按鈕圖標
 function updateMobileModeIcon() {
   let mobileModeIcon = select("#mobile-mode-icon");
   if (!mobileModeIcon) return;
 
-  const isWireframeMode = mode === "Wireframe";
-
-  // 決定 icon 後綴（黑色或白色版本）
-  let suffix = "";
-
-  if (isWireframeMode) {
-    // Wireframe 模式下，根據描邊顏色選擇黑色或白色版本
-    const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
-    suffix = isWhiteIcon ? "_Inverse" : "";
-  } else {
-    // Standard 模式：使用黑色 icon（無後綴）
-    // Inverse 模式：使用白色 icon（_Inverse 後綴）
-    suffix = (mode === "Inverse") ? "_Inverse" : "";
-  }
-
-  // 根據當前模式選擇對應的 icon
-  let iconSrc;
-  if (isWireframeMode) {
-    // Wireframe 模式下，根據背景色選擇黑色或白色版本
-    const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
-    iconSrc = isWhiteIcon ? `Panel Icon/Inverse_Wireframe.svg` : `Panel Icon/Standard_Wireframe.svg`;
-  } else {
-    switch(mode) {
-      case "Standard":
-        iconSrc = `Panel Icon/Standard.svg`;
-        break;
-      case "Inverse":
-        iconSrc = `Panel Icon/Inverse_White.svg`;
-        break;
-      default:
-        iconSrc = `Panel Icon/Standard.svg`;
-    }
-  }
-
-  mobileModeIcon.attribute('src', iconSrc);
+  mobileModeIcon.attribute('src', getModeIconSrc());
 }
 
 // 更新手機版輸入框的垂直置中

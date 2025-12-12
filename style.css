@@ -1090,10 +1090,10 @@ body.wireframe-mode .angle-input:not(.enabled) {
   /* Logo 大小等級：直接控制寬度 */
   /* 1. 初始狀態（standard/inverse，無 panel）：100% - 已在上方設定 */
 
-  /* 2. Standard/Inverse 模式下有 custom 出現：縮小至 75% */
+  /* 2. Standard/Inverse 模式下有 custom 出現：縮小至 65% */
   body.standard-mode .mobile-logo-container.has-custom,
   body.inverse-mode .mobile-logo-container.has-custom {
-    width: 75%;
+    width: 65%;
   }
 
   /* 3. Wireframe 模式下無 custom：保持 100%（color picker 一定存在但不縮小）*/
@@ -1101,7 +1101,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     width: 100%;
   }
 
-  /* 4. Wireframe 模式下有 custom：縮小至 65% */
+  /* 4. Wireframe 模式下有 custom：縮小至 65%（與 Standard/Inverse 一致）*/
   body.wireframe-mode .mobile-logo-container.has-custom {
     width: 65%;
   }
@@ -2028,6 +2028,8 @@ body.wireframe-mode .angle-input:not(.enabled) {
   /* 在 rotation-group 內的按鈕移除外框（不需要分隔線） */
   .mobile-rotation-group .mobile-bottom-btn {
     border: none;
+    /* 調整高度以配合外層容器的 border，確保 icon 垂直居中 */
+    height: calc(var(--mobile-btn-size) - 4px); /* 扣除外層容器的上下 border (2px * 2) */
   }
 
 

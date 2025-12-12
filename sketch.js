@@ -2348,25 +2348,24 @@ function animateSaveButton(button, iconElement) {
         return;
     }
 
-    const isInverseMode = mode === "Inverse";
-    const isWireframeMode = mode === "Wireframe";
-
-    // 決定 icon 後綴（黑色或白色版本）
-    let suffix = "";
-    if (isWireframeMode) {
-        const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
-        suffix = isWhiteIcon ? "_Inverse" : "";
-    } else {
-        suffix = isInverseMode ? "_Inverse" : "";
-    }
-
     const rotateDuration = 800; // Generate icon 旋轉時長：800ms
     const fadeInOutDuration = 200; // 淡入淡出時間：200ms
     const scaleUpDuration = 100; // Generate icon 放大時間：100ms（快速出現）
 
-    // 保存原始 icon
-    const originalIconSrc = iconElement.attribute('src');
-    const generateIconSrc = `Panel Icon/Generate${suffix}.svg`;
+    // 動態獲取當前的 icon 後綴（避免在動畫期間模式變更導致 icon 不匹配）
+    const getCurrentSuffix = () => getIconSuffix();
+
+    // 動態獲取 Generate icon 路徑
+    const getGenerateIconSrc = () => `Panel Icon/Generate${getCurrentSuffix()}.svg`;
+
+    // 動態獲取原始 icon 路徑（根據當前狀態決定）
+    const getOriginalIconSrc = () => {
+        const suffix = getCurrentSuffix();
+        if (isEasterEggActive) {
+            return `Panel Icon/Gift${suffix}.svg`;
+        }
+        return `Panel Icon/Download${suffix}.svg`;
+    };
 
     // 獲取原生DOM元素
     const imgEl = iconElement.elt;
@@ -2387,7 +2386,7 @@ function animateSaveButton(button, iconElement) {
 
         // 2. fadeInOutDuration 後切換到 Generate icon，並快速放大
         setTimeout(() => {
-            iconElement.attribute('src', generateIconSrc);
+            iconElement.attribute('src', getGenerateIconSrc()); // 動態獲取正確的 Generate icon
             imgEl.style.animation = `save-icon-grow ${scaleUpDuration}ms ease forwards`;
 
             // 放大完成後立即開始旋轉
@@ -2403,7 +2402,7 @@ function animateSaveButton(button, iconElement) {
 
         // 4. Generate icon 縮小完成後，切換回原 icon 並放大
         setTimeout(() => {
-            iconElement.attribute('src', originalIconSrc);
+            iconElement.attribute('src', getOriginalIconSrc()); // 使用函數動態獲取正確的 icon
             setTimeout(() => {
                 imgEl.style.animation = `save-icon-grow ${fadeInOutDuration}ms ease forwards`;
                 setTimeout(() => {
@@ -2432,7 +2431,7 @@ function animateSaveButton(button, iconElement) {
 
         // 2. fadeInOutDuration 後切換到 Generate icon，並快速放大
         setTimeout(() => {
-            iconElement.attribute('src', generateIconSrc);
+            iconElement.attribute('src', getGenerateIconSrc()); // 動態獲取正確的 Generate icon
             imgEl.style.transition = `transform ${scaleUpDuration}ms ease, opacity ${scaleUpDuration}ms ease`;
             imgEl.style.transform = 'scale(1) rotate(0deg)';
             imgEl.style.opacity = '1';
@@ -2458,7 +2457,7 @@ function animateSaveButton(button, iconElement) {
             imgEl.style.opacity = '0';
 
             setTimeout(() => {
-                iconElement.attribute('src', originalIconSrc);
+                iconElement.attribute('src', getOriginalIconSrc()); // 使用函數動態獲取正確的 icon
                 setTimeout(() => {
                     imgEl.style.transition = `transform ${fadeInOutDuration}ms ease, opacity ${fadeInOutDuration}ms ease`;
                     imgEl.style.transform = 'scale(1) rotate(0deg)';
@@ -2865,15 +2864,19 @@ function updateUI() {
         // 更新 Save 按鈕（添加存在性檢查）
         if (saveButton) {
             saveButton.style('display', 'flex');
-            saveButton.elt.disabled = !hasText;
-            saveButton.style('cursor', hasText ? 'pointer' : 'not-allowed');
+            // 彩蛋模式下也要啟用下載按鈕
+            const canSave = hasText || isEasterEggActive;
+            saveButton.elt.disabled = !canSave;
+            saveButton.style('cursor', canSave ? 'pointer' : 'not-allowed');
         }
     }
-    
+
     // 更新手機版 Save 按鈕
     if (saveButtonMobile && saveImgMobile) {
-        saveButtonMobile.elt.disabled = !hasText;
-        saveButtonMobile.style('cursor', hasText ? 'pointer' : 'not-allowed');
+        // 彩蛋模式下也要啟用下載按鈕
+        const canSave = hasText || isEasterEggActive;
+        saveButtonMobile.elt.disabled = !canSave;
+        saveButtonMobile.style('cursor', canSave ? 'pointer' : 'not-allowed');
     }
     
     // 手機版：更新UI（使用全域變數，不需要重新 select）

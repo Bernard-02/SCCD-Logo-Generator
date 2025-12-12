@@ -975,13 +975,10 @@ function updateMobileButtons() {
     }
   }
 
-  // Save 按鈕：沒有文字時禁用（彩蛋除外）
+  // Save 按鈕：啟用條件 - 有文字 或 彩蛋激活中
   if (mobileElements.saveBtn) {
-    if (!hasText && !isEasterEggActive) {
-      mobileElements.saveBtn.elt.disabled = true;
-    } else {
-      mobileElements.saveBtn.elt.disabled = false;
-    }
+    const canSave = hasText || isEasterEggActive;
+    mobileElements.saveBtn.elt.disabled = !canSave;
   }
 
   // Custom/Play 按鈕的 active 狀態（Bento 面板內的按鈕）
@@ -1005,7 +1002,7 @@ function updateMobileButtons() {
 // 更新手機版圖標
 function updateMobileIcons() {
   const isWireframe = mode === "Wireframe";
-  const suffix = getSuffixForMode();
+  const suffix = getIconSuffix();
 
   // Random/Reset 圖標（舊的 Bento 面板）
   if (mobileElements.randomIcon) {
@@ -1032,32 +1029,14 @@ function updateMobileIcons() {
   updateMobileBentoPlayIcon();
 
   // 更新邊框顏色
-  if (isWireframe && wireframeStrokeColor) {
-    // Wireframe 模式：設定動態顏色
-    updateMobileBorderColors();
-  } else {
-    // Standard/Inverse 模式：清除 inline style，讓 CSS 規則生效
-    const bottomBtns = selectAll('.mobile-bottom-btn');
-    bottomBtns.forEach(btn => {
-      btn.style('border-color', '');
-      btn.style('color', '');
-    });
-
-    const bentoContainer = select('.mobile-bento-container');
-    if (bentoContainer) {
-      bentoContainer.style('border-color', '');
-    }
-
-    const bentoLeft = select('.mobile-bento-left');
-    if (bentoLeft) {
-      bentoLeft.style('border-color', '');
-    }
-
-    const bentoButtons = selectAll('.mobile-bento-button');
-    bentoButtons.forEach(btn => {
-      btn.style('border-color', '');
-    });
-  }
+  const borderColor = isWireframe ? getWireframeBorderColor() : null;
+  const elements = [
+    ...selectAll('.mobile-bottom-btn'),
+    select('.mobile-bento-container'),
+    select('.mobile-bento-left'),
+    ...selectAll('.mobile-bento-button')
+  ];
+  updateElementsBorderColor(elements, borderColor);
 }
 
 // 更新 Bento Play 圖標
@@ -1065,7 +1044,7 @@ function updateMobileBentoPlayIcon() {
   if (!mobileElements.bentoPlayIcon) return;
 
   const hasText = letters.length > 0;
-  const suffix = getSuffixForMode();
+  const suffix = getIconSuffix();
 
   let iconSrc = '';
 
@@ -1084,44 +1063,20 @@ function updateMobileBentoPlayIcon() {
   mobileElements.bentoPlayIcon.attribute('src', iconSrc);
 }
 
-// 取得圖標後綴
-function getSuffixForMode() {
-  if (mode === "Wireframe") {
-    const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
-    return isWhiteIcon ? "_Inverse" : "";
-  } else {
-    return (mode === "Inverse") ? "_Inverse" : "";
-  }
-}
+// 注意：getSuffixForMode 已移至 utils.js 的 getIconSuffix()
 
 // 更新手機版邊框顏色（Wireframe 模式）
 function updateMobileBorderColors() {
-  if (!wireframeStrokeColor) return;
+  const borderColor = getWireframeBorderColor();
+  if (!borderColor) return;
 
-  const borderColor = `rgb(${red(wireframeStrokeColor)}, ${green(wireframeStrokeColor)}, ${blue(wireframeStrokeColor)})`;
-
-  // 底部按鈕
-  const bottomBtns = selectAll('.mobile-bottom-btn');
-  bottomBtns.forEach(btn => {
-    btn.style('border-color', borderColor);
-    btn.style('color', borderColor);
-  });
-
-  // Bento 容器和按鈕
-  const bentoContainer = select('.mobile-bento-container');
-  if (bentoContainer) {
-    bentoContainer.style('border-color', borderColor);
-  }
-
-  const bentoLeft = select('.mobile-bento-left');
-  if (bentoLeft) {
-    bentoLeft.style('border-color', borderColor);
-  }
-
-  const bentoButtons = selectAll('.mobile-bento-button');
-  bentoButtons.forEach(btn => {
-    btn.style('border-color', borderColor);
-  });
+  const elements = [
+    ...selectAll('.mobile-bottom-btn'),
+    select('.mobile-bento-container'),
+    select('.mobile-bento-left'),
+    ...selectAll('.mobile-bento-button')
+  ];
+  updateElementsBorderColor(elements, borderColor);
 }
 
 // 同步桌面版 Sliders
@@ -1134,30 +1089,10 @@ function syncDesktopSliders() {
   if (mobileElements.bSlider) bSlider.value(mobileElements.bSlider.value());
 }
 
-// 更新手機版 Mode 圖標（複製 utils.js 的邏輯）
+// 更新手機版 Mode 圖標（使用 utils.js 的共用函數）
 function updateMobileModeIcon() {
   if (!mobileElements.modeIcon) return;
-
-  const isWireframe = mode === "Wireframe";
-  let iconSrc;
-
-  if (isWireframe) {
-    const isWhiteIcon = wireframeStrokeColor && red(wireframeStrokeColor) > 128;
-    iconSrc = isWhiteIcon ? `Panel Icon/Inverse_Wireframe.svg` : `Panel Icon/Standard_Wireframe.svg`;
-  } else {
-    switch(mode) {
-      case "Standard":
-        iconSrc = `Panel Icon/Standard.svg`;
-        break;
-      case "Inverse":
-        iconSrc = `Panel Icon/Inverse_White.svg`;
-        break;
-      default:
-        iconSrc = `Panel Icon/Standard.svg`;
-    }
-  }
-
-  mobileElements.modeIcon.attribute('src', iconSrc);
+  mobileElements.modeIcon.attribute('src', getModeIconSrc());
 }
 
 // ====================================
