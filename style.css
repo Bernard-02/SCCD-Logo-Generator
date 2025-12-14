@@ -1831,9 +1831,12 @@ body.wireframe-mode .angle-input:not(.enabled) {
     min-height: calc(2rem * 1.2); /* 縮減為單行高度 */
   }
 
-  /* Wireframe 模式：輸入框永遠單行，容器也縮小 */
+  /* Wireframe 模式：輸入框永遠單行，但添加上下 padding 讓總高度接近多行模式 */
   body.wireframe-mode .mobile-input-area {
     min-height: calc(2rem * 1.2); /* 單行高度 */
+    /* 添加上下 padding，讓總高度接近 3 行文字的高度，保持 logo 位置一致 */
+    padding-top: calc(2rem * 1.2);
+    padding-bottom: calc(2rem * 1.2);
   }
 
   /* 最滿狀態（Wireframe + Custom + Color Picker）：Wireframe 輸入框永遠單行，不需要額外縮小，讓 logo 可以更大 */

@@ -1493,7 +1493,12 @@ function draw() {
       // Standard/Inverse 模式
       imgToShow = (mode === 'Inverse') ? sccdWhiteImg_2 : sccdBlackImg_2;
     }
-    image(imgToShow, width / 2, height / 2, 378, 378); // 放大 1.26 倍 (300 * 1.2 * 1.05 = 378)
+
+    // 動態計算彩蛋圖片大小，根據 canvas 尺寸縮放
+    // 桌面版基準：432x540 canvas，圖片大小 378 (300 * 1.26)
+    // 手機版和鍵盤模式：按照 canvas 寬度等比例縮放，並縮小 5% 避免裁切
+    let easterEggSize = isMobileMode ? (width / 432) * 378 * 0.95 : 378 * 0.95;
+    image(imgToShow, width / 2, height / 2, easterEggSize, easterEggSize);
     pop();
   }
 
@@ -1764,9 +1769,14 @@ function drawLogo(pg, alphaMultiplier = 255) {
   let totalLetters = letters.length;
   if (totalLetters === 0) return;
 
+  // 確保 textSize 正確設定（避免 resizeCanvas 重置後遺失）
+  // 桌面版固定 367.5，手機版根據 canvas 大小縮放
+  let currentTextSize = isMobileMode ? (width / 432) * 367.5 * 1.1 : 367.5;
+  pg.textSize(currentTextSize);
+
   // 計算每個字母應佔的角度
   let angleStep = 360 / totalLetters;
-  
+
   // 簡單地將字母分為三組
   let sectionSize = floor(totalLetters / 3);
   let remainder = totalLetters % 3;
@@ -2203,6 +2213,14 @@ function triggerSpecialEasterEgg() {
   // 生成隨機的目標角度（-60 到 60 度）
   specialEasterEggTargetAngle = random(-60, 60);
 
+  // 強制關閉鍵盤（讓輸入框失去焦點）
+  if (isMobileMode) {
+    // 手機版：讓所有輸入框失去焦點以關閉鍵盤
+    if (inputBoxMobile) inputBoxMobile.elt.blur();
+    let mobileInputBoxBottom = select('#mobile-input-box-bottom');
+    if (mobileInputBoxBottom) mobileInputBoxBottom.elt.blur();
+  }
+
   // 禁用輸入框（防止用戶在動畫播放時繼續輸入）
   if (inputBox) inputBox.attribute('disabled', '');
   if (inputBoxMobile) inputBoxMobile.attribute('disabled', '');
@@ -2218,14 +2236,8 @@ function triggerSpecialEasterEgg() {
     if (inputBox) inputBox.removeAttribute('disabled');
     if (inputBoxMobile) inputBoxMobile.removeAttribute('disabled');
 
-    // 恢復輸入框的 focus 狀態
-    setTimeout(() => {
-      if (isMobileMode && inputBoxMobile) {
-        inputBoxMobile.elt.focus();
-      } else if (inputBox) {
-        inputBox.elt.focus();
-      }
-    }, 50); // 短暫延遲確保 disabled 已移除
+    // 不自動 focus 輸入框，保持在非鍵盤模式讓用戶欣賞完整動畫
+    // 用戶可以自己點擊輸入框重新進入鍵盤模式
   }, 6000);
 }
 
@@ -3116,6 +3128,14 @@ function adjustLayoutForKeyboard(keyboardHeight) {
     // 選項3：縮小 logo 區域（如果需要更多空間）
     // displayArea.style('transform', 'scale(0.8)');
   }
+
+  // 鍵盤彈出時，mobile-logo-container 的可用空間可能改變，需要重新調整 canvas 尺寸
+  // 延遲執行以確保 DOM 更新完成
+  setTimeout(() => {
+    if (typeof requestCanvasResize === 'function') {
+      requestCanvasResize(true); // 立即執行
+    }
+  }, 100);
 }
 
 function resetLayoutAfterKeyboard() {
@@ -3141,6 +3161,14 @@ function resetLayoutAfterKeyboard() {
   if (displayArea) {
     // displayArea.style('transform', 'scale(1)');
   }
+
+  // 鍵盤收起時，mobile-logo-container 的可用空間恢復，需要重新調整 canvas 尺寸
+  // 延遲執行以確保 DOM 更新完成
+  setTimeout(() => {
+    if (typeof requestCanvasResize === 'function') {
+      requestCanvasResize(true); // 立即執行
+    }
+  }, 100);
 }
 
 // --- 重新調整 Canvas 尺寸（手機版專用）---
