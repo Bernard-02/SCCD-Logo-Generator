@@ -1826,11 +1826,13 @@ body.wireframe-mode .angle-input:not(.enabled) {
     overflow: visible; /* 允許內容溢出但不影響容器高度 */
   }
 
-  /* 當有 Custom 或 Color Picker 時，移除下方 gap 並縮小高度 */
+  /* 當有 Custom 或 Color Picker 時，移除下方 gap */
   .mobile-input-area.has-custom,
   .mobile-input-area.has-colorpicker {
     margin-bottom: 0;
-    height: calc(2rem * 1.2); /* 縮減為單行高度 */
+    /* 不強制單行高度，讓輸入框可以根據內容自動調整（避免與 custom 重疊）*/
+    height: auto;
+    min-height: calc(2rem * 1.2); /* 最小單行高度 */
   }
 
   /* Wireframe 模式：輸入框永遠單行，但添加上下 padding 讓總高度接近多行模式 */
@@ -1938,6 +1940,9 @@ body.wireframe-mode .angle-input:not(.enabled) {
   /* Standard 模式下的輸入框顏色 */
   body.standard-mode #mobile-input-box {
     color: black;
+    /* 強制使用相同的文字渲染設定，避免切換模式時位置偏移 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Standard 模式下的 placeholder */
@@ -1949,6 +1954,9 @@ body.wireframe-mode .angle-input:not(.enabled) {
   /* Inverse 模式下的輸入框顏色 */
   body.inverse-mode #mobile-input-box {
     color: white;
+    /* 強制使用相同的文字渲染設定，避免切換模式時位置偏移 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Inverse 模式下的 placeholder */
@@ -2003,6 +2011,11 @@ body.wireframe-mode .angle-input:not(.enabled) {
     box-sizing: border-box;
     background-color: transparent;
     z-index: 200;
+  }
+
+  /* 彩蛋狀態：只顯示 mode 和 save 按鈕，靠攏到中間 */
+  .mobile-bottom-bar.easter-egg-active {
+    justify-content: center; /* 靠攏到中間 */
   }
 
   /* Custom + Rotate 按鈕組容器（共用外框） */

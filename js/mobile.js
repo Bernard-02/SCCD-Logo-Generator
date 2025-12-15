@@ -939,13 +939,26 @@ function updateMobileButtons() {
   // 更新底部按鈕的 disabled 狀態
   // Mode 按鈕始終啟用
 
-  // Rotation group 的 disabled 狀態（控制外框的 opacity）
+  // Rotation group 的顯示/隱藏狀態
   const rotationGroup = document.querySelector('.mobile-rotation-group');
+  const bottomBar = document.querySelector('.mobile-bottom-bar');
+
   if (rotationGroup) {
-    if (!hasText) {
-      rotationGroup.classList.add('disabled');
+    // SCCD 彩蛋時隱藏 rotation group，讓按鈕列只剩 mode 和 save
+    if (isEasterEggActive) {
+      rotationGroup.style.display = 'none';
+      // 給底部按鈕列添加 easter-egg-active class，讓按鈕靠攏到中間
+      if (bottomBar) bottomBar.classList.add('easter-egg-active');
     } else {
-      rotationGroup.classList.remove('disabled');
+      rotationGroup.style.display = '';
+      // 移除 easter-egg-active class，恢復正常布局
+      if (bottomBar) bottomBar.classList.remove('easter-egg-active');
+      // Rotation group 的 disabled 狀態（控制外框的 opacity）
+      if (!hasText) {
+        rotationGroup.classList.add('disabled');
+      } else {
+        rotationGroup.classList.remove('disabled');
+      }
     }
   }
 

@@ -352,7 +352,8 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
 
     // Placeholder 只有一行，計算一行的總高度
     const placeholderHeight = lineHeight * 1;
-    const paddingTop = Math.max(0, (containerHeight - placeholderHeight) / 2);
+    // 使用 Math.round 取整，避免 subpixel 差異導致模式切換時位置偏移
+    const paddingTop = Math.round(Math.max(0, (containerHeight - placeholderHeight) / 2));
 
     inputBox.style('padding-top', `${paddingTop}px`);
     inputBox.style('padding-bottom', '0');
@@ -381,7 +382,8 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
     const estimatedLines = Math.round(textHeight / lineHeight);
 
     // 規則：無論幾行，都垂直居中
-    const paddingTop = Math.max(0, (containerHeight - textHeight) / 2);
+    // 使用 Math.round 取整，避免 subpixel 差異導致模式切換時位置偏移
+    const paddingTop = Math.round(Math.max(0, (containerHeight - textHeight) / 2));
 
     console.log('🔍 垂直對齊計算:', {
       text: text.substring(0, 20),

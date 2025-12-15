@@ -2214,17 +2214,30 @@ function triggerSpecialEasterEgg() {
   // 生成隨機的目標角度（-60 到 60 度）
   specialEasterEggTargetAngle = random(-60, 60);
 
-  // 禁用輸入框（防止用戶在動畫播放時繼續輸入，也確保鍵盤能關閉）
-  if (inputBox) inputBox.attribute('disabled', '');
-  if (inputBoxMobile) inputBoxMobile.attribute('disabled', '');
-
-  // 強制關閉鍵盤（讓輸入框失去焦點）
-  // 必須在禁用之後執行 blur，這樣才能確保鍵盤關閉且不會重新 focus
+  // 強制關閉鍵盤（使用多重策略確保在各種移動瀏覽器上都能工作）
   if (isMobileMode) {
-    // 手機版：讓所有輸入框失去焦點以關閉鍵盤
+    // 策略1: 先設為 readonly（對 iOS Safari 特別有效）
+    if (inputBoxMobile) inputBoxMobile.attribute('readonly', '');
+
+    // 策略2: 使用原生 DOM blur 當前活動元素
+    if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') {
+      document.activeElement.blur();
+    }
+
+    // 策略3: 確保所有輸入框都失去焦點
     if (inputBoxMobile) inputBoxMobile.elt.blur();
     let mobileInputBoxBottom = select('#mobile-input-box-bottom');
     if (mobileInputBoxBottom) mobileInputBoxBottom.elt.blur();
+
+    // 策略4: 短暫延遲後設置 disabled（給鍵盤關閉的時間）
+    setTimeout(() => {
+      if (inputBox) inputBox.attribute('disabled', '');
+      if (inputBoxMobile) inputBoxMobile.attribute('disabled', '');
+    }, 100);
+  } else {
+    // 桌面版：直接禁用
+    if (inputBox) inputBox.attribute('disabled', '');
+    if (inputBoxMobile) inputBoxMobile.attribute('disabled', '');
   }
 
   // 6 秒後（2s旋轉 + 2s停留 + 2s fade out）自動恢復
@@ -2234,9 +2247,15 @@ function triggerSpecialEasterEgg() {
     specialEasterEggAlpha = 0;
     specialEasterEggScale = 0;
 
-    // 恢復輸入框
-    if (inputBox) inputBox.removeAttribute('disabled');
-    if (inputBoxMobile) inputBoxMobile.removeAttribute('disabled');
+    // 恢復輸入框（移除所有限制屬性）
+    if (inputBox) {
+      inputBox.removeAttribute('disabled');
+      inputBox.removeAttribute('readonly');
+    }
+    if (inputBoxMobile) {
+      inputBoxMobile.removeAttribute('disabled');
+      inputBoxMobile.removeAttribute('readonly');
+    }
 
     // 不自動 focus 輸入框，保持在非鍵盤模式讓用戶欣賞完整動畫
     // 用戶可以自己點擊輸入框重新進入鍵盤模式
