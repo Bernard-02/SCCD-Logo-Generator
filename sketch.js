@@ -3227,6 +3227,11 @@ function resizeMobileCanvas() {
   // 根據 canvas 尺寸動態調整 logo 文字大小
   let baseTextSize = (canvasSize.width / 432) * 367.5 * 1.1;
   textSize(baseTextSize);
+
+  // --- 修復：手機螢幕旋轉後，確保 Wireframe 模式的背景顏色被重新應用 ---
+  if (mode === 'Wireframe' && wireframeColor) {
+    updateBackgroundColor(wireframeColor);
+  }
 }
 
 function windowResized() {
