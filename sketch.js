@@ -1267,10 +1267,14 @@ function draw() {
       updateInputTextColor();
     }
 
-    // 如果離開 Wireframe 模式，停止 color wheel 旋轉
+    // 如果離開 Wireframe 模式，停止 color wheel 旋轉並重置背景顏色
     if (previousMode === "Wireframe" && targetMode !== "Wireframe") {
       isColorWheelRotating = false;
       updateColorWheelIcon();
+
+      // 重置背景顏色為黑色或白色（根據目標模式）
+      let resetColor = (targetMode === "Inverse") ? color(255) : color(0);
+      updateBackgroundColor(resetColor);
 
       // 恢復 transition，確保切換模式時有 fade 效果
       let body = select('body');
@@ -2531,6 +2535,10 @@ function updateUI() {
         body.removeClass('inverse-mode');
         body.addClass('wireframe-mode');
         // Wireframe 模式下，背景顏色使用 CSS 變數 --wireframe-bg
+        // 確保在 window resize（如手機轉向）時也能保持當前的背景顏色
+        if (wireframeColor) {
+            updateBackgroundColor(wireframeColor);
+        }
 
         // 淡入 color picker box（容器展開動畫 + 淡入）
         if (colorPickerBox) {
@@ -2621,7 +2629,23 @@ function updateUI() {
             body.removeClass('inverse-mode');
             body.addClass('standard-mode');
         }
-        // Standard/Inverse 模式下，CSS 會自動根據 class 切換背景色
+        // Standard/Inverse 模式下，清除 Wireframe 的 CSS 變數，讓背景色恢復為黑/白
+        // 這樣可以確保從 Wireframe 切換回來時，背景顏色會正確重置
+        body.elt.style.removeProperty('--wireframe-bg');
+        body.elt.style.removeProperty('--wireframe-border');
+        body.elt.style.removeProperty('--wireframe-icon-opacity');
+
+        // 同時清除 canvas container 的 CSS 變數
+        let canvasContainer = select('#canvas-container');
+        let desktopCanvasContainer = select('#desktop-canvas-container');
+        if (canvasContainer) {
+            canvasContainer.elt.style.removeProperty('--wireframe-bg');
+            canvasContainer.elt.style.removeProperty('--wireframe-border');
+        }
+        if (desktopCanvasContainer) {
+            desktopCanvasContainer.elt.style.removeProperty('--wireframe-bg');
+            desktopCanvasContainer.elt.style.removeProperty('--wireframe-border');
+        }
 
         // 瞬間隱藏 color picker box（不需要淡出動畫）
         if (colorPickerBox) {

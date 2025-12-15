@@ -324,6 +324,12 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
     return;
   }
 
+  // 如果是彩蛋模式，不調整 padding（避免切換模式時文字跳動）
+  if (typeof isEasterEggActive !== 'undefined' && isEasterEggActive) {
+    console.log('⏭️ 彩蛋模式，不調整 padding');
+    return;
+  }
+
   // 檢查是否有 custom-open class（這個狀態才需要靠上）
   // 注意：最滿狀態和鍵盤狀態現在都會走垂直居中邏輯，不會提前返回
   if (inputBox.elt.classList.contains('custom-open')) {
