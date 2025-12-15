@@ -1598,6 +1598,47 @@ function handleInput(event) {
     let normalizedInput = validInput.toUpperCase().replace(/[\s\n]/g, "");
     isEasterEggActive = (normalizedInput === easterEggString || normalizedInput === "SCCD");
 
+    // 手機版：設置彩蛋 data 屬性（用於 CSS 高度調整）
+    if (isMobileMode) {
+      const mobileInputBox = select('#mobile-input-box');
+      if (mobileInputBox) {
+        if (normalizedInput === "SCCD") {
+          mobileInputBox.attribute('data-easter-egg', 'sccd');
+        } else if (normalizedInput === easterEggString) {
+          mobileInputBox.attribute('data-easter-egg', 'fullname');
+        } else {
+          mobileInputBox.removeAttribute('data-easter-egg');
+        }
+      }
+    }
+
+    // Bug fix：彩蛋觸發時自動關閉 Custom 面板（手機版）
+    if (isMobileMode && isEasterEggActive && !previousEasterEggState) {
+      // 彩蛋剛剛觸發（從 false 變成 true）
+      if (mobileElements.customAngleControls && !mobileElements.customAngleControls.hasClass('hidden')) {
+        // Custom 面板是打開的，需要關閉它
+        mobileElements.customAngleControls.addClass('hidden');
+
+        // 移除 has-custom class
+        const logoContainer = document.querySelector('.mobile-logo-container');
+        const inputArea = document.querySelector('.mobile-input-area');
+        if (logoContainer) logoContainer.classList.remove('has-custom');
+        if (inputArea) inputArea.classList.remove('has-custom');
+
+        // 移除 custom-open class
+        if (mobileElements.inputBox) {
+          mobileElements.inputBox.removeClass('custom-open');
+          mobileElements.inputBox.elt.classList.remove('overflowing');
+        }
+
+        // 重新調整 canvas 尺寸
+        requestCanvasResize();
+
+        // 更新按鈕狀態
+        updateCustomRotateButtonStates();
+      }
+    }
+
     // 新彩蛋邏輯（COOLGUY, CHILLGUY）
     // 只有在不是動畫中時才檢測
     // 並且需要檢查是否真的有內容變化（避免按無效鍵觸發）

@@ -324,14 +324,7 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
     return;
   }
 
-  // 如果是彩蛋模式，不調整 padding（避免切換模式時文字跳動）
-  if (typeof isEasterEggActive !== 'undefined' && isEasterEggActive) {
-    console.log('⏭️ 彩蛋模式，不調整 padding');
-    return;
-  }
-
-  // 檢查是否有 custom-open class（這個狀態才需要靠上）
-  // 注意：最滿狀態和鍵盤狀態現在都會走垂直居中邏輯，不會提前返回
+  // 檢查是否有 custom-open class（Wireframe + Custom 最滿狀態）
   if (inputBox.elt.classList.contains('custom-open')) {
     console.log('⏭️ custom-open 狀態，文字靠上對齊（padding-top: 0）');
     inputBox.style('padding-top', '0');
@@ -340,10 +333,18 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
   }
 
   // 檢查是否處於鍵盤激活狀態（單行模式，高度受限）
-  // 在此狀態下，輸入框高度固定且較小，不需要 padding 調整
   const inputArea = document.querySelector('.mobile-input-area');
   if (inputArea && inputArea.classList.contains('keyboard-active')) {
     console.log('⏭️ keyboard-active 狀態，不調整 padding（保持單行居中）');
+    inputBox.style('padding-top', '0');
+    inputBox.style('padding-bottom', '0');
+    return;
+  }
+
+  // 檢查是否為彩蛋模式（通過 data-easter-egg 屬性判斷）
+  const easterEggType = inputBox.elt.getAttribute('data-easter-egg');
+  if (easterEggType === 'sccd' || easterEggType === 'fullname') {
+    console.log('⏭️ 彩蛋模式，不需要調整 padding（CSS 已處理高度）');
     inputBox.style('padding-top', '0');
     inputBox.style('padding-bottom', '0');
     return;
@@ -360,6 +361,12 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
     const placeholderHeight = lineHeight * 1;
     // 使用 Math.round 取整，避免 subpixel 差異導致模式切換時位置偏移
     const paddingTop = Math.round(Math.max(0, (containerHeight - placeholderHeight) / 2));
+
+    console.log('🔍 Placeholder 垂直對齊:', {
+      containerHeight,
+      placeholderHeight,
+      paddingTop
+    });
 
     inputBox.style('padding-top', `${paddingTop}px`);
     inputBox.style('padding-bottom', '0');

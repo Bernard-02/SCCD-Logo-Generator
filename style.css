@@ -1826,28 +1826,73 @@ body.wireframe-mode .angle-input:not(.enabled) {
     overflow: visible; /* 允許內容溢出但不影響容器高度 */
   }
 
-  /* 當有 Custom 或 Color Picker 時，移除下方 gap */
-  .mobile-input-area.has-custom,
-  .mobile-input-area.has-colorpicker {
-    margin-bottom: 0;
-    /* 不強制單行高度，讓輸入框可以根據內容自動調整（避免與 custom 重疊）*/
-    height: auto;
-    min-height: calc(2rem * 1.2); /* 最小單行高度 */
+  /* ========================================
+     手機版輸入框高度規範（根據模式、文字數量、Custom 狀態）
+     ======================================== */
+
+  /* 預設：3 行高度（適用於 >6 字的情況）*/
+  /* 已在上方定義：height: calc(2rem * 1.2 * 3); */
+
+  /* --- 1. 預設模式（不開啟 Custom）--- */
+
+  /* 1.1 Standard/Inverse 模式 + <6字（大字）：使用大字單行高度 */
+  body.standard-mode .mobile-input-area:not(.has-custom):not(.has-colorpicker):has(#mobile-input-box:not(.small-text):not(:placeholder-shown)),
+  body.inverse-mode .mobile-input-area:not(.has-custom):not(.has-colorpicker):has(#mobile-input-box:not(.small-text):not(:placeholder-shown)) {
+    height: calc(3.5rem * 1.2); /* 大字（3.5rem）單行高度 */
+    padding: 0;
   }
 
-  /* Wireframe 模式：輸入框永遠單行，但添加上下 padding 讓總高度接近多行模式 */
-  body.wireframe-mode .mobile-input-area {
-    height: calc(2rem * 1.2 + 2rem * 0.8 * 2); /* 單行高度 + 上下 padding */
-    /* 添加上下 padding，縮小一些避免 logo 被擠到上面 */
+  /* 1.2 Wireframe 模式：永遠是小字單行 + padding（無論字數）*/
+  body.wireframe-mode .mobile-input-area:not(.has-custom) {
+    height: calc(2rem * 1.2 + 2rem * 0.8 * 2); /* 小字單行 + 上下 padding */
     padding-top: calc(2rem * 0.8);
     padding-bottom: calc(2rem * 0.8);
   }
 
-  /* 最滿狀態（Wireframe + Custom）：移除 padding，保持單行即可 */
+  /* --- 2. 開啟 Custom 模式 --- */
+
+  /* 2.1 Standard/Inverse + Custom + <6字（大字）：使用大字單行高度 */
+  body.standard-mode .mobile-input-area.has-custom:has(#mobile-input-box:not(.small-text):not(:placeholder-shown)),
+  body.inverse-mode .mobile-input-area.has-custom:has(#mobile-input-box:not(.small-text):not(:placeholder-shown)) {
+    height: calc(3.5rem * 1.2); /* 大字單行高度 */
+    margin-bottom: 0;
+    padding: 0;
+  }
+
+  /* 2.2 Standard/Inverse + Custom + >6字（小字）：保持 3 行高度（預設值）*/
+  body.standard-mode .mobile-input-area.has-custom:has(#mobile-input-box.small-text),
+  body.inverse-mode .mobile-input-area.has-custom:has(#mobile-input-box.small-text) {
+    height: calc(2rem * 1.2 * 3); /* 維持 3 行高度 */
+    margin-bottom: 0;
+    padding: 0;
+  }
+
+  /* 2.3 Wireframe + Custom：max 狀態，小字單行（無論字數）*/
   body.wireframe-mode .mobile-input-area.has-custom {
-    height: calc(2rem * 1.2); /* 只有單行高度，沒有 padding */
-    padding-top: 0;
-    padding-bottom: 0;
+    height: calc(2rem * 1.2); /* 小字單行 */
+    margin-bottom: 0;
+    padding: 0;
+  }
+
+  /* 2.4 當有 ColorPicker 但沒有 Custom 時，移除下方 gap */
+  .mobile-input-area.has-colorpicker:not(.has-custom) {
+    margin-bottom: 0;
+  }
+
+  /* --- 3. 彩蛋模式 --- */
+
+  /* 3.1 SCCD（單行）：使用小字單行高度 */
+  .mobile-input-area:has(#mobile-input-box[data-easter-egg="sccd"]) {
+    height: calc(2rem * 1.2) !important; /* 小字單行 */
+    padding: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* 3.2 全稱（兩行）：使用小字兩行高度 */
+  .mobile-input-area:has(#mobile-input-box[data-easter-egg="fullname"]) {
+    height: calc(2rem * 1.2 * 2) !important; /* 小字兩行 */
+    padding: 0 !important;
+    margin-bottom: 0 !important;
   }
 
   /* 鍵盤激活狀態：輸入框強制單行顯示 */
