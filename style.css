@@ -1090,10 +1090,10 @@ body.wireframe-mode .angle-input:not(.enabled) {
   /* Logo 大小等級：直接控制寬度 */
   /* 1. 初始狀態（standard/inverse，無 panel）：100% - 已在上方設定 */
 
-  /* 2. Standard/Inverse 模式下有 custom 出現：縮小至 65% */
+  /* 2. Standard/Inverse 模式下有 custom 出現：縮小至 70% */
   body.standard-mode .mobile-logo-container.has-custom,
   body.inverse-mode .mobile-logo-container.has-custom {
-    width: 65%;
+    width: 70%;
   }
 
   /* 3. Wireframe 模式下無 custom：保持 100%（color picker 一定存在但不縮小）*/
@@ -1817,29 +1817,36 @@ body.wireframe-mode .angle-input:not(.enabled) {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 auto; /* 不佔用剩餘空間，根據內容大小決定 */
+    flex: 0 0 auto; /* 不佔用剩餘空間 */
     width: 100%; /* 填滿父容器寬度 */
-    min-height: calc(2rem * 1.2 * 3); /* 最小高度：3行文字 */
+    /* 使用固定高度而不是 min-height，確保字體大小變化時容器高度不變 */
+    height: calc(2rem * 1.2 * 3); /* 固定高度：3行文字（基於 2rem 字體）*/
     margin-bottom: var(--mobile-content-gap); /* 畫面最大時，下方增加 gap */
-    transition: margin-bottom 0.3s ease, min-height 0.3s ease; /* 平滑過渡 */
+    transition: margin-bottom 0.3s ease, height 0.3s ease; /* 平滑過渡 */
+    overflow: visible; /* 允許內容溢出但不影響容器高度 */
   }
 
-  /* 當有 Custom 或 Color Picker 時，移除下方 gap 並縮小最小高度 */
+  /* 當有 Custom 或 Color Picker 時，移除下方 gap 並縮小高度 */
   .mobile-input-area.has-custom,
   .mobile-input-area.has-colorpicker {
     margin-bottom: 0;
-    min-height: calc(2rem * 1.2); /* 縮減為單行高度 */
+    height: calc(2rem * 1.2); /* 縮減為單行高度 */
   }
 
   /* Wireframe 模式：輸入框永遠單行，但添加上下 padding 讓總高度接近多行模式 */
   body.wireframe-mode .mobile-input-area {
-    min-height: calc(2rem * 1.2); /* 單行高度 */
-    /* 添加上下 padding，讓總高度接近 3 行文字的高度，保持 logo 位置一致 */
-    padding-top: calc(2rem * 1.2);
-    padding-bottom: calc(2rem * 1.2);
+    height: calc(2rem * 1.2 + 2rem * 0.8 * 2); /* 單行高度 + 上下 padding */
+    /* 添加上下 padding，縮小一些避免 logo 被擠到上面 */
+    padding-top: calc(2rem * 0.8);
+    padding-bottom: calc(2rem * 0.8);
   }
 
-  /* 最滿狀態（Wireframe + Custom + Color Picker）：Wireframe 輸入框永遠單行，不需要額外縮小，讓 logo 可以更大 */
+  /* 最滿狀態（Wireframe + Custom）：移除 padding，保持單行即可 */
+  body.wireframe-mode .mobile-input-area.has-custom {
+    height: calc(2rem * 1.2); /* 只有單行高度，沒有 padding */
+    padding-top: 0;
+    padding-bottom: 0;
+  }
 
   /* 鍵盤激活狀態：輸入框強制單行顯示 */
   .mobile-input-area.keyboard-active {

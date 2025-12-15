@@ -234,7 +234,8 @@ function setup() {
     // 當輸入框失去 focus 時，立即重新 focus（確保 caret 永遠顯示）
     inputBoxMobile.elt.addEventListener('blur', function() {
       setTimeout(() => {
-        if (isMobileMode) { // 只在手機版自動重新 focus
+        // 如果正在播放彩蛋動畫，不要重新 focus，讓鍵盤保持關閉
+        if (isMobileMode && !specialEasterEggAnimating) {
           inputBoxMobile.elt.focus();
         }
       }, 0);
@@ -2213,17 +2214,18 @@ function triggerSpecialEasterEgg() {
   // 生成隨機的目標角度（-60 到 60 度）
   specialEasterEggTargetAngle = random(-60, 60);
 
+  // 禁用輸入框（防止用戶在動畫播放時繼續輸入，也確保鍵盤能關閉）
+  if (inputBox) inputBox.attribute('disabled', '');
+  if (inputBoxMobile) inputBoxMobile.attribute('disabled', '');
+
   // 強制關閉鍵盤（讓輸入框失去焦點）
+  // 必須在禁用之後執行 blur，這樣才能確保鍵盤關閉且不會重新 focus
   if (isMobileMode) {
     // 手機版：讓所有輸入框失去焦點以關閉鍵盤
     if (inputBoxMobile) inputBoxMobile.elt.blur();
     let mobileInputBoxBottom = select('#mobile-input-box-bottom');
     if (mobileInputBoxBottom) mobileInputBoxBottom.elt.blur();
   }
-
-  // 禁用輸入框（防止用戶在動畫播放時繼續輸入）
-  if (inputBox) inputBox.attribute('disabled', '');
-  if (inputBoxMobile) inputBoxMobile.attribute('disabled', '');
 
   // 6 秒後（2s旋轉 + 2s停留 + 2s fade out）自動恢復
   setTimeout(() => {
