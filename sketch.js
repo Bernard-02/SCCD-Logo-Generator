@@ -907,13 +907,13 @@ function handleOrientationChange() {
     // 進入橫向模式
     if (!landscapeOverlay) return;
 
-    // 根據當前模式設定 overlay 顏色
+    // 根據當前模式更新 CSS 變數（landscape overlay 會通過 CSS 自動使用這些變數）
     if (mode === "Standard") {
-      landscapeOverlay.style.background = 'white';
-      landscapeOverlay.style.color = 'black';
+      document.documentElement.style.setProperty('--current-wireframe-bg', 'white');
+      document.documentElement.style.setProperty('--current-wireframe-text', 'black');
     } else if (mode === "Inverse") {
-      landscapeOverlay.style.background = 'black';
-      landscapeOverlay.style.color = 'white';
+      document.documentElement.style.setProperty('--current-wireframe-bg', 'black');
+      document.documentElement.style.setProperty('--current-wireframe-text', 'white');
     } else if (mode === "Wireframe" && wireframeColor) {
       let r = red(wireframeColor);
       let g = green(wireframeColor);
@@ -926,11 +926,11 @@ function handleOrientationChange() {
       let borderB = blue(contrastColor);
       let borderCssColor = `rgb(${borderR}, ${borderG}, ${borderB})`;
 
-      landscapeOverlay.style.background = cssColor;
-      landscapeOverlay.style.color = borderCssColor;
+      document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
+      document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
     }
 
-    // 顯示 overlay
+    // 顯示 overlay（顏色由 CSS 變數控制）
     landscapeOverlay.style.display = 'flex';
     if (mainContainer) {
       mainContainer.style.display = 'none';
@@ -4019,13 +4019,7 @@ function updateBackgroundColor(bgColor, disableTransition = false) {
     document.documentElement.style.setProperty('--current-wireframe-bg', cssColor);
     document.documentElement.style.setProperty('--current-wireframe-text', borderCssColor);
 
-    // 如果 landscape overlay 正在顯示，直接更新其顏色（立即生效，無 transition）
-    const landscapeOverlay = document.getElementById('landscape-overlay');
-    if (landscapeOverlay && landscapeOverlay.style.display === 'flex') {
-      landscapeOverlay.style.background = cssColor;
-      landscapeOverlay.style.color = borderCssColor;
-      document.body.style.background = cssColor;
-    }
+    // landscape overlay 的顏色現在由 CSS 變數控制，不需要設置 inline style
 
     // 根據 icon 顏色添加或移除 dark-icons class
     if (isDarkIcons) {

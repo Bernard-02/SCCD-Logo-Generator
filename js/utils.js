@@ -341,14 +341,8 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
     return;
   }
 
-  // 檢查是否為彩蛋模式（通過 data-easter-egg 屬性判斷）
-  const easterEggType = inputBox.elt.getAttribute('data-easter-egg');
-  if (easterEggType === 'sccd' || easterEggType === 'fullname') {
-    console.log('⏭️ 彩蛋模式，不需要調整 padding（CSS 已處理高度）');
-    inputBox.style('padding-top', '0');
-    inputBox.style('padding-bottom', '0');
-    return;
-  }
+  // 彩蛋模式現在也使用相同的垂直置中邏輯（SCCD 單行、全稱兩行都在 3 行容器中垂直置中）
+  // 移除了彩蛋模式的特殊處理，讓它走正常的計算流程
 
   // 如果沒有文字，設置 padding 讓 placeholder 垂直居中
   if (!text || text.trim() === '') {
@@ -373,6 +367,26 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
     return;
   }
 
+  // 檢查是否需要跳過重新計算（避免 Standard/Inverse 切換時文字跳動）
+  // 如果輸入框已經有 padding-top，且文字內容和字體大小都沒有改變，則跳過
+  const currentPaddingTop = parseFloat(inputBox.elt.style.paddingTop) || 0;
+  const currentFontSize = window.getComputedStyle(inputBox.elt).fontSize;
+
+  // 儲存上次的文字和字體大小
+  if (typeof updateMobileInputBoxVerticalAlignment.lastText === 'undefined') {
+    updateMobileInputBoxVerticalAlignment.lastText = '';
+    updateMobileInputBoxVerticalAlignment.lastFontSize = '';
+  }
+
+  const textChanged = text !== updateMobileInputBoxVerticalAlignment.lastText;
+  const fontSizeChanged = currentFontSize !== updateMobileInputBoxVerticalAlignment.lastFontSize;
+
+  // 如果文字和字體大小都沒變，且已經有 padding，則跳過重新計算
+  if (!textChanged && !fontSizeChanged && currentPaddingTop > 0) {
+    console.log('⏭️ 文字和字體大小未改變，保持現有 padding-top');
+    return;
+  }
+
   // 等待兩幀確保字體大小已經更新（第一幀更新 class，第二幀計算）
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -391,25 +405,29 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
       const containerHeight = inputBox.elt.offsetHeight;
       const textHeight = mobileHiddenMeasurer.elt.scrollHeight;
 
-    // 計算文字行數（基於實際測量的高度）
-    const estimatedLines = Math.round(textHeight / lineHeight);
+      // 計算文字行數（基於實際測量的高度）
+      const estimatedLines = Math.round(textHeight / lineHeight);
 
-    // 規則：無論幾行，都垂直居中
-    // 使用 Math.round 取整，避免 subpixel 差異導致模式切換時位置偏移
-    const paddingTop = Math.round(Math.max(0, (containerHeight - textHeight) / 2));
+      // 規則：無論幾行，都垂直居中
+      // 使用 Math.round 取整，避免 subpixel 差異導致模式切換時位置偏移
+      const paddingTop = Math.round(Math.max(0, (containerHeight - textHeight) / 2));
 
-    console.log('🔍 垂直對齊計算:', {
-      text: text.substring(0, 20),
-      containerHeight,
-      textHeight,
-      lineHeight,
-      estimatedLines,
-      paddingTop
-    });
+      console.log('🔍 垂直對齊計算:', {
+        text: text.substring(0, 20),
+        containerHeight,
+        textHeight,
+        lineHeight,
+        estimatedLines,
+        paddingTop
+      });
 
       // 應用 padding（只設置 top，讓文字自然從上往下排列）
       inputBox.style('padding-top', `${paddingTop}px`);
       inputBox.style('padding-bottom', '0');
+
+      // 更新記錄
+      updateMobileInputBoxVerticalAlignment.lastText = text;
+      updateMobileInputBoxVerticalAlignment.lastFontSize = currentFontSize;
     });
   });
 }
