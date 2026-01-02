@@ -1703,6 +1703,32 @@ function handleInput(event) {
     // 控制 Placeholder 的 fade in/out
     if (letters.length === 0) {
       targetPlaceholderAlpha = 255; // Fade in（沒有文字時顯示）
+
+      // Bug fix: 刪除所有文字時，關閉手機版 Custom 面板並恢復 logo 大小
+      if (isMobileMode && mobileElements && mobileElements.customAngleControls) {
+        if (!mobileElements.customAngleControls.hasClass('hidden')) {
+          // Custom 面板是打開的，需要關閉它
+          mobileElements.customAngleControls.addClass('hidden');
+
+          // 移除 has-custom class，讓 logo 恢復到 100%
+          const logoContainer = document.querySelector('.mobile-logo-container');
+          const inputArea = document.querySelector('.mobile-input-area');
+          if (logoContainer) logoContainer.classList.remove('has-custom');
+          if (inputArea) inputArea.classList.remove('has-custom');
+
+          // 移除 custom-open class
+          if (mobileElements.inputBox) {
+            mobileElements.inputBox.removeClass('custom-open');
+            mobileElements.inputBox.elt.classList.remove('overflowing');
+          }
+
+          // 重新調整 canvas 尺寸（因為 logo-container 變大了）
+          requestCanvasResize();
+
+          // 更新按鈕狀態
+          updateCustomRotateButtonStates();
+        }
+      }
     } else if (previousLettersLength === 0 && letters.length > 0) {
       targetPlaceholderAlpha = 0; // Fade out（剛輸入文字時隱藏）
     }
@@ -2044,7 +2070,15 @@ function drawLogo(pg, alphaMultiplier = 255) {
       } else {
         pg.stroke(0, 0, 0, letterAlpha); // 預設黑色
       }
-      pg.strokeWeight(5);
+
+      // 手機版 Wireframe + Custom 狀態：使用較細的描邊（視覺矯正）
+      let strokeWeightValue = 5; // 預設 stroke weight
+      if (isMobileMode && mobileElements && mobileElements.customAngleControls &&
+          !mobileElements.customAngleControls.hasClass('hidden')) {
+        strokeWeightValue = 3; // Custom 打開時使用較細的描邊
+      }
+
+      pg.strokeWeight(strokeWeightValue);
       pg.text(letter, 0, -offsetY);
 
       // 第二次：繪製填充顏色（來自色彩選擇器）
@@ -2302,8 +2336,23 @@ function triggerSpecialEasterEgg() {
       inputBoxMobile.removeAttribute('readonly');
     }
 
-    // 不自動 focus 輸入框，保持在非鍵盤模式讓用戶欣賞完整動畫
-    // 用戶可以自己點擊輸入框重新進入鍵盤模式
+    // 自動 focus 輸入框，讓用戶可以無縫接續輸入
+    // 手機版：需要延遲一點讓 readonly 完全移除後再 focus
+    setTimeout(() => {
+      if (isMobileMode) {
+        // 手機版：focus 到手機版輸入框
+        if (mobileElements && mobileElements.inputBox) {
+          mobileElements.inputBox.elt.focus();
+        } else if (inputBoxMobile) {
+          inputBoxMobile.elt.focus();
+        }
+      } else {
+        // 桌面版：focus 到桌面版輸入框
+        if (inputBox) {
+          inputBox.elt.focus();
+        }
+      }
+    }, 100); // 100ms 延遲，確保屬性移除完成
   }, 6000);
 }
 
@@ -2453,6 +2502,9 @@ function animateSaveButton(button, iconElement) {
 
     if (isMobile) {
         // === 手機版：使用 CSS Animation ===
+        // 確保 icon 是正確的 Download/Gift icon（防止重複點擊或狀態異常）
+        iconElement.attribute('src', getOriginalIconSrc());
+
         // 清除所有可能存在的動畫和 inline 樣式
         imgEl.removeAttribute('style');
         imgEl.classList.remove('save-icon-animating');

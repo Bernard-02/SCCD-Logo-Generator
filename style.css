@@ -1827,7 +1827,7 @@ body.wireframe-mode .angle-input:not(.enabled) {
     /* 使用固定高度而不是 min-height，確保字體大小變化時容器高度不變 */
     height: calc(2rem * 1.2 * 3); /* 固定高度：3行文字（基於 2rem 字體）*/
     margin-bottom: var(--mobile-content-gap); /* 畫面最大時，下方增加 gap */
-    transition: margin-bottom 0.3s ease, height 0.3s ease; /* 平滑過渡 */
+    transition: margin-bottom 0.3s ease, height 0.3s ease, margin-top 0.3s ease; /* 平滑過渡 */
     overflow: visible; /* 允許內容溢出但不影響容器高度 */
   }
 
@@ -1861,11 +1861,14 @@ body.wireframe-mode .angle-input:not(.enabled) {
     padding: 0;
   }
 
-  /* 2.2 Wireframe + Custom：max 狀態，小字單行（無論字數）*/
+  /* 2.2 Wireframe + Custom：max 狀態，小字單行 + gap 高度（無論字數）*/
   body.wireframe-mode .mobile-input-area.has-custom {
-    height: calc(2rem * 1.2); /* 小字單行 */
+    height: calc(2rem * 1.2 + var(--mobile-content-gap)); /* 小字單行 + 1rem gap */
+    margin-top: calc(-1 * var(--mobile-content-gap)); /* 負 margin 抵消 logo 和輸入框之間的 gap */
     margin-bottom: 0;
     padding: 0;
+    display: flex;
+    align-items: center; /* 輸入框在容器內垂直置中 */
   }
 
   /* 2.3 當有 ColorPicker 但沒有 Custom 時，移除下方 gap */

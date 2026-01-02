@@ -408,9 +408,18 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
       // 計算文字行數（基於實際測量的高度）
       const estimatedLines = Math.round(textHeight / lineHeight);
 
-      // 規則：無論幾行，都垂直居中
-      // 使用 Math.round 取整，避免 subpixel 差異導致模式切換時位置偏移
-      const paddingTop = Math.round(Math.max(0, (containerHeight - textHeight) / 2));
+      // 規則：
+      // - 如果是三行文字，靠上對齊（padding-top: 0），確保三行都可見
+      // - 如果是一行或兩行，垂直居中
+      let paddingTop;
+      if (estimatedLines >= 3) {
+        // 三行文字：靠上對齊，避免第三行被切到
+        paddingTop = 0;
+      } else {
+        // 一行或兩行：垂直居中
+        // 使用 Math.round 取整，避免 subpixel 差異導致模式切換時位置偏移
+        paddingTop = Math.round(Math.max(0, (containerHeight - textHeight) / 2));
+      }
 
       console.log('🔍 垂直對齊計算:', {
         text: text.substring(0, 20),
