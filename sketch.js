@@ -2075,7 +2075,7 @@ function drawLogo(pg, alphaMultiplier = 255) {
       let strokeWeightValue = 5; // 預設 stroke weight
       if (isMobileMode && mobileElements && mobileElements.customAngleControls &&
           !mobileElements.customAngleControls.hasClass('hidden')) {
-        strokeWeightValue = 3; // Custom 打開時使用較細的描邊
+        strokeWeightValue = 4; // Custom 打開時使用較細的描邊
       }
 
       pg.strokeWeight(strokeWeightValue);
@@ -4148,12 +4148,22 @@ function createSpecialEasterEggContainer() {
   specialEasterEggContainer.style.top = '0';
   specialEasterEggContainer.style.left = '0';
   specialEasterEggContainer.style.width = '100vw';
-  specialEasterEggContainer.style.height = '100vh';
+  // 使用 window.innerHeight 而非 100vh，確保在移動設備上正確居中（避免地址欄影響）
+  specialEasterEggContainer.style.height = `${window.innerHeight}px`;
   specialEasterEggContainer.style.display = 'none'; // 預設隱藏
   specialEasterEggContainer.style.justifyContent = 'center';
   specialEasterEggContainer.style.alignItems = 'center';
   specialEasterEggContainer.style.zIndex = '9999'; // 確保在最上層
   specialEasterEggContainer.style.pointerEvents = 'none'; // 預設不阻擋事件，顯示時會改為 auto
+
+  // 監聽視窗大小變化，動態更新容器高度（處理地址欄顯示/隱藏、螢幕旋轉等情況）
+  const updateContainerHeight = () => {
+    if (specialEasterEggContainer) {
+      specialEasterEggContainer.style.height = `${window.innerHeight}px`;
+    }
+  };
+  window.addEventListener('resize', updateContainerHeight);
+  window.addEventListener('orientationchange', updateContainerHeight);
 
   // 創建半透明背景圖層（用於阻擋互動和提供視覺焦點）
   specialEasterEggOverlay = document.createElement('div');

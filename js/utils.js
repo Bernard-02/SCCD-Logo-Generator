@@ -415,10 +415,18 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
       if (estimatedLines >= 3) {
         // 三行文字：靠上對齊，避免第三行被切到
         paddingTop = 0;
+        // 同時將 mobile-input-area 的對齊方式改為靠上（覆蓋 CSS 的 align-items: center）
+        if (inputArea) {
+          inputArea.style.alignItems = 'flex-start';
+        }
       } else {
         // 一行或兩行：垂直居中
         // 使用 Math.round 取整，避免 subpixel 差異導致模式切換時位置偏移
         paddingTop = Math.round(Math.max(0, (containerHeight - textHeight) / 2));
+        // 恢復 mobile-input-area 的垂直居中對齊
+        if (inputArea) {
+          inputArea.style.alignItems = 'center';
+        }
       }
 
       console.log('🔍 垂直對齊計算:', {
@@ -427,7 +435,8 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
         textHeight,
         lineHeight,
         estimatedLines,
-        paddingTop
+        paddingTop,
+        alignItems: estimatedLines >= 3 ? 'flex-start' : 'center'
       });
 
       // 應用 padding（只設置 top，讓文字自然從上往下排列）
