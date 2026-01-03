@@ -14,7 +14,11 @@
       "Bash(git log:*)",
       "Bash(git restore:*)",
       "Bash(git pull:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(dir /s /b *.png *.jpg *.ttf *.js)",
+      "Bash(findstr:*)",
+      "Bash(ls:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []

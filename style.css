@@ -2090,8 +2090,8 @@ body.wireframe-mode .angle-input:not(.enabled) {
 
 
   .mobile-bottom-btn img {
-    width: 45%; /* icon 大小為按鈕的 45% */
-    height: 45%;
+    width: 40%; /* icon 大小為按鈕的 40% */
+    height: 40%;
     object-fit: contain;
   }
 

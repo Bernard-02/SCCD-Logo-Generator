@@ -40,7 +40,7 @@ let sccdBlackImg_2, sccdWhiteImg_2; // 用於顯示
 let sccdBlackWireframeImg_2, sccdWhiteWireframeImg_2; // 用於顯示
 
 // --- 新彩蛋相關（COOLGUY, KAOCHIEHISHERE）---
-let rexImg, kcImg; // 新彩蛋圖片
+// 新彩蛋圖片透過 HTML img.src 延遲載入，不需要預載入變數
 let isSpecialEasterEggActive = false; // 是否正在播放新彩蛋動畫
 let specialEasterEggType = null; // 'COOLGUY' 或 'KAOCHIEHISHERE'
 let specialEasterEggAnimating = false; // 新彩蛋動畫是否正在播放中

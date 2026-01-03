@@ -17,9 +17,7 @@ function preload() {
   sccdBlackWireframeImg_2 = loadImage('Easter Egg/SCCD_Black Wireframe_2.png');
   sccdWhiteWireframeImg_2 = loadImage('Easter Egg/SCCD_White Wireframe_2.png');
 
-  // 預載入新彩蛋圖片（COOLGUY, CHILLGUY）
-  rexImg = loadImage('Easter Egg/Rex.png');
-  kcImg = loadImage('Easter Egg/KC.png');
+  // 新彩蛋圖片（COOLGUY, CHILLGUY）改為延遲載入（透過 HTML img.src），不再預載入
 }
 
 // --- 延遲載入彩蛋下載圖片（只在需要下載時載入）---
