@@ -312,21 +312,12 @@ function updateMobileModeIcon() {
 
 // 更新手機版輸入框的垂直置中
 function updateMobileInputBoxVerticalAlignment(inputBox, text) {
-  console.log('✅ updateMobileInputBoxVerticalAlignment 被調用', {
-    isMobileMode,
-    hasMeasurer: !!mobileHiddenMeasurer,
-    hasInputBox: !!inputBox,
-    text: text ? text.substring(0, 20) : 'empty'
-  });
-
   if (!isMobileMode || !mobileHiddenMeasurer || !inputBox) {
-    console.log('❌ 條件檢查失敗，函數提前返回');
     return;
   }
 
   // 檢查是否有 custom-open class（Wireframe + Custom 最滿狀態）
   if (inputBox.elt.classList.contains('custom-open')) {
-    console.log('⏭️ custom-open 狀態，文字靠上對齊（padding-top: 0）');
     inputBox.style('padding-top', '0');
     inputBox.style('padding-bottom', '0');
     return;
@@ -335,7 +326,6 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
   // 檢查是否處於鍵盤激活狀態（單行模式，高度受限）
   const inputArea = document.querySelector('.mobile-input-area');
   if (inputArea && inputArea.classList.contains('keyboard-active')) {
-    console.log('⏭️ keyboard-active 狀態，不調整 padding（保持單行居中）');
     inputBox.style('padding-top', '0');
     inputBox.style('padding-bottom', '0');
     return;
@@ -355,12 +345,6 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
     const placeholderHeight = lineHeight * 1;
     // 使用 Math.round 取整，避免 subpixel 差異導致模式切換時位置偏移
     const paddingTop = Math.round(Math.max(0, (containerHeight - placeholderHeight) / 2));
-
-    console.log('🔍 Placeholder 垂直對齊:', {
-      containerHeight,
-      placeholderHeight,
-      paddingTop
-    });
 
     inputBox.style('padding-top', `${paddingTop}px`);
     inputBox.style('padding-bottom', '0');
@@ -383,7 +367,6 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
 
   // 如果文字和字體大小都沒變，且已經有 padding，則跳過重新計算
   if (!textChanged && !fontSizeChanged && currentPaddingTop > 0) {
-    console.log('⏭️ 文字和字體大小未改變，保持現有 padding-top');
     return;
   }
 
@@ -428,16 +411,6 @@ function updateMobileInputBoxVerticalAlignment(inputBox, text) {
           inputArea.style.alignItems = 'center';
         }
       }
-
-      console.log('🔍 垂直對齊計算:', {
-        text: text.substring(0, 20),
-        containerHeight,
-        textHeight,
-        lineHeight,
-        estimatedLines,
-        paddingTop,
-        alignItems: estimatedLines >= 3 ? 'flex-start' : 'center'
-      });
 
       // 應用 padding（只設置 top，讓文字自然從上往下排列）
       inputBox.style('padding-top', `${paddingTop}px`);

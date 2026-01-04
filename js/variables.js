@@ -25,6 +25,12 @@ let resetEaseSpeed = 0.035;
 const baseSpeeds = [0.125, -0.125, 0.25]; // R, G, B 各自的基礎旋轉速度
 const placeholderBaseSpeeds = [0.125, -0.125, 0.25]; // Placeholder SVG 的旋轉速度
 
+// --- 旋轉相關常數 ---
+const MIN_LETTERS_FOR_CHANNELS = [1, 2, 3]; // R, G, B 所需的最小字母數
+const ROTATION_ANGLE_MIN = -180;
+const ROTATION_ANGLE_MAX = 180;
+const EASE_THRESHOLD = 0.1; // ease 動畫的閾值
+
 // --- 字體大小設定 ---
 const extraLargeFontSize = '180px';  // 1-3 字
 const largeFontSize = '120px';       // 4-15 字
@@ -66,15 +72,15 @@ let previousMode = "Standard"; // 追蹤上一次的模式
 let isAutoRotateMode = false;
 let isCustomMode = false;
 
-// --- 旋轉偏移 ---
-let rRotationOffset = 0, gRotationOffset = 0, bRotationOffset = 0;
-let targetRRotationOffset = 0, targetGRotationOffset = 0, targetBRotationOffset = 0;
+// --- 旋轉偏移（改用陣列：[R, G, B]）---
+let rotationOffsets = [0, 0, 0];          // 當前旋轉偏移 [R, G, B]
+let targetRotationOffsets = [0, 0, 0];    // 目標旋轉偏移 [R, G, B]
 let isEasingCustomRotation = false;
 let customEaseSpeed = 0.08;
 
-// --- Slider 動畫 ---
-let currentRSliderValue = 0, currentGSliderValue = 0, currentBSliderValue = 0;
-let targetRSliderValue = 0, targetGSliderValue = 0, targetBSliderValue = 0;
+// --- Slider 動畫（改用陣列：[R, G, B]）---
+let currentSliderValues = [0, 0, 0];    // 當前 slider 值 [R, G, B]
+let targetSliderValues = [0, 0, 0];     // 目標 slider 值 [R, G, B]
 let isEasingSlider = false;
 
 // --- Slider Hover 狀態 ---
@@ -85,15 +91,18 @@ let inputBox, inputBoxMobile;
 let mobileHiddenMeasurer; // 用於測量手機版輸入框文字高度
 let rotateButton, customButton, colormodeButton, colormodeBox;
 let randomButton, resetButton, saveButton, saveButtonMobile, saveBox;
-let rSlider, gSlider, bSlider;
-let rAngleLabel, gAngleLabel, bAngleLabel;
+
+// --- Slider 和 AngleLabel（改用陣列：[R, G, B]）---
+let sliders = [null, null, null];         // 桌面版 sliders [R, G, B]
+let angleLabels = [null, null, null];     // 桌面版 angle labels [R, G, B]
+let mobileSliders = [null, null, null];   // 手機版 sliders [R, G, B]
+let mobileAngleLabels = [null, null, null]; // 手機版 angle labels [R, G, B]
+
 let randomImg, resetImg, saveImg, saveImgMobile, rotateIcon;
 let customIcon, colormodeIcon;
 let mobileRandomImg, mobileResetImg, mobileRotateIcon, mobileCustomIcon;
 let mobileRotateButton, mobileCustomButton, mobileStandardButton, mobileInverseButton;
 let mobileRandomButton, mobileResetButton;
-let mobileRSlider, mobileGSlider, mobileBSlider;
-let mobileRAngleLabel, mobileGAngleLabel, mobileBAngleLabel;
 
 // --- 色彩選擇器相關變數 ---
 let colorPickerCanvas; // 主 canvas（桌面版色環 / 手機版 bar）

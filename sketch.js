@@ -91,10 +91,6 @@ function setup() {
   let canvas = createCanvas(canvasSize.width, canvasSize.height);
   canvas.parent(canvasContainerId);
 
-  // --- 移除：不再需要計算中心點 ---
-  // circleX = width * 0.7; // 參考 ref.js 的佈局
-  // circleY = height * 0.4; // 參考 ref.js 的佈局
-
   // p5.js 繪圖設定
   textFont(font);
   // 根據 canvas 尺寸動態調整文字大小
@@ -127,21 +123,16 @@ function setup() {
   customIcon = select('#custom-icon');
   colormodeIcon = select('#colormode-icon');
 
-  rSlider = select("#r-slider");
-  gSlider = select("#g-slider");
-  bSlider = select("#b-slider");
+  // 使用陣列選取 sliders 和 labels
+  sliders[0] = select("#r-slider");
+  sliders[1] = select("#g-slider");
+  sliders[2] = select("#b-slider");
 
-  // 初始化 slider 的當前值
-  currentRSliderValue = 0;
-  currentGSliderValue = 0;
-  currentBSliderValue = 0;
-  targetRSliderValue = 0;
-  targetGSliderValue = 0;
-  targetBSliderValue = 0;
+  // 初始化 slider 的當前值和目標值（已在 variables.js 初始化為 [0,0,0]）
 
-  rAngleLabel = select("#r-angle-label");
-  gAngleLabel = select("#g-angle-label");
-  bAngleLabel = select("#b-angle-label");
+  angleLabels[0] = select("#r-angle-label");
+  angleLabels[1] = select("#g-angle-label");
+  angleLabels[2] = select("#b-angle-label");
 
   // --- 選取手機版元素 ---
   inputBoxMobile = select("#input-box-mobile");
@@ -159,13 +150,13 @@ function setup() {
   mobileResetButton = select(".mobile-reset-button");
   let mobileColormodeIndicator = select(".mobile-colormode-indicator");
 
-  // 選取手機版滑桿
-  mobileRSlider = select("#mobile-r-slider");
-  mobileGSlider = select("#mobile-g-slider");
-  mobileBSlider = select("#mobile-b-slider");
-  mobileRAngleLabel = select("#mobile-r-angle-label");
-  mobileGAngleLabel = select("#mobile-g-angle-label");
-  mobileBAngleLabel = select("#mobile-b-angle-label");
+  // 使用陣列選取手機版滑桿和 labels
+  mobileSliders[0] = select("#mobile-r-slider");
+  mobileSliders[1] = select("#mobile-g-slider");
+  mobileSliders[2] = select("#mobile-b-slider");
+  mobileAngleLabels[0] = select("#mobile-r-angle-label");
+  mobileAngleLabels[1] = select("#mobile-g-angle-label");
+  mobileAngleLabels[2] = select("#mobile-b-angle-label");
 
   // 選取手機版圖片
   mobileRandomImg = select("#mobile-random-img");
@@ -337,21 +328,12 @@ function setup() {
       // 重置桌面版按鈕icon
       updateRotateIcon();
 
-      // 使用新的 ease 系統平滑回到 0°
-      // 計算回到 0° 的最短路徑
-      let rDiff = getShortestRotation(rRotationOffset, 0);
-      let gDiff = getShortestRotation(gRotationOffset, 0);
-      let bDiff = getShortestRotation(bRotationOffset, 0);
-
-      // 設置目標值
-      targetRRotationOffset = rRotationOffset + rDiff;
-      targetGRotationOffset = gRotationOffset + gDiff;
-      targetBRotationOffset = bRotationOffset + bDiff;
-
-      // 設置 slider 的目標值為 0
-      targetRSliderValue = 0;
-      targetGSliderValue = 0;
-      targetBSliderValue = 0;
+      // 使用新的 ease 系統平滑回到 0°（使用陣列迴圈）
+      for (let i = 0; i < 3; i++) {
+        const diff = getShortestRotation(rotationOffsets[i], 0);
+        targetRotationOffsets[i] = rotationOffsets[i] + diff;
+        targetSliderValues[i] = 0;
+      }
 
       // 啟動新的 ease 動畫（Custom 模式的 ease）
       isEasingCustomRotation = true;
@@ -418,34 +400,17 @@ function setup() {
       if (letters.length > 0 && !isAutoRotateMode && !isEasterEggActive) {
         const letterCount = letters.length;
 
-        // 只為有足夠字母數的 slider 生成隨機角度
-        // R slider: 需要至少 1 個字母
-        let newRAngle = (letterCount > 0) ? floor(random(-180, 180)) : 0;
-        // G slider: 需要至少 2 個字母
-        let newGAngle = (letterCount > 1) ? floor(random(-180, 180)) : 0;
-        // B slider: 需要至少 3 個字母
-        let newBAngle = (letterCount > 2) ? floor(random(-180, 180)) : 0;
-
-        // 計算最短旋轉路徑
-        let rDiff = getShortestRotation(rRotationOffset, newRAngle);
-        let gDiff = getShortestRotation(gRotationOffset, newGAngle);
-        let bDiff = getShortestRotation(bRotationOffset, newBAngle);
-
-        // 設置目標值為當前值加上最短路徑差值
-        targetRRotationOffset = rRotationOffset + rDiff;
-        targetGRotationOffset = gRotationOffset + gDiff;
-        targetBRotationOffset = bRotationOffset + bDiff;
-
-        // 設置 slider 的目標值（正規化後）
-        targetRSliderValue = normalizeAngle(targetRRotationOffset);
-        targetGSliderValue = normalizeAngle(targetGRotationOffset);
-        targetBSliderValue = normalizeAngle(targetBRotationOffset);
+        // 使用陣列迴圈處理 R/G/B（簡化重複邏輯）
+        for (let i = 0; i < 3; i++) {
+          const newAngle = (letterCount >= MIN_LETTERS_FOR_CHANNELS[i]) ? floor(random(ROTATION_ANGLE_MIN, ROTATION_ANGLE_MAX)) : 0;
+          const diff = getShortestRotation(rotationOffsets[i], newAngle);
+          targetRotationOffsets[i] = rotationOffsets[i] + diff;
+          targetSliderValues[i] = normalizeAngle(targetRotationOffsets[i]);
+        }
 
         // 啟動 ease 動畫
         isEasingCustomRotation = true;
         isEasingSlider = true;
-
-        // 立即更新 UI 以顯示目標角度
         updateUI();
       }
   });
@@ -453,56 +418,29 @@ function setup() {
   // 參考 ref.js:128
   resetButton.mousePressed(() => {
       if (letters.length > 0 && !isAutoRotateMode && !isEasterEggActive) {
-        // 計算回到 0° 的最短路徑
-        let rDiff = getShortestRotation(rRotationOffset, 0);
-        let gDiff = getShortestRotation(gRotationOffset, 0);
-        let bDiff = getShortestRotation(bRotationOffset, 0);
-
-        // 設置目標值為當前值加上最短路徑差值
-        targetRRotationOffset = rRotationOffset + rDiff;
-        targetGRotationOffset = gRotationOffset + gDiff;
-        targetBRotationOffset = bRotationOffset + bDiff;
-
-        // 設置 slider 的目標值為 0
-        targetRSliderValue = 0;
-        targetGSliderValue = 0;
-        targetBSliderValue = 0;
+        // 使用陣列迴圈處理 R/G/B（簡化重複邏輯）
+        for (let i = 0; i < 3; i++) {
+          const diff = getShortestRotation(rotationOffsets[i], 0);
+          targetRotationOffsets[i] = rotationOffsets[i] + diff;
+          targetSliderValues[i] = 0;
+        }
 
         // 啟動 ease 動畫
         isEasingCustomRotation = true;
         isEasingSlider = true;
-
-        // 立即更新 UI 以顯示目標角度
         updateUI();
       }
   });
 
-  // --- 為滑桿綁定 input 事件，參考 ref.js:135-138 ---
-  rSlider.input(() => { if (!isEasterEggActive && !isAutoRotateMode) { updateSliders(); updateUI(); } });
-  gSlider.input(() => { if (!isEasterEggActive && !isAutoRotateMode) { updateSliders(); updateUI(); } });
-  bSlider.input(() => { if (!isEasterEggActive && !isAutoRotateMode) { updateSliders(); updateUI(); } });
-
-  // --- 為滑桿綁定 hover 事件 ---
-  // rSlider.elt.addEventListener('mouseenter', () => {
-  //   if (rSlider.hasClass('enabled')) {
-  //     hoveredSlider = 'r';
-  //   }
-  // });
-  // rSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
-
-  // gSlider.elt.addEventListener('mouseenter', () => {
-  //   if (gSlider.hasClass('enabled')) {
-  //     hoveredSlider = 'g';
-  //   }
-  // });
-  // gSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
-
-  // bSlider.elt.addEventListener('mouseenter', () => {
-  //   if (bSlider.hasClass('enabled')) {
-  //     hoveredSlider = 'b';
-  //   }
-  // });
-  // bSlider.elt.addEventListener('mouseleave', () => { hoveredSlider = null; });
+  // --- 為滑桿綁定 input 事件（使用陣列迴圈）---
+  sliders.forEach(slider => {
+    slider.input(() => {
+      if (!isEasterEggActive && !isAutoRotateMode) {
+        updateSliders();
+        updateUI();
+      }
+    });
+  });
 
   // --- 為角度輸入框綁定事件 ---
   // 限制輸入只能是數字、- 和 +
@@ -519,108 +457,46 @@ function setup() {
     }
   };
 
-  // 處理 R 角度輸入
-  const handleRAngleInput = function(e) {
-    if (!isEasterEggActive && !isAutoRotateMode) {
-      let normalizedAngle = convertAngleInput(e.target.value);
-      rSlider.value(normalizedAngle);
-      updateSliders();
-      updateUI();
-    }
-  };
-  rAngleLabel.elt.addEventListener('keydown', function(e) {
-    filterAngleInput(e); // 先過濾輸入
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleRAngleInput(e);
-      e.target.blur(); // 移除焦點，隱藏 caret
-    }
-  });
-  rAngleLabel.elt.addEventListener('blur', handleRAngleInput);
-
-  // 處理 G 角度輸入
-  const handleGAngleInput = function(e) {
-    if (!isEasterEggActive && !isAutoRotateMode) {
-      let normalizedAngle = convertAngleInput(e.target.value);
-      gSlider.value(normalizedAngle);
-      updateSliders();
-      updateUI();
-    }
-  };
-  gAngleLabel.elt.addEventListener('keydown', function(e) {
-    filterAngleInput(e); // 先過濾輸入
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleGAngleInput(e);
-      e.target.blur(); // 移除焦點，隱藏 caret
-    }
-  });
-  gAngleLabel.elt.addEventListener('blur', handleGAngleInput);
-
-  // 處理 B 角度輸入
-  const handleBAngleInput = function(e) {
-    if (!isEasterEggActive && !isAutoRotateMode) {
-      let normalizedAngle = convertAngleInput(e.target.value);
-      bSlider.value(normalizedAngle);
-      updateSliders();
-      updateUI();
-    }
-  };
-  bAngleLabel.elt.addEventListener('keydown', function(e) {
-    filterAngleInput(e); // 先過濾輸入
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleBAngleInput(e);
-      e.target.blur(); // 移除焦點，隱藏 caret
-    }
-  });
-  bAngleLabel.elt.addEventListener('blur', handleBAngleInput);
-
-  // --- 綁定手機版角度輸入框事件 ---
-  if (mobileRAngleLabel) {
-    mobileRAngleLabel.elt.addEventListener('keydown', filterAngleInput); // 過濾輸入
-    mobileRAngleLabel.elt.addEventListener('input', function(e) {
+  // 使用陣列迴圈處理 R/G/B 角度輸入（簡化重複邏輯）
+  angleLabels.forEach((label, index) => {
+    const handleAngleInput = function(e) {
       if (!isEasterEggActive && !isAutoRotateMode) {
         let normalizedAngle = convertAngleInput(e.target.value);
-        if (mobileRSlider) {
-          mobileRSlider.value(normalizedAngle);
-          rSlider.value(normalizedAngle);
-        }
+        if (sliders[index]) sliders[index].value(normalizedAngle);
         updateSliders();
         updateUI();
       }
-    });
-  }
+    };
 
-  if (mobileGAngleLabel) {
-    mobileGAngleLabel.elt.addEventListener('keydown', filterAngleInput); // 過濾輸入
-    mobileGAngleLabel.elt.addEventListener('input', function(e) {
-      if (!isEasterEggActive && !isAutoRotateMode) {
-        let normalizedAngle = convertAngleInput(e.target.value);
-        if (mobileGSlider) {
-          mobileGSlider.value(normalizedAngle);
-          gSlider.value(normalizedAngle);
-        }
-        updateSliders();
-        updateUI();
+    label.elt.addEventListener('keydown', function(e) {
+      filterAngleInput(e); // 先過濾輸入
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleAngleInput(e);
+        e.target.blur(); // 移除焦點，隱藏 caret
       }
     });
-  }
 
-  if (mobileBAngleLabel) {
-    mobileBAngleLabel.elt.addEventListener('keydown', filterAngleInput); // 過濾輸入
-    mobileBAngleLabel.elt.addEventListener('input', function(e) {
-      if (!isEasterEggActive && !isAutoRotateMode) {
-        let normalizedAngle = convertAngleInput(e.target.value);
-        if (mobileBSlider) {
-          mobileBSlider.value(normalizedAngle);
-          bSlider.value(normalizedAngle);
+    label.elt.addEventListener('blur', handleAngleInput);
+  });
+
+  // --- 綁定手機版角度輸入框事件（使用陣列迴圈）---
+  mobileAngleLabels.forEach((label, index) => {
+    if (label) {
+      label.elt.addEventListener('keydown', filterAngleInput); // 過濾輸入
+      label.elt.addEventListener('input', function(e) {
+        if (!isEasterEggActive && !isAutoRotateMode) {
+          let normalizedAngle = convertAngleInput(e.target.value);
+          if (mobileSliders[index]) {
+            mobileSliders[index].value(normalizedAngle);
+            if (sliders[index]) sliders[index].value(normalizedAngle);
+          }
+          updateSliders();
+          updateUI();
         }
-        updateSliders();
-        updateUI();
-      }
-    });
-  }
+      });
+    }
+  });
 
   // --- 綁定手機版按鈕事件（同步桌面版） ---
   if (mobileStandardButton) {
@@ -673,17 +549,12 @@ function setup() {
           }
         }
         updateRotateIcon();
-        let rDiff = getShortestRotation(rRotationOffset, 0);
-        let gDiff = getShortestRotation(gRotationOffset, 0);
-        let bDiff = getShortestRotation(bRotationOffset, 0);
-        targetRRotationOffset = rRotationOffset + rDiff;
-        targetGRotationOffset = gRotationOffset + gDiff;
-        targetBRotationOffset = bRotationOffset + bDiff;
-
-        // 設置 slider 的目標值為 0
-        targetRSliderValue = 0;
-        targetGSliderValue = 0;
-        targetBSliderValue = 0;
+        // 使用陣列迴圈處理 R/G/B
+        for (let i = 0; i < 3; i++) {
+          const diff = getShortestRotation(rotationOffsets[i], 0);
+          targetRotationOffsets[i] = rotationOffsets[i] + diff;
+          targetSliderValues[i] = 0;
+        }
 
         isEasingCustomRotation = true;
         isEasingSlider = true;
@@ -698,25 +569,13 @@ function setup() {
       if (letters.length > 0 && !isAutoRotateMode && !isEasterEggActive) {
         const letterCount = letters.length;
 
-        // 只為有足夠字母數的 slider 生成隨機角度
-        // R slider: 需要至少 1 個字母
-        let newRAngle = (letterCount > 0) ? floor(random(-180, 180)) : 0;
-        // G slider: 需要至少 2 個字母
-        let newGAngle = (letterCount > 1) ? floor(random(-180, 180)) : 0;
-        // B slider: 需要至少 3 個字母
-        let newBAngle = (letterCount > 2) ? floor(random(-180, 180)) : 0;
-
-        let rDiff = getShortestRotation(rRotationOffset, newRAngle);
-        let gDiff = getShortestRotation(gRotationOffset, newGAngle);
-        let bDiff = getShortestRotation(bRotationOffset, newBAngle);
-        targetRRotationOffset = rRotationOffset + rDiff;
-        targetGRotationOffset = gRotationOffset + gDiff;
-        targetBRotationOffset = bRotationOffset + bDiff;
-
-        // 設置 slider 的目標值（正規化後）
-        targetRSliderValue = normalizeAngle(targetRRotationOffset);
-        targetGSliderValue = normalizeAngle(targetGRotationOffset);
-        targetBSliderValue = normalizeAngle(targetBRotationOffset);
+        // 使用陣列迴圈處理 R/G/B
+        for (let i = 0; i < 3; i++) {
+          const newAngle = (letterCount >= MIN_LETTERS_FOR_CHANNELS[i]) ? floor(random(ROTATION_ANGLE_MIN, ROTATION_ANGLE_MAX)) : 0;
+          const diff = getShortestRotation(rotationOffsets[i], newAngle);
+          targetRotationOffsets[i] = rotationOffsets[i] + diff;
+          targetSliderValues[i] = normalizeAngle(targetRotationOffsets[i]);
+        }
 
         // 啟動 ease 動畫
         isEasingCustomRotation = true;
@@ -731,17 +590,12 @@ function setup() {
   if (mobileResetButton) {
     mobileResetButton.mousePressed(() => {
       if (letters.length > 0 && !isAutoRotateMode && !isEasterEggActive) {
-        let rDiff = getShortestRotation(rRotationOffset, 0);
-        let gDiff = getShortestRotation(gRotationOffset, 0);
-        let bDiff = getShortestRotation(bRotationOffset, 0);
-        targetRRotationOffset = rRotationOffset + rDiff;
-        targetGRotationOffset = gRotationOffset + gDiff;
-        targetBRotationOffset = bRotationOffset + bDiff;
-
-        // 設置 slider 的目標值為 0
-        targetRSliderValue = 0;
-        targetGSliderValue = 0;
-        targetBSliderValue = 0;
+        // 使用陣列迴圈處理 R/G/B
+        for (let i = 0; i < 3; i++) {
+          const diff = getShortestRotation(rotationOffsets[i], 0);
+          targetRotationOffsets[i] = rotationOffsets[i] + diff;
+          targetSliderValues[i] = 0;
+        }
 
         // 啟動 ease 動畫
         isEasingCustomRotation = true;
@@ -754,50 +608,24 @@ function setup() {
   }
 
   // --- 為手機版滑桿綁定事件 ---
-  if (mobileRSlider) {
-    mobileRSlider.input(() => {
-      if (!isEasterEggActive && !isAutoRotateMode) {
-        isEasingCustomRotation = false;
-        isEasingSlider = false;
-        rRotationOffset = mobileRSlider.value();
-        targetRRotationOffset = rRotationOffset;
-        currentRSliderValue = rRotationOffset;
-        targetRSliderValue = rRotationOffset;
-        rSlider.value(rRotationOffset);
-        updateUI();
-      }
-    });
-  }
-
-  if (mobileGSlider) {
-    mobileGSlider.input(() => {
-      if (!isEasterEggActive && !isAutoRotateMode) {
-        isEasingCustomRotation = false;
-        isEasingSlider = false;
-        gRotationOffset = mobileGSlider.value();
-        targetGRotationOffset = gRotationOffset;
-        currentGSliderValue = gRotationOffset;
-        targetGSliderValue = gRotationOffset;
-        gSlider.value(gRotationOffset);
-        updateUI();
-      }
-    });
-  }
-
-  if (mobileBSlider) {
-    mobileBSlider.input(() => {
-      if (!isEasterEggActive && !isAutoRotateMode) {
-        isEasingCustomRotation = false;
-        isEasingSlider = false;
-        bRotationOffset = mobileBSlider.value();
-        targetBRotationOffset = bRotationOffset;
-        currentBSliderValue = bRotationOffset;
-        targetBSliderValue = bRotationOffset;
-        bSlider.value(bRotationOffset);
-        updateUI();
-      }
-    });
-  }
+  // 使用陣列迴圈綁定手機版 slider input 事件
+  mobileSliders.forEach((mobileSlider, index) => {
+    if (mobileSlider) {
+      mobileSlider.input(() => {
+        if (!isEasterEggActive && !isAutoRotateMode) {
+          isEasingCustomRotation = false;
+          isEasingSlider = false;
+          const value = mobileSlider.value();
+          rotationOffsets[index] = value;
+          targetRotationOffsets[index] = value;
+          currentSliderValues[index] = value;
+          targetSliderValues[index] = value;
+          if (sliders[index]) sliders[index].value(value);
+          updateUI();
+        }
+      });
+    }
+  });
 
   // --- 綁定Save按鈕事件 ---
   // 將事件綁定到整個 save-box，讓整個容器都可以點擊
@@ -1008,49 +836,6 @@ function draw() {
       updateIconsForMode();
     }
   }
-
-  // --- Slider Hover 效果 ---
-  // if (!isMobileMode) {
-  //   // 選取所有 slider-container
-  //   let sliderContainers = selectAll('.slider-container');
-
-  //   // 檢查每個 slider 是否 disabled
-  //   let rSliderEnabled = rSlider && rSlider.hasClass('enabled');
-  //   let gSliderEnabled = gSlider && gSlider.hasClass('enabled');
-  //   let bSliderEnabled = bSlider && bSlider.hasClass('enabled');
-
-  //   // 移除所有 dimmed class
-  //   sliderContainers.forEach(container => {
-  //     container.removeClass('dimmed');
-  //   });
-
-  //   // 如果有 hover，添加 dimmed 效果
-  //   if (hoveredSlider && sliderContainers.length >= 3) {
-  //     if (hoveredSlider === 'r') {
-  //       sliderContainers[1].addClass('dimmed'); // G slider
-  //       sliderContainers[2].addClass('dimmed'); // B slider
-  //     } else if (hoveredSlider === 'g') {
-  //       sliderContainers[0].addClass('dimmed'); // R slider
-  //       sliderContainers[2].addClass('dimmed'); // B slider
-  //     } else if (hoveredSlider === 'b') {
-  //       sliderContainers[0].addClass('dimmed'); // R slider
-  //       sliderContainers[1].addClass('dimmed'); // G slider
-  //     }
-  //   }
-
-  //   // 額外處理：如果有 slider 是 disabled 且沒有被 hover，也要添加 dimmed
-  //   if (hoveredSlider) {
-  //     if (!rSliderEnabled && hoveredSlider !== 'r') {
-  //       sliderContainers[0].addClass('dimmed');
-  //     }
-  //     if (!gSliderEnabled && hoveredSlider !== 'g') {
-  //       sliderContainers[1].addClass('dimmed');
-  //     }
-  //     if (!bSliderEnabled && hoveredSlider !== 'b') {
-  //       sliderContainers[2].addClass('dimmed');
-  //     }
-  //   }
-  // }
 
   // --- 頁面載入動畫 ---
   let timeSinceLoad = millis() - pageLoadStartTime;
@@ -1884,28 +1669,25 @@ function drawLogo(pg, alphaMultiplier = 255) {
         rotationAngles[i] = lerp(rotationAngles[i], 0, 0.08);
 
         // 檢查是否已經很接近 0°
-        if (abs(rotationAngles[i]) > 0.1) {
+        if (abs(rotationAngles[i]) > EASE_THRESHOLD) {
           allReachedZero = false;
         }
       }
     }
 
-    // 處理手動偏移（Custom 模式的 offset）
-    rRotationOffset = lerp(rRotationOffset, 0, 0.08);
-    gRotationOffset = lerp(gRotationOffset, 0, 0.08);
-    bRotationOffset = lerp(bRotationOffset, 0, 0.08);
-
-    // 檢查 offset 是否也接近 0°
-    if (abs(rRotationOffset) > 0.1 || abs(gRotationOffset) > 0.1 || abs(bRotationOffset) > 0.1) {
-      allReachedZero = false;
+    // 處理手動偏移（Custom 模式的 offset）- 使用陣列迴圈
+    for (let i = 0; i < 3; i++) {
+      rotationOffsets[i] = lerp(rotationOffsets[i], 0, 0.08);
+      // 檢查 offset 是否也接近 0°
+      if (abs(rotationOffsets[i]) > EASE_THRESHOLD) {
+        allReachedZero = false;
+      }
     }
 
     // 如果所有角度都接近 0° 了，完全重設並停止
     if (allReachedZero) {
       rotationAngles = [...originalRotationAngles];
-      rRotationOffset = 0;
-      gRotationOffset = 0;
-      bRotationOffset = 0;
+      rotationOffsets.fill(0); // 重設所有 offset 為 0
       shouldResetToZero = false;
     }
   }
@@ -1914,32 +1696,26 @@ function drawLogo(pg, alphaMultiplier = 255) {
   if (isEasingCustomRotation && !isAutoRotateMode && !isEasterEggActive) {
     let allReachedTarget = true;
 
-    // 使用 lerp 平滑過渡到目標角度
-    rRotationOffset = lerp(rRotationOffset, targetRRotationOffset, customEaseSpeed);
-    gRotationOffset = lerp(gRotationOffset, targetGRotationOffset, customEaseSpeed);
-    bRotationOffset = lerp(bRotationOffset, targetBRotationOffset, customEaseSpeed);
+    // 使用陣列迴圈處理 R/G/B rotation ease
+    for (let i = 0; i < 3; i++) {
+      // 使用 lerp 平滑過渡到目標角度
+      rotationOffsets[i] = lerp(rotationOffsets[i], targetRotationOffsets[i], customEaseSpeed);
 
-    // 檢查是否已經很接近目標角度
-    if (abs(rRotationOffset - targetRRotationOffset) > 0.1) allReachedTarget = false;
-    if (abs(gRotationOffset - targetGRotationOffset) > 0.1) allReachedTarget = false;
-    if (abs(bRotationOffset - targetBRotationOffset) > 0.1) allReachedTarget = false;
+      // 檢查是否已經很接近目標角度
+      if (abs(rotationOffsets[i] - targetRotationOffsets[i]) > EASE_THRESHOLD) {
+        allReachedTarget = false;
+      }
+    }
 
-    // 如果已經接近目標，完全設置為目標值並停止 ease
+    // 如果所有角度都已接近目標，完全設置為目標值並停止 ease
     if (allReachedTarget) {
-      rRotationOffset = targetRRotationOffset;
-      gRotationOffset = targetGRotationOffset;
-      bRotationOffset = targetBRotationOffset;
-
-      // 正規化角度值到 -180° 到 180°
-      rRotationOffset = normalizeAngle(rRotationOffset);
-      gRotationOffset = normalizeAngle(gRotationOffset);
-      bRotationOffset = normalizeAngle(bRotationOffset);
-
-      // 同步更新目標值
-      targetRRotationOffset = rRotationOffset;
-      targetGRotationOffset = gRotationOffset;
-      targetBRotationOffset = bRotationOffset;
-
+      for (let i = 0; i < 3; i++) {
+        rotationOffsets[i] = targetRotationOffsets[i];
+        // 正規化角度值到 -180° 到 180°
+        rotationOffsets[i] = normalizeAngle(rotationOffsets[i]);
+        // 同步更新目標值
+        targetRotationOffsets[i] = rotationOffsets[i];
+      }
       isEasingCustomRotation = false;
     }
   }
@@ -1948,46 +1724,34 @@ function drawLogo(pg, alphaMultiplier = 255) {
   if (isEasingSlider && !isAutoRotateMode && !isEasterEggActive) {
     let allSlidersReachedTarget = true;
 
-    // 使用 lerp 平滑過渡到目標 slider 值
-    currentRSliderValue = lerp(currentRSliderValue, targetRSliderValue, customEaseSpeed);
-    currentGSliderValue = lerp(currentGSliderValue, targetGSliderValue, customEaseSpeed);
-    currentBSliderValue = lerp(currentBSliderValue, targetBSliderValue, customEaseSpeed);
+    // 使用陣列迴圈處理 R/G/B slider ease 動畫
+    for (let i = 0; i < 3; i++) {
+      // 使用 lerp 平滑過渡到目標 slider 值
+      currentSliderValues[i] = lerp(currentSliderValues[i], targetSliderValues[i], customEaseSpeed);
 
-    // 更新 slider 顯示值
-    if (rSlider) rSlider.value(currentRSliderValue);
-    if (gSlider) gSlider.value(currentGSliderValue);
-    if (bSlider) bSlider.value(currentBSliderValue);
+      // 更新桌面版和手機版 slider 顯示值
+      if (sliders[i]) sliders[i].value(currentSliderValues[i]);
+      if (mobileSliders[i]) mobileSliders[i].value(currentSliderValues[i]);
 
-    // 同步手機版 slider
-    if (mobileRSlider) mobileRSlider.value(currentRSliderValue);
-    if (mobileGSlider) mobileGSlider.value(currentGSliderValue);
-    if (mobileBSlider) mobileBSlider.value(currentBSliderValue);
+      // 檢查是否已經很接近目標值
+      if (abs(currentSliderValues[i] - targetSliderValues[i]) > EASE_THRESHOLD) {
+        allSlidersReachedTarget = false;
+      }
+    }
 
-    // 檢查是否已經很接近目標值
-    if (abs(currentRSliderValue - targetRSliderValue) > 0.1) allSlidersReachedTarget = false;
-    if (abs(currentGSliderValue - targetGSliderValue) > 0.1) allSlidersReachedTarget = false;
-    if (abs(currentBSliderValue - targetBSliderValue) > 0.1) allSlidersReachedTarget = false;
-
-    // 如果已經接近目標，完全設置為目標值並停止 ease
+    // 如果所有 slider 都已接近目標，完全設置為目標值並停止 ease
     if (allSlidersReachedTarget) {
-      currentRSliderValue = targetRSliderValue;
-      currentGSliderValue = targetGSliderValue;
-      currentBSliderValue = targetBSliderValue;
-
-      if (rSlider) rSlider.value(currentRSliderValue);
-      if (gSlider) gSlider.value(currentGSliderValue);
-      if (bSlider) bSlider.value(currentBSliderValue);
-      if (mobileRSlider) mobileRSlider.value(currentRSliderValue);
-      if (mobileGSlider) mobileGSlider.value(currentGSliderValue);
-      if (mobileBSlider) mobileBSlider.value(currentBSliderValue);
-
+      for (let i = 0; i < 3; i++) {
+        currentSliderValues[i] = targetSliderValues[i];
+        if (sliders[i]) sliders[i].value(currentSliderValues[i]);
+        if (mobileSliders[i]) mobileSliders[i].value(currentSliderValues[i]);
+      }
       isEasingSlider = false;
     }
   }
 
-  // Hover 時需要分兩批繪製：先繪製非 hover 的（半透明），再繪製 hover 的（置頂）
-  // let drawingPasses = hoveredSlider ? 2 : 1;
-  let drawingPasses = 1; // 注解 hover 功能
+  // 繪製字母（Hover 功能已停用）
+  let drawingPasses = 1;
 
   for (let pass = 0; pass < drawingPasses; pass++) {
     for (let i = 0; i < totalLetters; i++) {
@@ -2036,10 +1800,8 @@ function drawLogo(pg, alphaMultiplier = 255) {
     }
 
     // --- 應用手動偏移 ---
-    let currentManualOffset;
-    if (colorIndex === 0) { currentManualOffset = rRotationOffset; }
-    else if (colorIndex === 1) { currentManualOffset = gRotationOffset; }
-    else { currentManualOffset = bRotationOffset; }
+    // 使用陣列直接取得對應的 rotation offset
+    let currentManualOffset = rotationOffsets[colorIndex] || 0;
 
     pg.push();
     // 計算並應用旋轉角度
@@ -2370,13 +2132,9 @@ function disableAllUI() {
   if (saveButtonMobile) saveButtonMobile.attribute('disabled', '');
   if (colorWheelPlayButton) colorWheelPlayButton.elt.setAttribute('disabled', '');
 
-  // 禁用滑桿
-  if (rSlider) rSlider.attribute('disabled', '');
-  if (gSlider) gSlider.attribute('disabled', '');
-  if (bSlider) bSlider.attribute('disabled', '');
-  if (mobileRSlider) mobileRSlider.attribute('disabled', '');
-  if (mobileGSlider) mobileGSlider.attribute('disabled', '');
-  if (mobileBSlider) mobileBSlider.attribute('disabled', '');
+  // 禁用滑桿（使用陣列迴圈）
+  sliders.forEach(slider => { if (slider) slider.attribute('disabled', ''); });
+  mobileSliders.forEach(slider => { if (slider) slider.attribute('disabled', ''); });
 
   // 禁用手機版按鈕
   if (mobileRotateButton) mobileRotateButton.attribute('disabled', '');
@@ -2408,14 +2166,10 @@ function enableAllUI() {
   if (saveButtonMobile) saveButtonMobile.removeAttribute('disabled');
   if (colorWheelPlayButton) colorWheelPlayButton.elt.removeAttribute('disabled');
 
-  // 恢復滑桿
+  // 恢復滑桿（使用陣列迴圈）
   if (!isAutoRotateMode && !isEasterEggActive && letters.length > 0) {
-    if (rSlider) rSlider.removeAttribute('disabled');
-    if (gSlider) gSlider.removeAttribute('disabled');
-    if (bSlider) bSlider.removeAttribute('disabled');
-    if (mobileRSlider) mobileRSlider.removeAttribute('disabled');
-    if (mobileGSlider) mobileGSlider.removeAttribute('disabled');
-    if (mobileBSlider) mobileBSlider.removeAttribute('disabled');
+    sliders.forEach(slider => { if (slider) slider.removeAttribute('disabled'); });
+    mobileSliders.forEach(slider => { if (slider) slider.removeAttribute('disabled'); });
   }
 }
 
@@ -2461,9 +2215,10 @@ function getShortestRotation(currentAngle, targetAngle) {
 
 // --- 新增：重設角度偏移的輔助函數 ---
 function resetRotationOffsets() {
-    rSlider.value(0);
-    gSlider.value(0);
-    bSlider.value(0);
+    // 使用陣列迴圈重置所有 sliders
+    for (let i = 0; i < 3; i++) {
+      if (sliders[i]) sliders[i].value(0);
+    }
     updateSliders(); // 確保全域變數也被更新
 }
 
@@ -2894,8 +2649,6 @@ function updateUI() {
         }
         
         // 更新滑桿（根據字母數量決定可用的 slider）
-        const sliders = [rSlider, gSlider, bSlider];
-        const labels = [rAngleLabel, gAngleLabel, bAngleLabel];
         const letterCount = letters.length;
 
         sliders.forEach((slider, i) => {
@@ -2908,7 +2661,7 @@ function updateUI() {
             slider.elt.disabled = !sliderEnabled;
             if (sliderEnabled) {
                 slider.addClass('enabled');
-                labels[i].addClass('enabled');
+                angleLabels[i].addClass('enabled');
 
                 // 決定 slider 和 label 的顏色
                 if (mode === "Wireframe") {
@@ -2916,97 +2669,87 @@ function updateUI() {
                     // 移除 inline style，讓 CSS 規則生效
                     slider.elt.style.removeProperty("--track-color");
                     slider.elt.style.removeProperty("--thumb-color");
-                    labels[i].elt.style.removeProperty("color");
+                    angleLabels[i].elt.style.removeProperty("color");
                 } else {
                     // Standard/Inverse 模式：使用 RGB 三種顏色
                     let sliderColor = `rgb(${colors[i].join(',')})`;
                     slider.elt.style.setProperty("--track-color", sliderColor);
                     slider.elt.style.setProperty("--thumb-color", sliderColor);
-                    labels[i].style("color", sliderColor);
+                    angleLabels[i].style("color", sliderColor);
                 }
             } else {
                 slider.removeClass('enabled');
-                labels[i].removeClass('enabled');
+                angleLabels[i].removeClass('enabled');
 
                 if (mode === "Wireframe") {
                     // Wireframe 模式：移除 inline style，讓 CSS 規則生效
                     slider.elt.style.removeProperty("--track-color");
                     slider.elt.style.removeProperty("--thumb-color");
-                    labels[i].elt.style.removeProperty("color");
+                    angleLabels[i].elt.style.removeProperty("color");
                 } else {
                     // 其他模式：設為預設 disabled 顏色
-                    labels[i].style("color", disabledColor);
+                    angleLabels[i].style("color", disabledColor);
                 }
             }
         });
         
-        // 更新滑桿數值標籤，並加上正號
+        // 更新滑桿數值標籤，並加上正號（使用陣列迴圈）
         // 如果正在 ease，顯示目標角度（正規化後的）；否則顯示當前角度
-        let rVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetRRotationOffset) : rRotationOffset);
-        let gVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetGRotationOffset) : gRotationOffset);
-        let bVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetBRotationOffset) : bRotationOffset);
+        const vals = [0, 1, 2].map(i =>
+          Math.round(isEasingCustomRotation ? normalizeAngle(targetRotationOffsets[i]) : rotationOffsets[i])
+        );
 
-        // 只在角度 label 沒有焦點時才更新它的值（避免干擾用戶編輯，添加存在性檢查）
+        // 只在角度 label 沒有焦點時才更新它的值（避免干擾用戶編輯）
         const activeElement = document.activeElement;
-        if (rAngleLabel && activeElement !== rAngleLabel.elt) {
-          rAngleLabel.value((rVal > 0 ? "+" : "") + rVal);
-        }
-        if (gAngleLabel && activeElement !== gAngleLabel.elt) {
-          gAngleLabel.value((gVal > 0 ? "+" : "") + gVal);
-        }
-        if (bAngleLabel && activeElement !== bAngleLabel.elt) {
-          bAngleLabel.value((bVal > 0 ? "+" : "") + bVal);
-        }
+        angleLabels.forEach((label, i) => {
+          if (label && activeElement !== label.elt) {
+            label.value((vals[i] > 0 ? "+" : "") + vals[i]);
+          }
+        });
 
         // 更新手機版 Custom 調整區的 slider 和 label
         if (isMobileMode && mobileElements.customAngleControls) {
-            const mobileSliders = [mobileElements.mobileRSlider, mobileElements.mobileGSlider, mobileElements.mobileBSlider];
-            const mobileLabels = [mobileElements.mobileRAngleLabel, mobileElements.mobileGAngleLabel, mobileElements.mobileBAngleLabel];
             mobileSliders.forEach((slider, i) => {
-                if (slider && mobileLabels[i]) {
+                if (slider && mobileAngleLabels[i]) {
                     let sliderEnabled = customControlsEnabled && letterCount > i;
                     slider.elt.disabled = !sliderEnabled;
 
                     if (sliderEnabled) {
                         slider.addClass('enabled');
-                        mobileLabels[i].addClass('enabled');
+                        mobileAngleLabels[i].addClass('enabled');
 
                         // 決定 slider 和 label 的顏色
                         if (mode === "Wireframe") {
                             slider.elt.style.removeProperty("--track-color");
                             slider.elt.style.removeProperty("--thumb-color");
-                            mobileLabels[i].elt.style.removeProperty("color");
+                            mobileAngleLabels[i].elt.style.removeProperty("color");
                         } else {
                             let sliderColor = `rgb(${colors[i].join(',')})`;
                             slider.elt.style.setProperty("--track-color", sliderColor);
                             slider.elt.style.setProperty("--thumb-color", sliderColor);
-                            mobileLabels[i].style("color", sliderColor);
+                            mobileAngleLabels[i].style("color", sliderColor);
                         }
                     } else {
                         slider.removeClass('enabled');
-                        mobileLabels[i].removeClass('enabled');
+                        mobileAngleLabels[i].removeClass('enabled');
 
                         if (mode === "Wireframe") {
                             slider.elt.style.removeProperty("--track-color");
                             slider.elt.style.removeProperty("--thumb-color");
-                            mobileLabels[i].elt.style.removeProperty("color");
+                            mobileAngleLabels[i].elt.style.removeProperty("color");
                         } else {
-                            mobileLabels[i].style("color", disabledColor);
+                            mobileAngleLabels[i].style("color", disabledColor);
                         }
                     }
                 }
             });
 
-            // 更新手機版 label 數值
-            if (mobileElements.mobileRAngleLabel) {
-                mobileElements.mobileRAngleLabel.value((rVal > 0 ? "+" : "") + rVal);
-            }
-            if (mobileElements.mobileGAngleLabel) {
-                mobileElements.mobileGAngleLabel.value((gVal > 0 ? "+" : "") + gVal);
-            }
-            if (mobileElements.mobileBAngleLabel) {
-                mobileElements.mobileBAngleLabel.value((bVal > 0 ? "+" : "") + bVal);
-            }
+            // 更新手機版 label 數值（使用陣列迴圈）
+            mobileAngleLabels.forEach((label, i) => {
+                if (label && activeElement !== label.elt) {
+                    label.value((vals[i] > 0 ? "+" : "") + vals[i]);
+                }
+            });
         }
 
         // 更新 Save 按鈕（添加存在性檢查）
@@ -3132,10 +2875,8 @@ function updateUI() {
     }
 
     // 更新手機版滑桿
-    // 手機版滑桿和標籤（使用全域變數）
-    if (mobileRSlider && mobileGSlider && mobileBSlider && mobileRAngleLabel && mobileGAngleLabel && mobileBAngleLabel) {
-        const mobileSliders = [mobileRSlider, mobileGSlider, mobileBSlider];
-        const mobileLabels = [mobileRAngleLabel, mobileGAngleLabel, mobileBAngleLabel];
+    // 手機版滑桿和標籤（使用全域陣列）
+    if (mobileSliders[0] && mobileSliders[1] && mobileSliders[2] && mobileAngleLabels[0] && mobileAngleLabels[1] && mobileAngleLabels[2]) {
         const letterCount = letters.length;
 
         mobileSliders.forEach((slider, i) => {
@@ -3148,7 +2889,7 @@ function updateUI() {
             slider.elt.disabled = !sliderEnabled;
             if (sliderEnabled) {
                 slider.addClass('enabled');
-                mobileLabels[i].addClass('enabled');
+                mobileAngleLabels[i].addClass('enabled');
 
                 // 決定 slider 和 label 的顏色
                 let sliderColor, labelColor;
@@ -3173,31 +2914,27 @@ function updateUI() {
                 // 動態設定滑桿顏色
                 slider.elt.style.setProperty("--track-color", sliderColor);
                 slider.elt.style.setProperty("--thumb-color", sliderColor);
-                mobileLabels[i].style("color", labelColor);
+                mobileAngleLabels[i].style("color", labelColor);
             } else {
                 slider.removeClass('enabled');
-                mobileLabels[i].removeClass('enabled');
-                mobileLabels[i].style("color", disabledColor);
+                mobileAngleLabels[i].removeClass('enabled');
+                mobileAngleLabels[i].style("color", disabledColor);
             }
         });
 
-        // 同步滑桿數值
+        // 同步滑桿數值（使用陣列迴圈）
         // 如果正在 ease，顯示目標角度（正規化後的）；否則顯示當前角度
-        let rVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetRRotationOffset) : rRotationOffset);
-        let gVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetGRotationOffset) : gRotationOffset);
-        let bVal = Math.round(isEasingCustomRotation ? normalizeAngle(targetBRotationOffset) : bRotationOffset);
+        const vals = [0, 1, 2].map(i =>
+          Math.round(isEasingCustomRotation ? normalizeAngle(targetRotationOffsets[i]) : rotationOffsets[i])
+        );
 
         // 只在角度 label 沒有焦點時才更新它的值（避免干擾用戶編輯）
         const activeElement = document.activeElement;
-        if (activeElement !== mobileRAngleLabel.elt) {
-          mobileRAngleLabel.value((rVal > 0 ? "+" : "") + rVal);
-        }
-        if (activeElement !== mobileGAngleLabel.elt) {
-          mobileGAngleLabel.value((gVal > 0 ? "+" : "") + gVal);
-        }
-        if (activeElement !== mobileBAngleLabel.elt) {
-          mobileBAngleLabel.value((bVal > 0 ? "+" : "") + bVal);
-        }
+        mobileAngleLabels.forEach((label, i) => {
+          if (label && activeElement !== label.elt) {
+            label.value((vals[i] > 0 ? "+" : "") + vals[i]);
+          }
+        });
     }
 
     // 更新手機版 UI（使用 mobile.js）
@@ -3209,33 +2946,22 @@ function updateSliders() {
     isEasingCustomRotation = false;
     isEasingSlider = false;
 
-    // 同時更新當前值和目標值
-    rRotationOffset = rSlider.value();
-    gRotationOffset = gSlider.value();
-    bRotationOffset = bSlider.value();
-
-    targetRRotationOffset = rRotationOffset;
-    targetGRotationOffset = gRotationOffset;
-    targetBRotationOffset = bRotationOffset;
-
-    // 同步 slider 的當前值和目標值
-    currentRSliderValue = rSlider.value();
-    currentGSliderValue = gSlider.value();
-    currentBSliderValue = bSlider.value();
-    targetRSliderValue = currentRSliderValue;
-    targetGSliderValue = currentGSliderValue;
-    targetBSliderValue = currentBSliderValue;
+    // 使用陣列迴圈更新 R/G/B（簡化重複邏輯）
+    for (let i = 0; i < 3; i++) {
+      if (sliders[i]) {
+        const sliderValue = sliders[i].value();
+        rotationOffsets[i] = sliderValue;
+        targetRotationOffsets[i] = sliderValue;
+        currentSliderValues[i] = sliderValue;
+        targetSliderValues[i] = sliderValue;
+      }
+    }
 }
 
 
 function getRotationFor(layer, index) {
-    let baseRotation = 0;
-    // --- 應用自訂角度偏移 ---
-    if (layer === 0) baseRotation += rRotationOffset; // R
-    if (layer === 1) baseRotation += gRotationOffset; // G
-    if (layer === 2) baseRotation += bRotationOffset; // B
-
-    return baseRotation;
+    // 使用陣列直接取得對應 layer 的旋轉偏移（簡化條件判斷）
+    return rotationOffsets[layer] || 0;
 }
 
 
