@@ -1,10 +1,6 @@
 // ====================================
 // SCCD Logo Generator - 主程式
 // ====================================
-// 注意：全域變數已移至 js/variables.js
-// 注意：工具函數已移至 js/utils.js (updateIconsForMode, updateRotateIcon, checkMobileMode, getCanvasSize等)
-// 注意：色彩選擇器已移至 js/color-picker.js
-// ===================================
 
 // --- p5.js 預載入 ---
 function preload() {
@@ -349,6 +345,11 @@ function setup() {
   // Standard -> Inverse -> Wireframe -> Standard
   // 將事件綁定到整個 colormode-box，讓整個容器都可以點擊
   colormodeBox.mousePressed(() => {
+    // 隨機旋轉 icon
+    if (colormodeIcon) {
+      animateModeIconRotation(colormodeIcon);
+    }
+
     switch(targetMode) {
       case "Standard":
         targetMode = "Inverse";
@@ -501,6 +502,12 @@ function setup() {
   // --- 綁定手機版按鈕事件（同步桌面版） ---
   if (mobileStandardButton) {
     mobileStandardButton.mousePressed(() => {
+      // 隨機旋轉手機版 mode icon
+      const mobileModeIcon = select('#mobile-mode-icon');
+      if (mobileModeIcon) {
+        animateModeIconRotation(mobileModeIcon);
+      }
+
       targetMode = "Standard";
       updateUI();
     });
@@ -508,6 +515,12 @@ function setup() {
 
   if (mobileInverseButton) {
     mobileInverseButton.mousePressed(() => {
+      // 隨機旋轉手機版 mode icon
+      const mobileModeIcon = select('#mobile-mode-icon');
+      if (mobileModeIcon) {
+        animateModeIconRotation(mobileModeIcon);
+      }
+
       targetMode = "Inverse";
       updateUI();
     });
@@ -1021,6 +1034,11 @@ function draw() {
     // 如果切換到 Wireframe 模式，重置色環以隨機選擇新顏色
     if (targetMode === "Wireframe" && previousMode !== "Wireframe") {
       if (colorPickerCanvas) {
+        // 清理全局事件監聽器
+        document.removeEventListener('mousemove', handleColorPickerMouseMove);
+        document.removeEventListener('mouseup', handleColorPickerMouseUp);
+        document.removeEventListener('touchend', handleColorPickerMouseUp);
+
         colorPickerCanvas.remove(); // 移除舊的 canvas
         colorPickerCanvas = null;
       }
@@ -1191,7 +1209,6 @@ function draw() {
           colorPickerCanvas.elt.addEventListener('mousedown', handleColorPickerMouseDown);
           colorPickerCanvas.elt.addEventListener('mousemove', handleColorPickerMouseMove);
           colorPickerCanvas.elt.addEventListener('mouseup', handleColorPickerMouseUp);
-          colorPickerCanvas.elt.addEventListener('mouseleave', handleColorPickerMouseUp); // 鼠標離開時也停止拖曳
 
           // 添加 touch 事件支持（手機端）
           colorPickerCanvas.elt.addEventListener('touchstart', handleColorPickerTouchStart);
@@ -1199,7 +1216,8 @@ function draw() {
           colorPickerCanvas.elt.addEventListener('touchend', handleColorPickerMouseUp);
           colorPickerCanvas.elt.addEventListener('touchcancel', handleColorPickerMouseUp);
 
-          // 全局 mouseup 事件，確保在 canvas 外放開鼠標也能停止拖曳
+          // 全局事件，確保在 canvas 外也能繼續拖曳和停止
+          document.addEventListener('mousemove', handleColorPickerMouseMove);
           document.addEventListener('mouseup', handleColorPickerMouseUp);
           document.addEventListener('touchend', handleColorPickerMouseUp);
 
@@ -2222,6 +2240,23 @@ function resetRotationOffsets() {
     updateSliders(); // 確保全域變數也被更新
 }
 
+// --- 新增：模式按鈕 icon 隨機旋轉動畫 ---
+function animateModeIconRotation(iconElement) {
+  if (!iconElement) return;
+
+  const imgEl = iconElement.elt;
+
+  // 生成隨機角度（-100 到 100 度之間）
+  const randomAngle = Math.floor(Math.random() * 201) - 100;
+
+  // 動畫持續時間
+  const duration = 600; // 600ms
+
+  // 使用平滑過渡旋轉到新的隨機角度
+  imgEl.style.transition = `transform ${duration}ms ease-in-out`;
+  imgEl.style.transform = `rotate(${randomAngle}deg)`;
+}
+
 // --- 新增：下載按鈕 icon 動畫（手機版用 CSS，桌面版用 JS）---
 function animateSaveButton(button, iconElement) {
     if (!button || !iconElement) {
@@ -2296,6 +2331,9 @@ function animateSaveButton(button, iconElement) {
         }, fadeInOutDuration + scaleUpDuration + rotateDuration + fadeInOutDuration);
     } else {
         // === 桌面版：使用 JavaScript + CSS Transition ===
+        // 確保 icon 是正確的 Download/Gift icon（防止重複點擊或狀態異常）
+        iconElement.attribute('src', getOriginalIconSrc());
+
         // 清除任何可能存在的樣式
         imgEl.style.removeProperty('transform');
         imgEl.style.removeProperty('transition');
@@ -2437,7 +2475,6 @@ function updateUI() {
                             colorPickerCanvas.elt.addEventListener('mousedown', handleColorPickerMouseDown);
                             colorPickerCanvas.elt.addEventListener('mousemove', handleColorPickerMouseMove);
                             colorPickerCanvas.elt.addEventListener('mouseup', handleColorPickerMouseUp);
-                            colorPickerCanvas.elt.addEventListener('mouseleave', handleColorPickerMouseUp);
 
                             // 添加 touch 事件支持（手機端）
                             colorPickerCanvas.elt.addEventListener('touchstart', handleColorPickerTouchStart);
@@ -2445,6 +2482,8 @@ function updateUI() {
                             colorPickerCanvas.elt.addEventListener('touchend', handleColorPickerMouseUp);
                             colorPickerCanvas.elt.addEventListener('touchcancel', handleColorPickerMouseUp);
 
+                            // 全局事件，確保在 canvas 外也能繼續拖曳和停止
+                            document.addEventListener('mousemove', handleColorPickerMouseMove);
                             document.addEventListener('mouseup', handleColorPickerMouseUp);
                             document.addEventListener('touchend', handleColorPickerMouseUp);
 
@@ -2493,23 +2532,29 @@ function updateUI() {
             desktopCanvasContainer.elt.style.removeProperty('--wireframe-border');
         }
 
-        // 瞬間隱藏 color picker box（不需要淡出動畫）
+        // 平滑收起 color picker box（收起動畫）
         if (colorPickerBox) {
-            colorPickerBox.style('display', 'none');
-            colorPickerBox.style('max-width', '0');
-            colorPickerBox.style('padding', '0');
-            colorPickerBox.removeClass('show'); // 移除 show class
-
-            // 重置標記
-            colorPickerReady = false;
-
-            // 同時隱藏內容
+            // 步驟 1：先淡出內容
             if (colorPickerContainer) {
                 colorPickerContainer.style('opacity', '0');
             }
             if (colorWheelPlayButton) {
                 colorWheelPlayButton.style('opacity', '0');
             }
+
+            // 步驟 2：收起容器（縮小 max-width、padding、opacity）
+            colorPickerBox.style('max-width', '0');
+            colorPickerBox.style('padding', '0');
+            colorPickerBox.style('opacity', '0');
+            colorPickerBox.removeClass('show'); // 移除 show class
+
+            // 步驟 3：等待動畫完成後再隱藏（200ms）
+            setTimeout(() => {
+                colorPickerBox.style('display', 'none');
+
+                // 重置標記
+                colorPickerReady = false;
+            }, 200); // 與 CSS transition 時間一致
         }
     }
 
@@ -2972,25 +3017,6 @@ function adjustLayoutForKeyboard(keyboardHeight) {
 
   console.log('調整佈局以適應鍵盤，鍵盤高度:', keyboardHeight + 'px');
 
-  // 獲取相關元素
-  let mobileInputArea = select('.mobile-input-area');
-  let displayArea = select('.display-area');
-  let mobileBottomBar = select('.mobile-bottom-bar');
-
-  if (mobileInputArea && displayArea && mobileBottomBar) {
-    // 選項1：將輸入框移到鍵盤上方
-    // 計算新的位置（鍵盤上方）
-    let newBottom = keyboardHeight + 10; // 10px 是額外的間距
-    mobileInputArea.style('bottom', newBottom + 'px');
-    mobileInputArea.style('top', 'auto'); // 移除 top 定位
-
-    // 選項2：隱藏底部按鈕列（如果需要）
-    // mobileBottomBar.style('display', 'none');
-
-    // 選項3：縮小 logo 區域（如果需要更多空間）
-    // displayArea.style('transform', 'scale(0.8)');
-  }
-
   // 鍵盤彈出時，mobile-logo-container 的可用空間可能改變，需要重新調整 canvas 尺寸
   // 延遲執行以確保 DOM 更新完成
   setTimeout(() => {
@@ -3004,25 +3030,6 @@ function resetLayoutAfterKeyboard() {
   if (!isMobileMode) return;
 
   console.log('重置佈局');
-
-  // 獲取相關元素
-  let mobileInputArea = select('.mobile-input-area');
-  let displayArea = select('.display-area');
-  let mobileBottomBar = select('.mobile-bottom-bar');
-
-  if (mobileInputArea) {
-    // 恢復原始位置
-    mobileInputArea.style('bottom', 'calc(3rem + var(--mobile-btn-size))');
-    mobileInputArea.style('top', 'calc(4rem + 100vw - 3rem)');
-  }
-
-  if (mobileBottomBar) {
-    // mobileBottomBar.style('display', 'flex');
-  }
-
-  if (displayArea) {
-    // displayArea.style('transform', 'scale(1)');
-  }
 
   // 鍵盤收起時，mobile-logo-container 的可用空間恢復，需要重新調整 canvas 尺寸
   // 延遲執行以確保 DOM 更新完成
@@ -3527,6 +3534,29 @@ function drawColorPickerIndicator(centerX, centerY, outerRadius, innerRadius) {
 // 處理鼠標事件
 function handleColorPickerMouseDown(e) {
   if (!colorPickerCanvas) return;
+
+  // 檢查初始點擊是否在色環範圍內（桌面版）或色條範圍內（手機版）
+  if (!isMobileMode) {
+    let rect = colorPickerCanvas.elt.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+    let w = colorPickerCanvas.width;
+
+    let centerX = w / 2;
+    let centerY = w / 2;
+    let dx = x - centerX;
+    let dy = y - centerY;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+
+    let outerRadius = w * 0.45;
+    let innerRadius = w * 0.25;
+
+    // 只有在色環範圍內按下時才開始拖曳
+    if (distance < innerRadius || distance > outerRadius) {
+      return; // 不在色環範圍內，不開始拖曳
+    }
+  }
+
   colorPickerDragging = true;
   updateColorFromMouse(e);
 }
@@ -3559,6 +3589,30 @@ function handleColorPickerMouseUp() {
 function handleColorPickerTouchStart(e) {
   if (!colorPickerCanvas) return;
   e.preventDefault(); // 防止滾動
+
+  // 檢查初始觸摸是否在色環範圍內（桌面版）或色條範圍內（手機版）
+  if (!isMobileMode && e.touches.length > 0) {
+    let touch = e.touches[0];
+    let rect = colorPickerCanvas.elt.getBoundingClientRect();
+    let x = touch.clientX - rect.left;
+    let y = touch.clientY - rect.top;
+    let w = colorPickerCanvas.width;
+
+    let centerX = w / 2;
+    let centerY = w / 2;
+    let dx = x - centerX;
+    let dy = y - centerY;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+
+    let outerRadius = w * 0.45;
+    let innerRadius = w * 0.25;
+
+    // 只有在色環範圍內觸摸時才開始拖曳
+    if (distance < innerRadius || distance > outerRadius) {
+      return; // 不在色環範圍內，不開始拖曳
+    }
+  }
+
   colorPickerDragging = true;
   if (e.touches.length > 0) {
     updateColorFromTouch(e.touches[0]);
@@ -3632,21 +3686,8 @@ function updateColorFromMouse(e) {
     let dx = x - centerX;
     let dy = y - centerY;
 
-    // 計算距離中心的距離
-    let distance = Math.sqrt(dx * dx + dy * dy);
-
-    // 計算 color wheel 的內外半徑（與繪製邏輯一致）
-    let outerRadius = w * 0.45;
-    let innerRadius = w * 0.25;
-
-    // 檢查是否在 wheel 的環形範圍內
-    if (distance < innerRadius || distance > outerRadius) {
-      // 鼠標不在有效範圍內，停止拖曳
-      colorPickerDragging = false;
-      return;
-    }
-
     // 計算角度（弧度）- atan2 返回 -PI 到 PI
+    // 即使拖曳到色環外，仍然可以根據角度改變顏色
     let angle = Math.atan2(dy, dx);
 
     // 轉換為度數並調整：

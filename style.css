@@ -339,7 +339,7 @@ body.wireframe-mode .control-box.disabled {
   padding: calc(16px * var(--scale)); /* 稍小的 padding，讓色彩區域更大 */
   opacity: 0; /* 預設透明（包括 border 和背景） */
   overflow: hidden; /* 隱藏溢出內容，配合寬度動畫 */
-  transition: max-width 0.3s ease, padding 0.3s ease, opacity 0.3s ease; /* 寬度、padding 和 opacity 過渡效果 */
+  transition: max-width 0.2s ease, padding 0.2s ease, opacity 0.2s ease; /* 寬度、padding 和 opacity 過渡效果 */
   max-width: 0; /* 預設寬度為 0 */
 }
 
@@ -513,13 +513,15 @@ body.inverse-mode .button-indicator {
   margin-top: 0; /* 移除上邊距，因為現在是左右佈局 */
   overflow: hidden; /* 隱藏溢出內容，配合動畫 */
   max-width: 0; /* 預設寬度為 0（隱藏狀態）*/
+  padding: 0; /* 預設無 padding */
   opacity: 0; /* 預設透明 */
-  transition: max-width 0.3s ease, opacity 0.3s ease; /* 添加平滑過渡 */
+  transition: max-width 0.3s ease, padding 0.3s ease, opacity 0.3s ease; /* 添加平滑過渡 */
 }
 
 /* 當 control-group 顯示時 */
 .control-group.show {
   max-width: 500px; /* 設定足夠大的值讓內容完全顯示 */
+  padding: 10px; /* 展開時添加 padding */
   opacity: 1; /* 完全不透明 */
   overflow: visible; /* 顯示時允許溢出（例如 tooltip）*/
 }
@@ -1345,21 +1347,23 @@ body.wireframe-mode .angle-input:not(.enabled) {
     flex-shrink: 0; /* 不縮小 */
     /* 預設收起 */
     max-height: 0;
+    padding: 0; /* 預設無 padding */
     overflow: hidden;
     opacity: 0;
-    transition: max-height 0.4s cubic-bezier(0.4, 0.0, 0.2, 1),
-                opacity 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
   }
 
   /* 隱藏狀態 */
   .mobile-custom-angle-controls.hidden {
     max-height: 0 !important;
+    padding: 0 !important;
     opacity: 0 !important;
   }
 
   /* 顯示時展開 */
   .mobile-custom-angle-controls:not(.hidden) {
     max-height: 120px; /* 更精確的高度值 */
+    padding: 0.5rem 0; /* 展開時添加上下 padding */
     opacity: 1;
   }
 
@@ -2242,9 +2246,9 @@ body.wireframe-mode .angle-input:not(.enabled) {
     opacity: 1 !important;
   }
 
-  /* Inactive 狀態：60% opacity */
+  /* Inactive 狀態：40% opacity */
   .mobile-rotation-group .mobile-bottom-btn.inactive {
-    opacity: 0.6 !important;
+    opacity: 0.4 !important;
   }
 
   /* 移除面板的邊框樣式（各元件有自己的邊框）*/

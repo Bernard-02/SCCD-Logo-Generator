@@ -18,7 +18,8 @@
       "Bash(dir /s /b *.png *.jpg *.ttf *.js)",
       "Bash(findstr:*)",
       "Bash(ls:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
