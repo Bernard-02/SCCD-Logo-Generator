@@ -443,6 +443,11 @@ function toggleRotatePanel() {
 
 // 循環切換模式（Mode 按鈕）
 function cycleModeButton() {
+  // 隨機旋轉 mode icon
+  if (mobileElements.modeIcon) {
+    animateModeIconRotation(mobileElements.modeIcon);
+  }
+
   // 循環切換
   switch(targetMode) {
     case "Standard":

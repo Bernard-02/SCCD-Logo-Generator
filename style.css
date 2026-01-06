@@ -1347,23 +1347,21 @@ body.wireframe-mode .angle-input:not(.enabled) {
     flex-shrink: 0; /* 不縮小 */
     /* 預設收起 */
     max-height: 0;
-    padding: 0; /* 預設無 padding */
     overflow: hidden;
     opacity: 0;
-    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+    transition: max-height 0.4s cubic-bezier(0.4, 0.0, 0.2, 1),
+                opacity 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
   }
 
   /* 隱藏狀態 */
   .mobile-custom-angle-controls.hidden {
     max-height: 0 !important;
-    padding: 0 !important;
     opacity: 0 !important;
   }
 
   /* 顯示時展開 */
   .mobile-custom-angle-controls:not(.hidden) {
     max-height: 120px; /* 更精確的高度值 */
-    padding: 0.5rem 0; /* 展開時添加上下 padding */
     opacity: 1;
   }
 
